@@ -17,15 +17,26 @@ def render_de_kt_module():
 
     # 2. HÀNG 1: MENU ĐIỀU HƯỚNG CƠ BẢN
     col1, col2, col3, col4 = st.columns(4)
+    
     with col1:
         st.markdown('<p class="header-blue">MENU MÔN HỌC</p>', unsafe_allow_html=True)
-        mon_hoc = st.selectbox("Môn", ["Khoa học Tự nhiên", "Toán học", "Vật lý", "Hóa học"], label_visibility="collapsed", index=0)
+        danh_sach_mon = [
+            "Ngữ văn", "Toán", "Tiếng Anh", "Giáo dục công dân", "Lịch sử và Địa lí", 
+            "Khoa học tự nhiên: KHTN (Vật lý)", "KHTN (Hoá học)", "KHTN (Sinh học)", 
+            "Công nghệ", "Tin học", "Giáo dục địa phương", "Hoạt động trải nghiệm, hướng nghiệp"
+        ]
+        # Mặc định trỏ vào KHTN (Vật lý) ở vị trí index=5
+        mon_hoc = st.selectbox("Môn", danh_sach_mon, label_visibility="collapsed", index=5)
+        
     with col2:
         st.markdown('<p class="header-blue">MENU LỚP</p>', unsafe_allow_html=True)
         lop = st.selectbox("Lớp", ["Lớp 6", "Lớp 7", "Lớp 8", "Lớp 9"], label_visibility="collapsed", index=3)
+        
     with col3:
         st.markdown('<p class="header-blue">HÌNH THỨC KT</p>', unsafe_allow_html=True)
-        hinh_thuc = st.selectbox("Hình thức", ["Giữa kì", "Cuối kì", "Thường xuyên"], label_visibility="collapsed")
+        # Đã cập nhật 3 hình thức kiểm tra
+        hinh_thuc = st.selectbox("Hình thức", ["Trắc nghiệm kết hợp tự luận", "Trắc nghiệm", "Tự luận"], label_visibility="collapsed")
+        
     with col4:
         st.markdown('<p class="header-blue">THỜI GIAN</p>', unsafe_allow_html=True)
         thoi_gian = st.selectbox("Thời gian", ["45 phút", "60 phút", "90 phút", "120 phút"], label_visibility="collapsed", index=1)
