@@ -7,7 +7,6 @@ python-docx
 docx2txt
 pypdf
 fpdf2
-google-generativeai
 google-auth
 gspread
 oauth2client
@@ -20,3 +19,4 @@ langchain-openai
 chromadb
 langchain-text-splitters
 rapidocr-onnxruntime
+google-genai
