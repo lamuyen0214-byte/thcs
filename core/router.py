@@ -1,5 +1,5 @@
 import streamlit as st
-
+from modules.1_danh_cho_giao_vien.stem.stem_builder import render_stem_module
 def route_teacher():
     st.header("👨‍🏫 Phân hệ: Dành Cho Giáo Viên")
     tabs = st.tabs([
@@ -16,9 +16,8 @@ def route_teacher():
         st.write("Giao diện sinh đề, trộn đề và xuất file Word chuẩn định dạng Toán, Lý, Hóa.")
         
     with tabs[2]:
-        st.subheader("Thiết kế bài dạy STEM")
-        st.write("Công cụ hỗ trợ lên kịch bản dự án STEM (ví dụ: Hệ thống tiết kiệm năng lượng thông minh sử dụng vi điều khiển ESP8266).")
-        
+        # GỌI MODULE STEM TẠI ĐÂY
+        render_stem_module()
     with tabs[3]:
         st.write("Module tạo Rubric đánh giá học sinh.")
     with tabs[4]:
