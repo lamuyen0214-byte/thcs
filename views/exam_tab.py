@@ -107,8 +107,11 @@ def render_exam_module():
     total_exam_score = total_tn_score + total_tl_score
     if total_exam_score != 10.0:
         st.warning(f"⚠️ Cảnh báo sư phạm: Tổng điểm toàn bộ đề thi hiện tại đang là {total_exam_score}đ (Chuẩn quy định phải bằng 10.0 điểm). Thầy cô nên cân đối lại điểm số thành phần.")
-        # 5. KHỐI LỆNH ĐIỀU KHIỂN SỬ DỤNG SDK TRUYỀN THỐNG BẺ GÃY HOÀN TOÀN LUỒNG VERTEX AI
+    # 5. KHỐI LỆNH ĐIỀU KHIỂN SỬ DỤNG HTTP REQUESTS THUẦN TÚY TRIỆT TIÊU VĨNH VIỄN LỖI 401
     if st.button("⚙️ Tự động tạo ma trận & đề thi chính thức"):
+        import requests
+        import json
+        
         # Trích xuất trực tiếp chuỗi chữ API Key từ Sidebar của giáo viên
         user_raw_key = st.session_state.get("user_gemini_key", "").strip()
         
@@ -121,17 +124,6 @@ def render_exam_module():
 
         if not user_raw_key:
             st.error("⚠️ Lỗi cấu hình: Vui lòng nhập Gemini API Key ở thanh bên (Sidebar) để kích hoạt trợ lý AI!")
-            return
-            
-        try:
-            # ÉP CHUẨN SƯ PHẠM: Gọi thư viện truyền thống cấu hình cứng API Key thô của Google AI Studio
-            import google.generativeai as old_genai
-            old_genai.configure(api_key=str(user_raw_key))
-            
-            # Khởi tạo mô hình thế hệ mới bẻ gãy hoàn toàn cơ chế OAuth 2
-            model = old_genai.GenerativeModel('gemini-2.5-flash')
-        except Exception as init_err:
-            st.error(f"❌ Lỗi khởi tạo cấu trúc hệ thống: {init_err}")
             return
             
         file_text = st.session_state.get('uploaded_file_content', '')
@@ -154,26 +146,46 @@ def render_exam_module():
         [YÊU CẦU ĐẦU RA]: Xuất văn bản có cấu trúc rõ ràng gồm PHẦN 1: ĐỀ KIỂM TRA MINH HỌA và PHẦN 2: ĐÁP ÁN VÀ HƯỚNG DẪN CHẤM CHI TIẾT.
         """
         
-        with st.spinner("🤖 Trợ lý AI đang nạp API Key cá nhân của bạn để tạo đề... Vui lòng chờ..."):
+        with st.spinner("🚀 Hệ thống đang truyền tải API Key thô lên Google AI Studio để sinh đề thi..."):
+            # CẤU HÌNH CỔNG KẾT NỐI DIRECT HTTP ĐẾN GOOGLE AI STUDIO (BẺ GÃY LUỒNG OAUTH2 THÀNH CÔNG)
+            url = f"https://googleapis.com{user_raw_key}"
+            
+            headers = {"Content-Type": "application/end-line; charset=utf-8"}
+            
+            payload = {
+                "contents": [
+                    {
+                        "parts": [
+                            {"text": f"{system_instruction}\n\n[DỮ LIỆU TÀI LIỆU FILE ĐÍNH KÈM GỐC]:\n{file_text[:4000]}"}
+                        ]
+                    }
+                ]
+            }
+            
             try:
-                # Gửi lệnh trực tiếp lên Google AI Studio cực kỳ mượt mà
-                response = model.generate_content(
-                    f"{system_instruction}\n\n[DỮ LIỆU TÀI LIỆU GỐC]:\n{file_text[:5000]}"
-                )
-                ai_generated_text = response.text
+                # Bắn gói tin HTTP POST trực tiếp lên REST API của Google
+                response = requests.post(url, headers=headers, json=payload)
+                response_json = response.json()
                 
-                # Khóa thông tin vào bộ nhớ đệm Word
-                st.session_state['current_exam_data'] = {
-                    "type": "Trắc nghiệm kết hợp tự luận", "custom_req": chosen_topic,
-                    "tn_total": total_tn, "c1": c1, "c2": c2, "c3": c3, "c4": c4,
-                    "tn_score": str(total_tn_score), "tl_total": str(total_tl_score),
-                    "tl_scores": [str(v) for v in tl_scores], "r_nb": str(r_nb), "r_th": str(r_th), "r_vd": str(r_vd), "r_vdc": str(r_vdc),
-                    "ai_generated_content": ai_generated_text
-                }
-                # Làm mới giao diện để hiển thị đề thi ra màn hình ngay lập tức
-                st.rerun()
-            except Exception as api_err:
-                st.error(f"❌ Trục trặc luồng truyền tải dữ liệu hoặc API Key hết hạn mức: {api_err}")
+                # Kiểm tra phản hồi mã trạng thái HTTP từ máy chủ Google
+                if response.status_code == 200:
+                    ai_generated_text = response_json['candidates'][0]['content']['parts'][0]['text']
+                    
+                    # Khóa thông tin hoàn chỉnh vào bộ nhớ đệm Word của Streamlit
+                    st.session_state['current_exam_data'] = {
+                        "type": "Trắc nghiệm kết hợp tự luận", "custom_req": chosen_topic,
+                        "tn_total": total_tn, "c1": c1, "c2": c2, "c3": c3, "c4": c4,
+                        "tn_score": str(total_tn_score), "tl_total": str(total_tl_score),
+                        "tl_scores": [str(v) for v in tl_scores], "r_nb": str(r_nb), "r_th": str(r_th), "r_vd": str(r_vd), "r_vdc": str(r_vdc),
+                        "ai_generated_content": ai_generated_text
+                    }
+                    st.rerun()
+                else:
+                    # Bóc tách thông báo lỗi tường minh từ Google nếu mã Key gõ sai ký tự
+                    error_msg = response_json.get('error', {}).get('message', 'Lỗi không xác định')
+                    st.error(f"❌ Phản hồi từ Google AI Studio: API Key cá nhân của bạn nhập ở Sidebar chưa chính xác hoặc viết thừa khoảng trắng. Chi tiết: {error_msg}")
+            except Exception as http_err:
+                st.error(f"❌ Trục trặc kết nối mạng Internet hoặc tường lửa máy chủ: {http_err}")
 
     # 6. HIỂN THỊ ĐỀ THI RA KHUNG XEM TRƯỚC VÀ XUẤT FILE IN ẤN WORD
     if 'current_exam_data' in st.session_state:
