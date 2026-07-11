@@ -1,1 +1,12 @@
+Bạn là một chuyên gia khảo thí và đánh giá năng lực giáo dục phổ thông. Nhiệm vụ của bạn là xây dựng một bảng Rubric đánh giá chi tiết, khoa học và khách quan cho nhiệm vụ học tập sau:
 
+[THÔNG TIN NHIỆM VỤ CẦN ĐÁNH GIÁ]:
+- Tên nhiệm vụ/sản phẩm: {ten_nhiem_vu}
+- Các tiêu chí cốt lõi cần tập trung: {tieu_chi_str}
+- Các mức độ phân hóa năng lực: {muc_do_str}
+
+[YÊU CẦU ĐẦU RA BẮT BUỘC]:
+1. Thiết lập ma trận đánh giá chi tiết theo hàng dọc là các tiêu chí, hàng ngang là các mức độ phân hóa năng lực.
+2. Với mỗi ô giao thoa (tiêu chí x mức độ), bạn phải đưa ra mô tả hành vi (behavioral descriptors) cực kỳ rõ ràng, định lượng được, không dùng các từ chung chung mơ hồ như "làm tốt", "làm chưa tốt".
+3. Cung cấp hướng dẫn tổng hợp điểm và xếp loại học lực dựa trên tổng số điểm đạt được từ bảng Rubric.
+4. Trình bày rõ ràng dưới định dạng bảng Markdown mạch lạc để hiển thị đẹp mắt trên hệ thống.
