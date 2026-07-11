@@ -23,47 +23,27 @@ def route_teacher():
         try:
             from modules.danh_cho_giao_vien.khbd.khbd_builder import render_khbd_module
             render_khbd_module()
-        except KeyError:
-            # Biện pháp cưỡng ép nạp trực tiếp nếu Streamlit Cloud bị kẹt KeyError module
-            import modules.danh_cho_giao_vien.khbd.khbd_builder as khbd_mod
-            khbd_mod.render_khbd_module()
         except Exception as e:
             st.error(f"💡 Hệ thống đang đồng bộ Tab KHBD: {e}")
         
-        # --- TAB 2: XÂY DỰNG ĐỀ KIỂM TRA (ĐÃ ĐỒNG BỘ CẤU HÌNH ĐIỂM ĐỘNG CŨ) ---
+    # --- TAB 2: XÂY DỰNG ĐỀ KIỂM TRA (ĐÃ ĐỒNG BỘ ĐƯỜNG DẪN THỰC TẾ) ---
     with tabs[1]:
         try:
-            # Gọi trực tiếp file cấu hình đề thi cũ của thầy
-            from views.exam_tab import ExamTab
-            
-            # Khởi tạo đối tượng giao diện Tkinter/CustomTkinter cũ tương thích luồng Streamlit
-            # Nếu thầy đã chuyển hẳn file exam_tab sang giao diện Streamlit, ta gọi hàm render:
-            if hasattr(ExamTab, 'render_exam_module'):
-                ExamTab.render_exam_module()
-            else:
-                # Luồng chạy bọc dự phòng nếu file của thầy vẫn giữ cấu trúc Class
-                st.subheader("📝 Xây dựng Đề kiểm tra")
-                st.info("Hệ thống đang nạp kho dữ liệu ma trận câu hỏi...")
-                
-                # Đoạn này sẽ gọi trực tiếp file views/exam_tab.py hoạt động
-                import views.exam_tab as exam_mod
-                if hasattr(exam_mod, 'render_exam_module'):
-                    exam_mod.render_exam_module()
+            # Chỉ định Python nạp trực tiếp hàm render_exam_module từ thư mục views
+            from views.exam_tab import render_exam_module
+            render_exam_module()
+        except KeyError:
+            # Khử lỗi bộ nhớ đệm cache ngầm của Streamlit Cloud bằng import alias trực tiếp
+            import views.exam_tab as exam_mod
+            exam_mod.render_exam_module()
         except Exception as e:
-            # Hiển thị thông báo hướng dẫn trực quan nếu file views/exam_tab chưa chuyển đổi sang Streamlit
-            st.subheader("📝 Xây dựng Đề kiểm tra")
-            st.warning("💡 Để hiển thị khung ma trận cũ trên nền tảng Web mới, tệp 'views/exam_tab.py' cần được chuyển đổi cú pháp từ đồ họa máy tính (customtkinter) sang đồ họa mạng (Streamlit).")
-
+            st.error(f"💡 Hệ thống đang khởi tạo dữ liệu Tab Đề kiểm tra: {e}")
         
     # --- TAB 3: THIẾT KẾ BÀI DẠY STEM ---
     with tabs[2]:
         try:
             from modules.danh_cho_giao_vien.stem.stem_builder import render_stem_module
             render_stem_module()
-        except KeyError:
-            # Biện pháp cưỡng ép nạp trực tiếp nếu Streamlit Cloud bị kẹt KeyError module
-            import modules.danh_cho_giao_vien.stem.stem_builder as stem_mod
-            stem_mod.render_stem_module()
         except Exception as e:
             st.error(f"💡 Hệ thống đang đồng bộ Tab STEM: {e}")
         
