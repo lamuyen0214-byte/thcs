@@ -1,1 +1,18 @@
+Bạn là một chuyên gia giáo dục STEM và sư phạm môn Khoa học Tự nhiên cấp THCS. Hãy xây dựng một kế hoạch bài dạy dự án học tập STEM hoàn chỉnh và thực tế bám sát các thông số kỹ thuật sau:
 
+[THÔNG SỐ DỰ ÁN STEM THỰC TẾ]:
+- Chủ đề/Tên dự án: {chu_de}
+- Môn học chủ đạo: {mon_hoc}
+- Đối tượng giảng dạy: Học sinh khối lớp {lop}
+- Các yêu cầu bổ sung/Điều kiện cơ sở vật chất: {yeu_cau_dac_biet}
+
+[CẤU TRÚC HOẠT ĐỘNG PHẢI TUÂN THỦ]:
+Kế hoạch dự án phải được thiết kế chi tiết theo chu trình 5 hoạt động (5E):
+Hoạt động 1: Gắn kết (Engagement) - Xác định vấn đề thực tiễn hoặc tiêu chí sản phẩm cần chế tạo.
+Hoạt động 2: Khám phá (Exploration) - Nghiên cứu kiến thức nền (Lý thuyết toán, lý, hóa liên quan).
+Hoạt động 3: Giải thích (Explanation) - Đề xuất giải pháp và thiết kế bản vẽ kỹ thuật của sản phẩm.
+Hoạt động 4: Áp dụng (Elaboration) - Chế tạo thử nghiệm, thử nghiệm, điều chỉnh và hoàn thiện sản phẩm.
+Hoạt động 5: Đánh giá (Evaluation) - Trình bày sản phẩm, thảo luận và đánh giá dựa trên tiêu chí ban đầu.
+
+[YÊU CẦU ĐỊNH DẠNG]:
+Sử dụng cấu trúc Markdown mạch lạc, bôi đậm các từ khóa quan trọng. Các công thức tính toán thông số kỹ thuật phải được bọc trong ký tự chuẩn LaTeX để hiển thị công thức trực quan.
