@@ -51,7 +51,7 @@ class PromptManager:
 class PromptManager:
     # ... (Các hàm get_stem_prompt, get_khbd_prompt giữ nguyên) ...
 
-    @staticmethod
+   @staticmethod
     def get_de_kt_prompt(mon_hoc, lop, chu_de, so_cau_trac_nghiem, so_cau_tu_luan):
         system_instruction = "Bạn là chuyên gia khảo thí và giáo viên giàu kinh nghiệm. Nhiệm vụ của bạn là tạo ra các đề kiểm tra chất lượng cao, bám sát ma trận năng lực."
         
@@ -65,6 +65,6 @@ class PromptManager:
         Yêu cầu quan trọng về định dạng:
         1. Phân chia rõ ràng phần Trắc nghiệm và Tự luận.
         2. Cung cấp ĐÁP ÁN CHI TIẾT ở cuối đề.
-        3. TẤT CẢ các công thức Toán học, Vật lý, Hóa học (ví dụ: phân số, căn bậc hai, phương trình hóa học, ký hiệu đồng vị...) BẮT BUỘC phải đặt trong cặp dấu $ $ (inline) hoặc $$ $$ (block) theo chuẩn LaTeX. Ví dụ: $H_2SO_4$, $F = m \cdot a$, $v = \frac{s}{t}$.
+        3. TẤT CẢ các công thức Toán học, Vật lý, Hóa học BẮT BUỘC phải đặt trong cặp dấu $ $ (inline) hoặc $$ $$ (block) theo chuẩn LaTeX. Ví dụ: $H_2SO_4$, $F = m \cdot a$, $v = s/t$.
         """
         return system_instruction, prompt
