@@ -30,10 +30,30 @@ def route_teacher():
         except Exception as e:
             st.error(f"💡 Hệ thống đang đồng bộ Tab KHBD: {e}")
         
-    # --- TAB 2: XÂY DỰNG ĐỀ KIỂM TRA ---
+        # --- TAB 2: XÂY DỰNG ĐỀ KIỂM TRA (ĐÃ ĐỒNG BỘ CẤU HÌNH ĐIỂM ĐỘNG CŨ) ---
     with tabs[1]:
-        st.subheader("Xây dựng Đề kiểm tra")
-        st.write("Giao diện sinh đề, trộn đề và xuất file Word chuẩn định dạng Toán, Lý, Hóa.")
+        try:
+            # Gọi trực tiếp file cấu hình đề thi cũ của thầy
+            from views.exam_tab import ExamTab
+            
+            # Khởi tạo đối tượng giao diện Tkinter/CustomTkinter cũ tương thích luồng Streamlit
+            # Nếu thầy đã chuyển hẳn file exam_tab sang giao diện Streamlit, ta gọi hàm render:
+            if hasattr(ExamTab, 'render_exam_module'):
+                ExamTab.render_exam_module()
+            else:
+                # Luồng chạy bọc dự phòng nếu file của thầy vẫn giữ cấu trúc Class
+                st.subheader("📝 Xây dựng Đề kiểm tra")
+                st.info("Hệ thống đang nạp kho dữ liệu ma trận câu hỏi...")
+                
+                # Đoạn này sẽ gọi trực tiếp file views/exam_tab.py hoạt động
+                import views.exam_tab as exam_mod
+                if hasattr(exam_mod, 'render_exam_module'):
+                    exam_mod.render_exam_module()
+        except Exception as e:
+            # Hiển thị thông báo hướng dẫn trực quan nếu file views/exam_tab chưa chuyển đổi sang Streamlit
+            st.subheader("📝 Xây dựng Đề kiểm tra")
+            st.warning("💡 Để hiển thị khung ma trận cũ trên nền tảng Web mới, tệp 'views/exam_tab.py' cần được chuyển đổi cú pháp từ đồ họa máy tính (customtkinter) sang đồ họa mạng (Streamlit).")
+
         
     # --- TAB 3: THIẾT KẾ BÀI DẠY STEM ---
     with tabs[2]:
