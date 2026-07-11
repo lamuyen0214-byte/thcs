@@ -17,3 +17,15 @@ lxml==5.1.0
 pandas==2.2.1
 openpyxl==3.1.2
 python-dotenv==1.0.1
+streamlit
+google-generativeai
+langchain
+chromadb
+sentence-transformers
+python-docx
+PyPDF2
+latex2mathml
+lxml
+pandas
+openpyxl
+python-dotenv
