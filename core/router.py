@@ -1,5 +1,10 @@
+# File: core/router.py
 import streamlit as st
 from modules.danh_cho_giao_vien.stem.stem_builder import render_stem_module
+
+# Thêm dòng import này cho KHBD
+from modules.danh_cho_giao_vien.khbd.khbd_builder import render_khbd_module
+
 def route_teacher():
     st.header("👨‍🏫 Phân hệ: Dành Cho Giáo Viên")
     tabs = st.tabs([
@@ -8,16 +13,17 @@ def route_teacher():
     ])
     
     with tabs[0]:
-        st.subheader("Xây dựng Kế hoạch bài dạy (KHBD)")
-        st.write("Module sinh tự động KHBD môn Khoa học Tự nhiên lớp 9 sẽ được kết nối tại đây.")
+        # GỌI MODULE KHBD TẠI ĐÂY
+        render_khbd_module()
         
     with tabs[1]:
         st.subheader("Xây dựng Đề kiểm tra")
         st.write("Giao diện sinh đề, trộn đề và xuất file Word chuẩn định dạng Toán, Lý, Hóa.")
         
     with tabs[2]:
-        # GỌI MODULE STEM TẠI ĐÂY
         render_stem_module()
+        
+    # ... (Các tab khác giữ nguyên) ...
     with tabs[3]:
         st.write("Module tạo Rubric đánh giá học sinh.")
     with tabs[4]:
