@@ -2,7 +2,7 @@ import streamlit as st
 from ai_engine.layer_1_model.gemini import gemini_instance
 from ai_engine.layer_3_reasoning.prompt_manager import PromptManager
 from ai_engine.layer_5_output.word_export import WordExportEngine
-
+from services.google_sheet import luu_lich_su_de_kt
 def render_de_kt_module():
     # 1. CẤU HÌNH CSS ĐỂ KHÓA BỐ CỤC
     st.markdown("""
