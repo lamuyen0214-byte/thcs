@@ -1,4 +1,5 @@
 import streamlit as st
+from google import genai
 import os
 
 def get_word_engine():
@@ -109,64 +110,60 @@ def render_exam_module():
         st.warning(f"⚠️ Cảnh báo sư phạm: Tổng điểm toàn bộ đề thi hiện tại đang là {total_exam_score}đ (Chuẩn quy định phải bằng 10.0 điểm). Thầy cô nên cân đối lại điểm số thành phần.")
     # 5. KHỐI LỆNH ĐIỀU KHIỂN SỬ DỤNG HTTP REQUESTS THUẦN TÚY TRIỆT TIÊU VĨNH VIỄN LỖI 401
     if st.button("⚙️ Tự động tạo ma trận & đề thi chính thức"):
-        import requests
-        import json
-        
-        # Trích xuất trực tiếp chuỗi chữ API Key từ Sidebar của giáo viên
-        user_raw_key = st.session_state.get("user_gemini_key", "").strip()
-        
-        # Nếu giáo viên không nhập, tự động lấy khóa dự phòng lưu trong Streamlit Secrets
-        if not user_raw_key:
-            if "GEMINI_API_KEY" in st.secrets:
-                user_raw_key = st.secrets["GEMINI_API_KEY"].strip()
-            elif "GOOGLE_API_KEY" in st.secrets:
-                user_raw_key = st.secrets["GOOGLE_API_KEY"].strip()
+        # ============================================
+# GỌI GEMINI SDK CHÍNH THỨC (google-genai 2.11.0)
+# ============================================
 
-        if not user_raw_key:
-            st.error("⚠️ Lỗi cấu hình: Vui lòng nhập Gemini API Key ở thanh bên (Sidebar) để kích hoạt trợ lý AI!")
-            return
-            
-        file_text = st.session_state.get('uploaded_file_content', '')
-        total_tn = c1 + c2 + c3 + c4
-        
-        # Tính toán biểu điểm chi tiết từng câu trắc nghiệm bám sát giao diện của thầy
-        item_score_1 = s1 / c1 if c1 > 0 else 0
-        item_score_2 = s2 / c2 if c2 > 0 else 0
-        item_score_3 = s3 / c3 if c3 > 0 else 0
-        item_score_4 = s4 / c4 if c4 > 0 else 0
-        
-        tl_scores_str = ", ".join([f"Câu {i+1} ({v}đ)" for i, v in enumerate(tl_scores)])
+from google import genai
 
-        system_instruction = f"""
-        Bạn là chuyên gia khảo thí THCS Bộ GD&ĐT Việt Nam. Hãy biên soạn đề thi thực tế bám sát tài liệu và yêu cầu: "{chosen_topic}".
-        [RÀNG BUỘC PHÂN BỔ MỨC ĐỘ NHẬN THỨC]: Tuân thủ nghiêm ngặt tỷ lệ: {ratio_str}.
-        [CẤU TRÚC ĐỀ BẮT BUỘC]:
-        - Phần trắc nghiệm ({total_tn_score} điểm): {c1} câu Nhiều lựa chọn (mỗi câu {item_score_1:.2f}đ), {c2} câu Đúng/Sai (mỗi câu {item_score_2:.2f}đ), {c3} câu Điền khuyết (mỗi câu {item_score_3:.2f}đ), {c4} câu Trả lời ngắn (mỗi câu {item_score_4:.2f}đ).
-        - Phần tự luận ({total_tl_score} điểm): {tl_count} câu với mức điểm lần lượt: {tl_scores_str}.
-        [YÊU CẦU ĐẦU RA]: Xuất văn bản có cấu trúc rõ ràng gồm PHẦN 1: ĐỀ KIỂM TRA MINH HỌA và PHẦN 2: ĐÁP ÁN VÀ HƯỚNG DẪN CHẤM CHI TIẾT.
-        """
-        
-        with st.spinner("🚀 Hệ thống đang truyền tải API Key thô lên Google AI Studio để sinh đề thi..."):
-            # CẤU HÌNH CỔNG KẾT NỐI DIRECT HTTP ĐẾN GOOGLE AI STUDIO (BẺ GÃY LUỒNG OAUTH2 THÀNH CÔNG)
-            url = f"https://googleapis.com{user_raw_key}"
-            
-            headers = {"Content-Type": "application/end-line; charset=utf-8"}
-            
-            payload = {
-                "contents": [
-                    {
-                        "parts": [
-                            {"text": f"{system_instruction}\n\n[DỮ LIỆU TÀI LIỆU FILE ĐÍNH KÈM GỐC]:\n{file_text[:4000]}"}
-                        ]
-                    }
-                ]
-            }
-            
-            try:
-                # Bắn gói tin HTTP POST trực tiếp lên REST API của Google
-                response = requests.post(url, headers=headers, json=payload)
-                response_json = response.json()
-                
+MODEL_NAME = "models/gemini-2.5-flash"
+
+try:
+    client = genai.Client(
+        api_key=user_raw_key
+    )
+
+    prompt = f"""
+{system_instruction}
+
+=========================
+TÀI LIỆU GIÁO VIÊN CUNG CẤP
+=========================
+
+{file_text[:4000]}
+"""
+
+    with st.spinner("🤖 AI đang xây dựng đề kiểm tra..."):
+
+        response = client.models.generate_content(
+            model=MODEL_NAME,
+            contents=prompt
+        )
+
+    ai_generated_text = response.text
+
+    st.session_state["current_exam_data"] = {
+        "type": "Trắc nghiệm kết hợp tự luận",
+        "custom_req": chosen_topic,
+        "tn_total": total_tn,
+        "c1": c1,
+        "c2": c2,
+        "c3": c3,
+        "c4": c4,
+        "tn_score": str(total_tn_score),
+        "tl_total": str(total_tl_score),
+        "tl_scores": [str(v) for v in tl_scores],
+        "r_nb": str(r_nb),
+        "r_th": str(r_th),
+        "r_vd": str(r_vd),
+        "r_vdc": str(r_vdc),
+        "ai_generated_content": ai_generated_text
+    }
+
+    st.rerun()
+
+except Exception as e:
+    st.error(f"❌ Gemini API lỗi:\n\n{e}")
                 # Kiểm tra phản hồi mã trạng thái HTTP từ máy chủ Google
                 if response.status_code == 200:
                     ai_generated_text = response_json['candidates'][0]['content']['parts'][0]['text']
