@@ -107,26 +107,30 @@ def render_exam_module():
     total_exam_score = total_tn_score + total_tl_score
     if total_exam_score != 10.0:
         st.warning(f"⚠️ Cảnh báo sư phạm: Tổng điểm toàn bộ đề thi hiện tại đang là {total_exam_score}đ (Chuẩn quy định phải bằng 10.0 điểm). Thầy cô nên cân đối lại điểm số thành phần.")
-    # 5. KHỐI LỆNH ĐIỀU KHIỂN SỬ DỤNG TRÍ TUỆ NHÂN TẠO TẠO ĐỀ
+        # 5. KHỐI LỆNH ĐIỀU KHIỂN SỬ DỤNG TRÍ TUỆ NHÂN TẠO TẠO ĐỀ
     if st.button("⚙️ Tự động tạo ma trận & đề thi chính thức"):
-        from ai_config import get_ai_client
-        gemini_client = get_ai_client()
+        # ĐÃ SỬA LẠI LUỒNG: Lấy chính xác biến Client đã lưu trong session_state tổng từ ai_config
+        if "gemini_client" in st.session_state and st.session_state["gemini_client"] is not None:
+            gemini_client = st.session_state["gemini_client"]
+        else:
+            # Luồng đọc trực tiếp dự phòng tối cao bẻ gãy hoàn toàn lỗi trống biến client
+            from ai_config import get_ai_client
+            gemini_client = get_ai_client()
         
         if not gemini_client:
-            st.error("⚠️ Lỗi xác thực: Vui lòng kiểm tra hoặc nhập Gemini API Key cá nhân ở thanh bên (Sidebar) trước!")
+            st.error("⚠️ Lỗi xác thực: Không tìm thấy kết nối AI. Vui lòng kiểm tra lại API Key ở thanh bên (Sidebar)!")
             return
             
         file_text = st.session_state.get('uploaded_file_content', '')
         total_tn = c1 + c2 + c3 + c4
         
-        # Tính điểm đơn lẻ của từng câu trắc nghiệm bám sát ma trận điểm số
+        # Tính điểm thành phần chi tiết bám sát giao diện của thầy
         item_score_1 = s1 / c1 if c1 > 0 else 0
         item_score_2 = s2 / c2 if c2 > 0 else 0
         item_score_3 = s3 / c3 if c3 > 0 else 0
         item_score_4 = s4 / c4 if c4 > 0 else 0
         
         tl_scores_str = ", ".join([f"Câu {i+1} ({v}đ)" for i, v in enumerate(tl_scores)])
-
         system_instruction = f"""
         Bạn là chuyên gia khảo thí THCS Bộ GD&ĐT Việt Nam. Hãy biên soạn đề thi thực tế bám sát tài liệu và yêu cầu: "{chosen_topic}".
         [RÀNG BUỘC PHÂN BỔ MỨC ĐỘ NHẬN THỨC]: Tuân thủ nghiêm ngặt tỷ lệ: {ratio_str}.
@@ -136,15 +140,16 @@ def render_exam_module():
         [YÊU CẦU ĐẦU RA]: Xuất văn bản có cấu trúc rõ ràng gồm PHẦN 1: ĐỀ KIỂM TRA MINH HỌA và PHẦN 2: ĐÁP ÁN VÀ HƯỚNG DẪN CHẤM CHI TIẾT.
         """
         
-        with st.spinner("🤖 Trợ lý AI đang phân bổ cấu trúc tỷ lệ nhận thức và biên soạn đề thi..."):
+        with st.spinner("🤖 Trợ lý AI đang tiếp nhận API Key cá nhân và tiến hành ra đề thi..."):
             try:
+                # ÉP CHUẨN: Gọi hàm generate_content trực thuộc gemini_client đã được nạp mã AQ...
                 response = gemini_client.models.generate_content(
                     model='gemini-2.5-flash',
                     contents=[system_instruction, f"[DỮ LIỆU TÀI LIỆU FILE ĐÍNH KÈM GỐC]:\n{file_text[:5000]}"]
                 )
                 ai_generated_text = response.text
                 
-                # Lưu thông tin đồng bộ vào bộ đệm phục vụ in ấn file Word
+                # Cập nhật kết quả vào bộ nhớ đệm Word
                 st.session_state['current_exam_data'] = {
                     "type": "Trắc nghiệm kết hợp tự luận", "custom_req": chosen_topic,
                     "tn_total": total_tn, "c1": c1, "c2": c2, "c3": c3, "c4": c4,
@@ -152,8 +157,12 @@ def render_exam_module():
                     "tl_scores": [str(v) for v in tl_scores], "r_nb": str(r_nb), "r_th": str(r_th), "r_vd": str(r_vd), "r_vdc": str(r_vdc),
                     "ai_generated_content": ai_generated_text
                 }
+                # Ép làm mới giao diện Streamlit để bung đề thi ra expander ngay lập tức
+                st.rerun()
             except Exception as api_err:
-                st.error(f"❌ Máy chủ Google từ chối quyền truy cập do lỗi Quota hoặc hết hạn mức: {api_err}")
+                st.error(f"❌ Lỗi xác thực máy chủ Google hoặc API Key không hợp lệ: {api_err}")
+
+    
     # 6. HIỂN THỊ ĐỀ THI RA KHUNG XEM TRƯỚC VÀ XUẤT FILE IN ẤN WORD
     if 'current_exam_data' in st.session_state:
         exam_cache = st.session_state['current_exam_data']
