@@ -1,4 +1,3 @@
-# File: ai_engine/layer_3_reasoning/prompt_manager.py
 import os
 
 class PromptManager:
@@ -20,14 +19,6 @@ class PromptManager:
         Hãy trình bày rõ ràng, sử dụng định dạng Markdown, phân chia các phần mạch lạc.
         """
         return system_instruction, prompt
-# File: ai_engine/layer_3_reasoning/prompt_manager.py
-import os
-
-class PromptManager:
-    @staticmethod
-    def get_stem_prompt(chu_de, mon_hoc, lop, yeu_cau_dac_biet):
-        # ... (code cũ giữ nguyên) ...
-        pass
 
     @staticmethod
     def get_khbd_prompt(ten_bai, mon_hoc, lop, thoi_luong, noi_dung_tich_hop):
@@ -36,9 +27,10 @@ class PromptManager:
         """
         system_instruction = "Bạn là một giáo viên cốt cán môn Khoa học Tự nhiên cấp THCS, có nhiều kinh nghiệm soạn giảng theo định hướng phát triển năng lực và yêu cầu của Công văn 5512."
         
-        # Xử lý chuỗi tích hợp
+        # Xử lý chuỗi tích hợp an toàn
         tich_hop_str = ", ".join(noi_dung_tich_hop) if noi_dung_tich_hop else "Không có"
         
+        # Tránh ảo giác toán học F-string bằng cách bọc chuỗi văn bản thuần cho LaTeX
         prompt = f"""
         Hãy soạn một Kế hoạch bài dạy (Giáo án) chi tiết theo chuẩn Công văn 5512 cho:
         - Tên bài học: {ten_bai}
