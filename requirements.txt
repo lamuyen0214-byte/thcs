@@ -7,17 +7,7 @@ python-docx
 docx2txt
 pypdf
 fpdf2
-google-auth
-gspread
-oauth2client
 python-dotenv
 streamlit-quill
-langchain
-langchain-community
-langchain-google-genai
-langchain-openai
-chromadb
-langchain-text-splitters
-rapidocr-onnxruntime
 google-genai
 requests
