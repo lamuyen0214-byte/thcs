@@ -1,5 +1,5 @@
 import streamlit as st
-from modules.1_danh_cho_giao_vien.stem.stem_builder import render_stem_module
+from modules.danh_cho_giao_vien.stem.stem_builder import render_stem_module
 def route_teacher():
     st.header("👨‍🏫 Phân hệ: Dành Cho Giáo Viên")
     tabs = st.tabs([
