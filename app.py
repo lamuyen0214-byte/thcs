@@ -1,7 +1,7 @@
 import streamlit as st
 
 # Import các hàm từ thư mục con
-from core.router import route_teacher, route_teaching_support, route_management
+from core.router import route_teacher
 from ui.sidebar import render_sidebar
 
 def main():
