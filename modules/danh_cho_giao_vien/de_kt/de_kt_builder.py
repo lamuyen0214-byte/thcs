@@ -164,6 +164,13 @@ def render_de_kt_module():
                 
                 if result:
                     st.success("✅ Đã tạo xong đề kiểm tra theo đúng ma trận!")
+                    
+                    # --- GỌI HÀM LƯU VÀO GOOGLE SHEETS TẠI ĐÂY ---
+                    luu_thanh_cong = luu_lich_su_de_kt(mon_hoc, lop, ten_bai, hinh_thuc, tong_diem_tn, tong_diem_tl)
+                    if luu_thanh_cong:
+                        st.toast("☁️ Đã lưu thông tin đề lên hệ thống Google Sheets!", icon="✅")
+                    # ----------------------------------------------
+                    
                     with st.expander("👀 Xem trước Đề và Đáp án", expanded=True):
                         st.markdown(result)
                     st.session_state['current_de_kt'] = result
