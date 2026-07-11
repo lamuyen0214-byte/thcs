@@ -10,4 +10,5 @@ fpdf2
 python-dotenv
 streamlit-quill
 google-genai
+google-generativeai
 requests
