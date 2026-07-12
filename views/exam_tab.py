@@ -11,40 +11,67 @@ def get_word_engine():
 
 def render_exam_module():
     st.subheader("📝 Xây dựng Đề kiểm tra & Ma trận")
-    st.markdown("Hệ thống trợ lý AI hỗ trợ tự động phân bổ ma trận đề thi bám sát tỷ lệ mức độ nhận thức.")
+    # ... (giữ nguyên phần tải file và cấu hình tỷ lệ của thầy) ...
+    
+    # 5. KHỐI LỆNH ĐIỀU KHIỂN - ĐÃ SỬA LỖI CẤU TRÚC VÀ THỤT LỀ
+    if st.button("⚙️ Tự động tạo ma trận & đề thi chính thức"):
+        st.write("Đã nhận lệnh khởi tạo!") # Dòng kiểm tra
+        
+        user_raw_key = st.session_state.get("user_gemini_key", "").strip()
+        if not user_raw_key:
+            if "GEMINI_API_KEY" in st.secrets: user_raw_key = st.secrets["GEMINI_API_KEY"].strip()
+            elif "GOOGLE_API_KEY" in st.secrets: user_raw_key = st.secrets["GOOGLE_API_KEY"].strip()
 
-    # 1. KHU VỰC TẢI NHIỀU TÀI LIỆU LÊN HỆ THỐNG
-    st.markdown("##### 📂 Tài liệu kiến thức đính kèm")
-    uploaded_files = st.file_uploader(
-        "Kéo thả hoặc chọn các file tài liệu giáo án, sách bài tập (.pdf, .docx, .txt):",
-        type=["pdf", "docx", "txt"],
-        accept_multiple_files=True
-    )
+        if not user_raw_key:
+            st.error("⚠️ Vui lòng nhập Gemini API Key ở thanh bên (Sidebar)!")
+            return
 
-    # Đọc và cộng dồn văn bản văn bản thô từ đa tệp
-    uploaded_content = ""
-    if uploaded_files:
-        loaded_names = []
-        for file in uploaded_files:
-            loaded_names.append(file.name)
-            ext = file.name.split(".")[-1].lower()
+        # CẤU HÌNH LẠI SYSTEM_INSTRUCTION CHO ĐÚNG BIẾN
+        file_text = st.session_state.get('uploaded_file_content', '')
+        system_instruction = f"""
+        Bạn là chuyên gia khảo thí THCS Bộ GD&ĐT Việt Nam. Hãy biên soạn đề thi bám sát tài liệu: "{chosen_topic}".
+        Tuân thủ tỷ lệ: {ratio_str}.
+        Phần trắc nghiệm ({total_tn_score} điểm), Phần tự luận ({total_tl_score} điểm).
+        """
+        
+        with st.spinner("🤖 Trợ lý AI đang ra đề..."):
+            url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
+            headers = {"Content-Type": "application/json"}
+            api_url = f"{url}?key={user_raw_key}"
+            payload = {"contents": [{"parts": [{"text": f"{system_instruction}\n\n[DỮ LIỆU]:\n{file_text[:4000]}"}]}]}
+            
             try:
-                if ext == "txt":
-                    uploaded_content += f"--- {file.name} ---\n" + file.read().decode("utf-8") + "\n\n"
-                elif ext == "pdf":
-                    from pypdf import PdfReader
-                    reader = PdfReader(file)
-                    pdf_text = "".join([page.extract_text() or "" for page in reader.pages])
-                    if pdf_text.strip():
-                        uploaded_content += f"--- {file.name} ---\n" + pdf_text + "\n\n"
-                elif ext == "docx":
-                    import docx
-                    doc = docx.Document(file)
-                    docx_text = "\n".join([p.text for p in doc.paragraphs])
-                    if docx_text.strip():
-                        uploaded_content += f"--- {file.name} ---\n" + docx_text + "\n\n"
+                response = requests.post(api_url, headers=headers, json=payload)
+                if response.status_code == 200:
+                    response_json = response.json()
+                    ai_generated_text = response_json['candidates'][0]['content']['parts'][0]['text']
+                    
+                    st.session_state['current_exam_data'] = {
+                        "custom_req": chosen_topic,
+                        "c1": c1, "c2": c2, "c3": c3, "c4": c4,
+                        "tn_score": str(total_tn_score), "tl_total": str(total_tl_score),
+                        "tl_scores": [str(v) for v in tl_scores],
+                        "ai_generated_content": ai_generated_text
+                    }
+                    st.rerun() # Phải rerun để hiện nút Tải về
+                else:
+                    st.error(f"❌ Lỗi API ({response.status_code}): {response.text}")
             except Exception as e:
-                st.error(f"Lỗi đọc file {file.name}: {e}")
+                st.error(f"❌ Lỗi kết nối: {e}")
+
+    # 6. KHUNG HIỂN THỊ ĐỀ THI - PHẦN NÀY PHẢI ĐỂ NGOÀI KHỐI IF NÚT BẤM
+    if 'current_exam_data' in st.session_state:
+        exam_cache = st.session_state['current_exam_data']
+        with st.expander("🔍 Xem trước Đề & Đáp án", expanded=True):
+            st.markdown(exam_cache["ai_generated_content"])
+            
+        WordEngine = get_word_engine()
+        if WordEngine:
+            try:
+                word_file = WordEngine.export_to_word(exam_cache)
+                st.download_button(label="📄 Tải file Word", data=word_file, file_name="De_Thi.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+            except Exception as e:
+                st.error(f"⚠️ Lỗi xuất Word: {e}")
         
         st.success(f"✅ Đã nạp thành công {len(loaded_names)} file: {', '.join(loaded_names)}")
         st.session_state['uploaded_file_content'] = uploaded_content
