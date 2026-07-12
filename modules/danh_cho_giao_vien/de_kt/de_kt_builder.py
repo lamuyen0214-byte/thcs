@@ -155,6 +155,7 @@ def render_de_kt_module():
         bam_sat = st.checkbox("Bám sát nội dung đề cương/ma trận tải lên", value=True)
         yeu_cau_khac = st.text_area("Yêu cầu chi tiết", placeholder="Ví dụ: Chú trọng các câu hỏi liên hệ thực tế...", label_visibility="collapsed")
         # =====================================================================
+        # =====================================================================
     # 7. SỰ KIỆN PHÂN PHỐI AI VÀ BỘ CHUỖI DỰ PHÒNG MÔ HÌNH KHÓA CHẶT BIẾN TĨNH
     # =====================================================================
     col_btn_run, col_model_sel = st.columns(2)
@@ -259,53 +260,6 @@ def render_de_kt_module():
             st.sidebar.success("💾 Đã lưu cấu hình đề thi vào RAM phiên an toàn!")
     with col_download:
         if word_file is not None and exam_cache is not None:
-            saved_title = exam_cache.get("ten_bai_save", "Moi").replace(" ", "_")
-            st.download_button(
-                label="📄 Tải file về máy", data=word_file,
-                file_name=f"Bo_De_Kiem_Tra_{saved_title}.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                use_container_width=True, key="btn_dl_word_de_kt"
-            )
-        else:
-            st.button("📄 Tải file về máy", disabled=True, use_container_width=True, key="btn_dl_word_de_kt_dis")
-    with col_delete:
-        if st.button("❌ Xóa file", use_container_width=True, disabled=(exam_cache is None), key="btn_del_de_kt"):
-            st.session_state['delete_action_trigger'] = True
-            st.rerun()
-
-
-    # 8. BỘ 3 NÚT CHỨC NĂNG KẾT XUẤT HỒ SƠ CỐ ĐỊNH CHUẨN ĐỒ HỌA MỚI (BẠN BÈ TẤT CẢ LÀ BIẾN ĐỘC LẬP)
-    st.markdown("---")
-    st.markdown("##### 📥 Kết Xuất Hồ Sơ Đề Kiểm Tra Chuyên Nghiệp")
-    
-    if st.session_state.get('delete_action_trigger'):
-        if 'current_exam_data' in st.session_state: del st.session_state['current_exam_data']
-        st.session_state['delete_action_trigger'] = False
-        st.rerun()
-
-    exam_cache = st.session_state.get('current_exam_data')
-    word_file = None
-
-    if exam_cache:
-        with st.expander("🔍 Xem trước Nội dung Đề kiểm tra & Đáp án chi tiết từ AI", expanded=True):
-            st.markdown(exam_cache["ai_generated_content"])
-        
-        # BỐC TÁCH KHỐI NGOẠI LỆ: Nếu xuất Word bảng biểu dính lỗi thì 2 nút Lưu/Xóa vẫn hiển thị hoạt động tốt!
-        WordEngine = get_word_engine()
-        if WordEngine:
-            try:
-                word_file = WordEngine.export_to_word(exam_cache)
-            except Exception as e:
-                st.error(f"💡 Trình dịch khung bảng biểu Word đang đồng bộ cấu trúc: {e}")
-
-    # ĐÃ ĐỒNG BỘ: Đưa bộ 3 nút ra ngoài hoàn toàn, luôn hiển thị ngang tăm tắp
-    col_save, col_download, col_delete = st.columns(3)
-    
-    with col_save:
-        if st.button("💾 Lưu file tạm thời", use_container_width=True, disabled=(exam_cache is None), key="btn_save_de_kt"):
-            st.sidebar.success("💾 Đã lưu cấu hình đề thi vào RAM phiên an toàn!")
-    with col_download:
-        if word_file and exam_cache:
             saved_title = exam_cache.get("ten_bai_save", "Moi").replace(" ", "_")
             st.download_button(
                 label="📄 Tải file về máy", data=word_file,
