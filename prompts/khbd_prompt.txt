@@ -11,15 +11,36 @@ Cấu trúc theo Công văn 5512 (Mục tiêu, Thiết bị, Tiến trình);
 Tiến trình dạy học: Chỉ chọn 2-3 phương pháp phù hợp nhất (ví dụ: Khăn trải bàn, Trò chơi, Thí nghiệm/Mô phỏng).
 Phân hóa: Mỗi hoạt động phải có 1 câu hỏi "Mở rộng" cho HS khá giỏi và 1 hỗ trợ "Cầm tay chỉ việc" cho HS hạn chế.
 Sản phẩm: Ghi rõ cụ thể học sinh cần làm gì (Ví dụ: Phiếu học tập số 1, Bài tập trên bảng nhóm...).
-C. Một số lưu ý
+C. Một số lưu ý cấu trúc mẫu.
 - Trình bày đầy đủ:
-I. MỤC TIÊU (Gồm: 1. Kiến thức, 2. Năng lực, 3. Năng lực số và Năng lực AI, 4 Phẩm chất)
-(Trong phần năng lực phải chia rõ: A. Năng lực chung (- Tự chủ và tự học, - Giao tiếp và hợp tác, - Giải quyết vấn đề và sáng tạo); B. Năng lực đặc thù môn học
+I. MỤC TIÊU (Gồm: 
+1. Kiến thức.
+2. Năng lực (Trong phần năng lực phải chia rõ)
+  a) Năng lực chung 
+  - Tự chủ và tự học 
+  - Giao tiếp và hợp tác
+  - Giải quyết vấn đề và sáng tạo
+  b) Năng lực đặc thù môn học
+3. Năng lực số và AI
+4 Phẩm chất
 II. THIẾT BỊ DẠY HỌC VÀ HỌC LIỆU
-- Thiết bị giáo viên; - Thiết bị học sinh (- Học liệu, Thiết bị số, Phần mềm, AI (nếu có)
+- Thiết bị giáo viên; 
+- Thiết bị học sinh (- Học liệu, Thiết bị số, Phần mềm, AI (nếu có)
 III. TIẾN TRÌNH DẠY HỌC
-- Mỗi tiết học gồm đầy đủ: (1. Hoạt động mở đầu; 2. Hoạt động hình thành kiến thức; 3. Hoạt động luyện tập; 4. Hoạt động vận dụng)
-Nếu bài nhiều tiết thì chia rõ: (TIẾT 1; TIẾT 2; TIẾT 3; ...)
+Nếu bài nhiều tiết thì chia rõ: (TIẾT 1; TIẾT 2; TIẾT 3; ...
+- Mỗi tiết học gồm đầy đủ: 
+1. Hoạt động mở đầu; 
+2. Hoạt động hình thành kiến thức;
+3. Hoạt động luyện tập; 
+4. Hoạt động vận dụng)
 IV. CẤU TRÚC MỖI HOẠT ĐỘNG
-- Mỗi hoạt động phải trình bày đầy đủ:( 1. Mục tiêu; 2. Nội dung; 3. Sản phẩm; 4. Tổ chức thực hiện)
-- Phần tổ chức thực hiện phải đủ 4 nội dung
+- Mỗi hoạt động phải trình bày đầy đủ:
+Hoạt động 1.
+  1. Mục tiêu; 
+  2. Nội dung; 
+  3. Sản phẩm; 
+  4. Tổ chức thực hiện
+  - Chuyển giao nhiệm vụ
+  - Thực hiện nhiệm vụ
+  - Sản phẩm
+  - Kết luận, nhận định
