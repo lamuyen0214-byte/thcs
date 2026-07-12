@@ -214,15 +214,21 @@ def render_de_kt_module():
                 # =========================================================================
                 
                 # Ánh xạ nhãn hiển thị sang hằng số tên mô hình API chuẩn, độ tương thích 100% với mọi API Key
+                # =========================================================================
+                # BẮT ĐẦU ĐOẠN THAY THẾ (GIỮ NGUYÊN TOÀN BỘ PHẦN TRÊN VÀ DƯỚI)
+                # =========================================================================
+                
+                # Cập nhật danh sách định danh mô hình chuẩn xác nhất của Google hiện tại
                 model_mapping = {
-                    "3.1 Flash-Lite": "gemini-1.5-flash",
+                    "3.1 Flash-Lite": "gemini-1.5-flash-8b",
                     "3.5 Flash": "gemini-1.5-flash",
-                    "3.1 Pro": "gemini-1.5-pro",
-                    "Tư duy mở rộng": "gemini-1.5-pro"
+                    "3.1 Pro": "gemini-2.0-flash",
+                    "Tư duy mở rộng": "gemini-1.5-pro-latest"
                 }
                 primary_model = model_mapping.get(model_display_name if 'model_display_name' in locals() else "3.1 Flash-Lite", "gemini-1.5-flash")
-                # Fallback queue sử dụng các model phổ biến nhất, đảm bảo không bị lỗi 404 trên tài khoản mới
-                fallback_queue = list(dict.fromkeys([primary_model, "gemini-1.5-flash", "gemini-1.5-pro"]))
+                
+                # Danh sách dự phòng toàn các mô hình cực nhẹ, tốc độ cao, độ tương thích API 100%
+                fallback_queue = list(dict.fromkeys([primary_model, "gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-2.0-flash"]))
                 
                 score_item_1 = d1 / sl1 if sl1 > 0 else 0
                 score_item_2 = d2 / sl2 if sl2 > 0 else 0
@@ -230,7 +236,7 @@ def render_de_kt_module():
                 score_item_4 = d4 / sl4 if sl4 > 0 else 0
                 tl_scores_str = ", ".join([f"Câu {idx+1} ({val}đ)" for idx, val in enumerate(diem_tl_list)])
 
-                # SIÊU CÂU LỆNH PROMPT SƯ PHẠM (Giữ nguyên của thầy)
+                # SIÊU CÂU LỆNH PROMPT SƯ PHẠM
                 system_instruction = f"""
                 Bạn là Viện trưởng Viện Khoa học Giáo dục kiêm Chuyên gia khảo thí cao cấp của Bộ GD&ĐT Việt Nam.
                 [YÊU CẦU NỀN TẢNG TUÂN THỦ]: Bạn phải sở hữu tri thức sâu rộng, am hiểu tường tận 100% mục tiêu cốt lõi của Chương trình GDPT 2018 đối với toàn bộ các môn học và cấu trúc nội dung phân phối chương trình của Bộ sách "Kết nối tri thức với cuộc sống".
@@ -246,7 +252,7 @@ def render_de_kt_module():
                 
                 response_text = None
                 activated_model_name = ""
-                last_error_msg = "" # KHÓA LỖI: Thêm biến để hứng lỗi cuối cùng
+                error_log = [] # Két sắt lưu trữ toàn bộ lịch sử lỗi
                 
                 from google import genai
                 try:
@@ -262,13 +268,30 @@ def render_de_kt_module():
                                 activated_model_name = current_model
                                 break
                         except Exception as e:
-                            last_error_msg = str(e) # Bắt lại chính xác lý do máy chủ từ chối
-                            if "503" in str(e) or "429" in str(e) or "UNAVAILABLE" in str(e) or "404" in str(e): continue
-                            else: raise e
+                            # Bắt trọn mọi lỗi của từng mô hình đưa vào danh sách
+                            error_log.append(f"[{current_model}] thất bại: {str(e)}")
+                            continue 
                 except Exception as api_err:
-                    st.error(f"❌ Trục trặc kết nối mô hình AI: {api_err}")
+                    st.error(f"❌ Lỗi khởi tạo hệ thống AI: {api_err}")
                     return
+                    
                 if response_text:
+                    st.session_state['current_exam_data'] = {
+                        "type": hinh_thuc, "custom_req": ten_bai if ten_bai else "De_Kiem_Tra",
+                        "tn_total": tong_so_cau_tn, "c1": sl1, "c2": sl2, "c3": sl3, "c4": sl4,
+                        "tn_score": str(tong_diem_tn), "tl_total": str(tong_diem_tl),
+                        "tl_scores": [str(v) for v in diem_tl_list], "r_nb": str(nhan_biet), "r_th": str(thong_hieu), "r_vd": str(van_dung), "r_vdc": str(van_dung_cao),
+                        "ai_generated_content": response_text
+                    }
+                    st.success(f"✅ Đã khởi tạo thành công bằng mô hình {activated_model_name}!")
+                else:
+                    # In rõ ràng lịch sử "chiến đấu" của vòng lặp để giáo viên không bị rối
+                    error_details = "\n\n".join(error_log)
+                    st.error(f"❌ Không thể kết nối AI sau khi đã quét toàn bộ các mô hình dự phòng. Chi tiết lỗi hệ thống:\n{error_details}")
+                    
+                # =========================================================================
+                # KẾT THÚC ĐOẠN THAY THẾ
+                # =========================================================================
                     st.session_state['current_exam_data'] = {
                         "type": hinh_thuc, "custom_req": ten_bai if ten_bai else "De_Kiem_Tra",
                         "tn_total": tong_so_cau_tn, "c1": sl1, "c2": sl2, "c3": sl3, "c4": sl4,
