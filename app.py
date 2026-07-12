@@ -8,7 +8,7 @@ sys.path.append(os.getcwd())
 st.set_page_config(layout="wide", page_title="Hệ Sinh Thái Số -L.H.Dưỡng Education")
 from views import teacher_support, teaching_support, department_mgmt
 # --- SIDEBAR: Giao diện cố định xuyên suốt ---
-with st.sidebar:
+    with st.sidebar:
     st.markdown("""
         <h2 style='text-align: center; color: red; font-size: 24px; margin-bottom: 5px;'>
         HỆ SINH THÁI SỐ<br>HỖ TRỢ GIÁO VIÊN
