@@ -1,5 +1,5 @@
 import streamlit as st
-from modules.rag_engine import process_rag_engine
+#from modules.rag_engine import process_rag_engine
 
 def render_module():
     st.markdown("## 📚 Hỗ trợ Giảng dạy")
