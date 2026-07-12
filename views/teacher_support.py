@@ -25,8 +25,7 @@ def render_module():
         render_stem_module()
         
     with tabs[3]:
-        st.subheader("📊 Xây dựng Rubric đánh giá")
-        st.info("⏳ Giao diện đang được cập nhật...")
+       
         render_rubric_module()
     with tabs[4]:
         st.subheader("📋 Công tác Chủ nhiệm")
