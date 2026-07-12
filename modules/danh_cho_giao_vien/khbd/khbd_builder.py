@@ -53,19 +53,31 @@ def render_khbd_module():
     st.write("")
     bam_sat = st.checkbox("🎯 Bám sát 100% tài liệu tải lên", value=True)
     st.write("")
+    # =====================================================================
+# CẤU TRÚC KÍCH HOẠT AN TOÀN CHỐNG TREO NÚT BẤM CHO MÔ-ĐUN KHBD
+# =====================================================================
+    # Khởi tạo biến cờ kiểm soát tiến trình chạy trong bộ nhớ phiên
+    if "khbd_processing_active" not in st.session_state:
+        st.session_state["khbd_processing_active"] = False
+
+    # Khi nhấn nút, chỉ bật cờ trạng thái lên True và chạy
     if st.button("🚀 KHỞI TẠO TIẾN TRÌNH KẾ HOẠCH BÀI DẠY", type="primary", use_container_width=True):
         if not ten_bai.strip():
             st.warning("⚠️ Vui lòng điền 'Tên bài học / Chủ đề bài dạy' trước khi kích hoạt.")
         else:
-            user_raw_key = st.session_state.get("user_gemini_key", "").strip()
-            if not user_raw_key:
-                if "GEMINI_API_KEY" in st.secrets: user_raw_key = st.secrets["GEMINI_API_KEY"].strip()
-                elif "GOOGLE_API_KEY" in st.secrets: user_raw_key = st.secrets["GOOGLE_API_KEY"].strip()
-                
-            if not user_raw_key:
-                st.error("🛑 Lỗi xác thực: Vui lòng cấu hình nhập API Key cá nhân ở thanh bên (Sidebar) trước!")
-                return
-                
+            st.session_state["khbd_processing_active"] = True
+
+    # Khối xử lý thực thi khi cờ trạng thái được bật
+    if st.session_state["khbd_processing_active"]:
+        user_raw_key = st.session_state.get("user_gemini_key", "").strip()
+        if not user_raw_key:
+            if "GEMINI_API_KEY" in st.secrets: user_raw_key = st.secrets["GEMINI_API_KEY"].strip()
+            elif "GOOGLE_API_KEY" in st.secrets: user_raw_key = st.secrets["GOOGLE_API_KEY"].strip()
+            
+        if not user_raw_key:
+            st.error("🛑 Lỗi xác thực: Vui lòng cấu hình nhập API Key cá nhân ở thanh bên (Sidebar) trước!")
+            st.session_state["khbd_processing_active"] = False
+        else:
             with st.spinner("🤖 Trợ lý AI đang nghiên cứu tài liệu và thiết lập giáo án 5512..."):
                 file_context = ""
                 
@@ -90,72 +102,69 @@ def render_khbd_module():
                     except Exception as extract_err:
                         print(f"Cảnh báo trích xuất file stream: {extract_err}")
 
-                if bam_sat and tai_lieu_file is None:
-                    st.error("🛑 LỖI NGHIỆP VỤ: Thầy đã tích chọn 'Bám sát 100% tài liệu tải lên' nhưng chưa nạp file tài liệu hoặc sách giáo khoa.")
-                    return
+                if bam_sat and not file_context.strip():
+                    st.error("🛑 LỖI NGHIỆP VỤ: Thầy đã tích chọn 'Bám sát 100% tài liệu tải lên' nhưng chưa nạp file tài liệu hoặc sách giáo khoa khả dụng.")
+                    st.session_state["khbd_processing_active"] = False
+                else:
+                    if not file_context.strip(): 
+                        file_context = f"Chủ đề trọng tâm bài dạy: {ten_bai}. Phân phối chương trình môn {mon_hoc} {lop} chuẩn quốc gia."
                     
-                if not file_context.strip(): 
-                    file_context = f"Chủ đề trọng tâm bài dạy: {ten_bai}. Phân phối chương trình môn {mon_hoc} {lop} chuẩn quốc gia."
-                
-                # Đồng bộ cơ chế kiểm tra đường dẫn linh hoạt (prompts hoặc prompt)
-                prompt_file_content = ""
-                possible_paths = ["prompt/khbd_prompt.txt", "prompts/khbd_prompt.txt"]
-                for p_path in possible_paths:
-                    if os.path.exists(p_path):
-                        try:
-                            with open(p_path, "r", encoding="utf-8") as f:
-                                prompt_file_content = f.read()
-                            break
-                        except Exception: pass
+                    prompt_file_content = ""
+                    possible_paths = ["prompt/khbd_prompt.txt", "prompts/khbd_prompt.txt"]
+                    for p_path in possible_paths:
+                        if os.path.exists(p_path):
+                            try:
+                                with open(p_path, "r", encoding="utf-8") as f:
+                                    prompt_file_content = f.read()
+                                break
+                            except Exception: pass
+                            
+                    if not prompt_file_content.strip():
+                        prompt_file_content = "Yêu cầu bắt buộc: Tích hợp sâu sắc 'Năng lực số' và ứng dụng 'Trí tuệ nhân tạo (AI)' vào các chuỗi hoạt động sư phạm."
                         
-                if not prompt_file_content.strip():
-                    prompt_file_content = "Yêu cầu bắt buộc: Tích hợp sâu sắc 'Năng lực số' và ứng dụng 'Trí tuệ nhân tạo (AI)' vào các chuỗi hoạt động sư phạm."
+                    from config.models import get_fallback_queue
+                    fallback_queue = get_fallback_queue(model_display_name)
+                    response_text = None
+                    from google import genai
                     
-                from config.models import get_fallback_queue
-                fallback_queue = get_fallback_queue(model_display_name)
-                response_text = None
-                from google import genai
-                
-                try:
-                    client = genai.Client(api_key=str(user_raw_key))
-                    system_instruction = f"""Bạn là Viện trưởng Viện Khoa học Giáo dục kiêm Chuyên gia khảo thí cao cấp tối cao của Bộ GD&ĐT Việt Nam. Kể từ năm 2026, Việt Nam sử dụng CHỈ DUY NHẤT bộ sách giáo khoa "Kết nối tri thức với cuộc sống" cho toàn quốc. Bạn bắt buộc phải bám sát cấu trúc phân phối chương trình và nội dung của duy nhất bộ sách này.
-                    
+                    try:
+                        client = genai.Client(api_key=str(user_raw_key))
+                        system_instruction = f"""Bạn là Viện trưởng Viện Khoa học Giáo dục kiêm Chuyên gia khảo thí cao cấp tối cao của Bộ GD&ĐT Việt Nam. Kể từ năm 2026, Việt Nam sử dụng CHỈ DUY NHẤT bộ sách giáo khoa "Kết nối tri thức với cuộc sống" cho toàn quốc. Bạn bắt buộc phải bám sát cấu trúc phân phối chương trình và nội dung của duy nhất bộ sách này.
+                        
 [CẤU TRÚC QUY ĐỊNH BẮT BUỘC TỪ THẦY]:
 {prompt_file_content}
- 
+     
 Biên soạn tệp Kế hoạch bài dạy môn {mon_hoc} {lop} kiểu mẫu kế hoạch '{mau_thiet_ke}' thời lượng {thoi_luong} tiết bám sát văn bản [TÀI LIỆU GỐC]. Đầu ra bắt buộc chia rõ mục I. Mục tiêu bài dạy, II. Thiết bị dạy học và học liệu, III. Tiến trình 4 hoạt động sư phạm chuẩn quy định 5512."""
 
-                    for current_model in fallback_queue:
-                        try:
-                            response = client.models.generate_content(
-                                model=current_model, 
-                                contents=[f"{system_instruction}\n\n[TÀI LIỆU GỐC SÁCH GIÁO KHOA ĐÍNH KÈM]:\n{file_context[:8000]}"]
-                            )
-                            if response and response.text:
-                                response_text = response.text
-                                break
-                        except Exception: continue
-                except Exception as api_err:
-                    st.error(f"❌ Trục trặc kết nối AI: {api_err}")
-                    return
-                    
-                if response_text:
-                    st.session_state['current_khbd_data'] = {
-                        "is_khbd": True, "title": ten_bai, "ten_bai_save": str(ten_bai), "subject": mon_hoc, 
-                        "grade": lop, "duration": str(thoi_luong), "style": mau_thiet_ke,
-                        "ai_generated_content": response_text
-                    }
-                    st.success("🎉 Đã khởi tạo giáo án điện tử thành công bám sát tệp tài liệu!")
-                    st.rerun()
+                        for current_model in fallback_queue:
+                            try:
+                                response = client.models.generate_content(
+                                    model=current_model, 
+                                    contents=[f"{system_instruction}\n\n[TÀI LIỆU GỐC SÁCH GIÁO KHOA ĐÍNH KÈM]:\n{file_context[:8000]}"]
+                                )
+                                if response and response.text:
+                                    response_text = response.text
+                                    break
+                            except Exception: continue
+                    except Exception as api_err:
+                        st.error(f"❌ Trục trặc kết nối AI: {api_err}")
+                        st.session_state["khbd_processing_active"] = False
+                        
+                    if response_text:
+                        st.session_state['current_khbd_data'] = {
+                            "is_khbd": True, "title": ten_bai, "ten_bai_save": str(ten_bai), "subject": mon_hoc, 
+                            "grade": lop, "duration": str(thoi_luong), "style": mau_thiet_ke,
+                            "ai_generated_content": response_text
+                        }
+                        # Tắt cờ trạng thái sau khi đã lưu kết quả vào session_state thành công
+                        st.session_state["khbd_processing_active"] = False
+                        st.success("🎉 Đã khởi tạo giáo án điện tử thành công bám sát tệp tài liệu!")
+                        st.rerun()
+                    else:
+                        st.error("❌ Mô hình AI không trả về dữ liệu hoặc các mô hình dự phòng đều bận. Vui lòng thử lại!")
+                        st.session_state["khbd_processing_active"] = False
+# =====================================================================
 
-        st.markdown("---")
-    st.markdown("##### Kết Xuất Hồ Sơ Giáo Án Sư Phạm Chuyên Nghiệp")
-    
-    if st.session_state.get('khbd_delete_trigger'):
-        if 'current_khbd_data' in st.session_state: del st.session_state['current_khbd_data']
-        if 'cached_word_file_khbd' in st.session_state: del st.session_state['cached_word_file_khbd']
-        st.session_state['khbd_delete_trigger'] = False
-        st.rerun()
         
     khbd_cache = st.session_state.get('current_khbd_data')
     
