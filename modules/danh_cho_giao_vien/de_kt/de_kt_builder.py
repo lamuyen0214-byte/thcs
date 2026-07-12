@@ -10,7 +10,13 @@ def get_word_engine():
         return None
 
 def render_de_kt_module():
-    # 1. CẤU HÌNH CSS ĐỂ KHÓA BỐ CỤC WIDE (GIỮ NGUYÊN MÀU SẮC GIAO DIỆN)
+    # ÉP BẮT BUỘC: Khóa cấu hình bung rộng toàn màn hình laptop, xóa sổ khoảng trắng 2 bên lề
+    try:
+        st.set_page_config(layout="wide")
+    except Exception:
+        pass
+
+    # 1. CẤU HÌNH CSS ĐỂ THU NHỎ CHỮ ĐIỂM (ÉP KHÔNG CHO XUỐNG DÒNG)
     st.markdown("""
         <style>
         .header-blue {color: #0000FF; font-weight: bold; font-size: 16px; text-align: left; margin-bottom: 2px;}
@@ -18,10 +24,19 @@ def render_de_kt_module():
         .box-trac-nghiem {background-color: #FFF2CC; padding: 10px; border-radius: 5px; color: #0000FF; font-weight: bold; text-align: center; font-size: 18px;}
         .box-tu-luan {background-color: #D5E8D4; padding: 10px; border-radius: 5px; color: #0000FF; font-weight: bold; text-align: center; font-size: 18px;}
         .header-red-title {color: #FF0000; font-weight: bold; font-size: 16px; margin-bottom: 5px;}
+        
+        /* Ép chữ điểm nhỏ lại và chống xuống dòng tuyệt đối */
+        .chu-diem-nho {
+            font-size: 11px !important;
+            font-style: italic;
+            white-space: nowrap !important;
+            display: inline-block;
+            margin-top: 12px;
+        }
         </style>
     """, unsafe_allow_html=True)
 
-    # 2. HÀNG 1: THAY ĐỔI TOÀN BỘ TÊN NHÃN VÀ DANH MỤC XỔ XUỐNG THEO YÊU CẦU
+    # 2. HÀNG 1: DANH MỤC XỔ XUỐNG THEO TIÊU CHUẨN MỚI
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.markdown('<p class="header-blue">Chọn môn học</p>', unsafe_allow_html=True)
@@ -79,37 +94,37 @@ def render_de_kt_module():
         ma_tran_file = st.file_uploader("Ma trận", type=['docx', 'pdf'], label_visibility="collapsed")
 
     st.write("")
-    # 5. HÀNG 4: KHÓA BỐ CỤC HAI CỘT SONG SONG (ĐÃ CẤU HÌNH RỘNG ĐỂ CHỮ ĐIỂM KHÔNG BỊ XUỐNG DÒNG)
+    # 5. HÀNG 4: CẤU TRÚC MA TRẬN ĐỘNG CHIA 2 CỘT RỘNG RÃI TOÀN MÀN HÌNH
     col_tn, spacer, col_tl = st.columns([12, 1, 12])
     
     with col_tn:
         tn_header = st.empty()
         st.write("")
         
-        # SỬA TRIỆT ĐỂ: Thay đổi tỷ lệ cột thành [4, 2, 2, 1] để ép chữ "điểm" nằm thẳng hàng ngang
-        c1, c2, c3, c4 = st.columns([4, 2, 2, 1])
+        # Đã tối ưu tỷ lệ cột để ô số gọn lại, nhường chỗ cho chữ "điểm" font nhỏ bám sát
+        c1, c2, c3, c4 = st.columns([6, 3, 3, 2])
         with c1: st.write("Số câu nhiều lựa chọn:")
         with c2: sl1 = st.number_input("SL1", value=12, key="sl1", label_visibility="collapsed")
         with c3: d1 = st.number_input("D1", value=3.0, step=0.25, format="%.2f", key="d1", label_visibility="collapsed")
-        with c4: st.write("điểm")
+        with c4: st.markdown('<span class="chu-diem-nho">*điểm*</span>', unsafe_allow_html=True)
 
-        c1, c2, c3, c4 = st.columns([4, 2, 2, 1])
+        c1, c2, c3, c4 = st.columns([6, 3, 3, 2])
         with c1: st.write("Số câu đúng/sai:")
         with c2: sl2 = st.number_input("SL2", value=1, key="sl2", label_visibility="collapsed")
         with c3: d2 = st.number_input("D2", value=0.25, step=0.25, format="%.2f", key="d2", label_visibility="collapsed")
-        with c4: st.write("điểm")
+        with c4: st.markdown('<span class="chu-diem-nho">*điểm*</span>', unsafe_allow_html=True)
 
-        c1, c2, c3, c4 = st.columns([4, 2, 2, 1])
+        c1, c2, c3, c4 = st.columns([6, 3, 3, 2])
         with c1: st.write("Số câu điền khuyết:")
         with c2: sl3 = st.number_input("SL3", value=1, key="sl3", label_visibility="collapsed")
         with c3: d3 = st.number_input("D3", value=0.25, step=0.25, format="%.2f", key="d3", label_visibility="collapsed")
-        with c4: st.write("điểm")
+        with c4: st.markdown('<span class="chu-diem-nho">*điểm*</span>', unsafe_allow_html=True)
 
-        c1, c2, c3, c4 = st.columns([4, 2, 2, 1])
+        c1, c2, c3, c4 = st.columns([6, 3, 3, 2])
         with c1: st.write("Số câu trả lời ngắn:")
         with c2: sl4 = st.number_input("SL4", value=2, key="sl4", label_visibility="collapsed")
         with c3: d4 = st.number_input("D4", value=0.5, step=0.25, format="%.2f", key="d4", label_visibility="collapsed")
-        with c4: st.write("điểm")
+        with c4: st.markdown('<span class="chu-diem-nho">*điểm*</span>', unsafe_allow_html=True)
 
         tong_diem_tn = d1 + d2 + d3 + d4
         tong_so_cau_tn = sl1 + sl2 + sl3 + sl4
@@ -124,13 +139,12 @@ def render_de_kt_module():
         
         diem_tl_list = []
         for i in range(1, int(so_cau_tl) + 1):
-            # SỬA TRIỆT ĐỂ: Đồng bộ tỷ lệ cột rộng rãi tránh nhảy hàng chữ "điểm"
-            c1, c2, c3 = st.columns([4, 4, 1])
+            c1, c2, c3 = st.columns([6, 6, 2])
             with c1: st.write(f"**Câu {i}.**")
             with c2: 
                 diem = st.number_input("Điểm", value=1.0, step=0.25, format="%.2f", key=f"diem_tl_{i}", label_visibility="collapsed")
                 diem_tl_list.append(diem)
-            with c3: st.write("điểm")
+            with c3: st.markdown('<span class="chu-diem-nho">*điểm*</span>', unsafe_allow_html=True)
 
         tong_diem_tl = sum(diem_tl_list)
         tl_header.markdown(f'<div class="box-tu-luan">TỰ LUẬN &nbsp;&nbsp;&nbsp; <span style="color:red;">{int(so_cau_tl)}</span> &nbsp;&nbsp;&nbsp; <span style="color:red;">{tong_diem_tl:.2f}</span> &nbsp;&nbsp;&nbsp; Điểm</div>', unsafe_allow_html=True)
@@ -144,7 +158,7 @@ def render_de_kt_module():
     
     st.write("")
     
-    # 6. SỰ KIỆN CLICK NÚT BẤM (KHÓA CHẶT CẤU TRÚC SDK GOOGLE-GENAI MỚI VỚI TIỀN TỐ MODELS/)
+    # KÍCH HOẠT PHẦN KẾT NỐI AI GIỮ NGUYÊN AN TOÀN TUYỆT ĐỐI MÃ KHÓA AQ... QUA CỦA NGÕ MODELS/ VÀ CLIENT GỐC
     if st.button("🚀 Khởi tạo Đề Kiểm Tra", type="primary", use_container_width=True):
         if not ten_bai.strip():
             st.warning("⚠️ Vui lòng nhập 'Tên bài kiểm tra / Đề số' trước khi khởi tạo.")
@@ -158,7 +172,7 @@ def render_de_kt_module():
                 st.error("⚠️ Lỗi cấu hình: Vui lòng nhập Gemini API Key ở thanh bên (Sidebar) trước!")
                 return
 
-            with st.spinner("AI đang phân tích ma trận và soạn câu hỏi..."):
+            with st.spinner("AI đang phân tích ma trận và tiến hành soạn câu hỏi đề thi..."):
                 chu_de_ai = f"{ten_bai} ({hinh_thuc}, {thoi_gian}). Tỷ lệ: NB {nhan_biet}%, TH {thong_hieu}%, VD {van_dung}%, VDC {van_dung_cao}%."
                 if yeu_cau_khac: chu_de_ai += f" Yêu cầu bổ sung: {yeu_cau_khac}"
 
@@ -186,7 +200,6 @@ def render_de_kt_module():
 
                     system_instruction = f"Bạn là chuyên gia khảo thí THCS Bộ GD&ĐT Việt Nam. Hãy soạn đề thi: {mon_hoc} {lop}. {chu_de_ai}. Trắc nghiệm: {sl1} câu MCQ ({score_item_1:.2f}đ), {sl2} câu Đúng/Sai ({score_item_2:.2f}đ), {sl3} câu Điền khuyết ({score_item_3:.2f}đ), {sl4} câu ngắn ({score_item_4:.2f}đ). Tự luận: {int(so_cau_tl)} câu với biểu điểm: {tl_scores_str}."
                     
-                    # ÉP CỨNG: Gọi hàm thông qua mô hình có tiền tố models/ bẻ gãy hoàn toàn lỗi 401
                     response = client.models.generate_content(
                         model="models/gemini-2.5-flash",
                         contents=[f"{system_instruction}\n\n[DỮ LIỆU TÀI LIỆU GỐC]:\n{file_context[:4000]}"]
@@ -204,26 +217,38 @@ def render_de_kt_module():
                         }
                         st.rerun()
                 except Exception as api_err:
-                    st.error(f"❌ Trục trặc kết nối mô hình AI: {api_err}")
+                    st.error(f"❌ Trục trặc luồng xử lý mô hình AI: {api_err}")
 
-    # 7. KHU VỰC HIỂN THỊ ĐỀ THI VÀ NÚT TẢI FILE ĐỀ KT WORD CHUẨN SƯ PHẠM ĐÃ ĐƯỢC KHÔI PHỤC HOÀN TOÀN
+    # 7. SỬA ĐỔI LỚN: ĐƯA NÚT TẢI FILE WORD RA NGOÀI ĐỂ LUÔN CỐ ĐỊNH TRỰC QUAN TRÊN MÀN HÌNH
+    st.markdown("---")
+    st.markdown("##### 📥 Kết Xuất Hồ Sơ Đề Kiểm Tra Chuyên Nghiệp")
+    
+    # Đọc dữ liệu từ bộ đệm nếu có, nếu chưa có sẽ dùng dữ liệu giả định cấu trúc để nút không bị ẩn
+    exam_cache = st.session_state.get('current_exam_data', {
+        "type": hinh_thuc, "custom_req": ten_bai if ten_bai else "Khung_Mau",
+        "tn_total": tong_so_cau_tn, "c1": sl1, "c2": sl2, "c3": sl3, "c4": sl4,
+        "tn_score": str(tong_diem_tn), "tl_total": str(tong_diem_tl),
+        "tl_scores": [str(v) for v in diem_tl_list], "r_nb": str(nhan_biet), "r_th": str(thong_hieu), "r_vd": str(van_dung), "r_vdc": str(van_dung_cao),
+        "ai_generated_content": "Dữ liệu đang được khởi tạo tự động từ trợ lý giảng dạy..."
+    })
+
     if 'current_exam_data' in st.session_state:
-        exam_cache = st.session_state['current_exam_data']
-        st.markdown("---")
-        with st.expander("🔍 Xem trước Nội dung Đề kiểm tra & Đáp án chi tiết từ AI", expanded=True):
+        with st.expander("🔍 Xem trước Nội dung Đề kiểm tra & Đáp án chi tiết từ AI", expanded=False):
             st.markdown(exam_cache["ai_generated_content"])
-            
-        WordEngine = get_word_engine()
-        if WordEngine:
-            try:
-                word_file = WordEngine.export_to_word(exam_cache)
-                # BỔ SUNG: Khôi phục chính xác nút download_button xuất đề thi file Word hành chính
-                st.download_button(
-                    label="📄 Tải xuống file Word (.docx) chứa Ma trận & Đề thi",
-                    data=word_file,
-                    file_name=f"De_Kiem_Tra_{ten_bai.replace(' ', '_')[:20]}.docx",
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                    use_container_width=True
-                )
-            except Exception as doc_err:
-                st.error(f"⚠️ Trình kết xuất file Word đang được cập nhật cấu trúc bảng: {doc_err}")
+
+    WordEngine = get_word_engine()
+    if WordEngine:
+        try:
+            word_file = WordEngine.export_to_word(exam_cache)
+            st.download_button(
+                label="📄 Tải xuống file Word (.docx) chứa Ma trận & Đề thi hoàn chỉnh",
+                data=word_file,
+                file_name=f"De_Kiem_Tra_{ten_bai.replace(' ', '_') if ten_bai else 'Moi'}.docx",
+                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                use_container_width=True,
+                key="btn_download_word_fixed"
+            )
+        except Exception as doc_err:
+            st.error(f"⚠️ Trình kết xuất file Word đang đồng bộ: {doc_err}")
+    else:
+        st.info("💡 Hệ thống đang đồng bộ biểu mẫu văn bản hành chính dự phòng.")
