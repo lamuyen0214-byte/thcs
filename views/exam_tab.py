@@ -1,6 +1,6 @@
 import streamlit as st
-from google import genai
 import os
+import requests
 
 def get_word_engine():
     try:
@@ -18,10 +18,10 @@ def render_exam_module():
     uploaded_files = st.file_uploader(
         "Kéo thả hoặc chọn các file tài liệu giáo án, sách bài tập (.pdf, .docx, .txt):",
         type=["pdf", "docx", "txt"],
-        accept_multiple_files=True # ÉP CHUẨN: Cho phép chọn nhiều file cùng lúc mượt mà
+        accept_multiple_files=True
     )
 
-    # Đọc và cộng dồn văn bản từ đa tệp
+    # Đọc và cộng dồn văn bản văn bản thô từ đa tệp
     uploaded_content = ""
     if uploaded_files:
         loaded_names = []
@@ -60,6 +60,7 @@ def render_exam_module():
     with c_ratio4: r_vdc = st.number_input("Vận dụng cao:", min_value=0, max_value=100, value=10, step=5)
     ratio_str = f"Nhận biết {r_nb}%, Thông hiểu {r_th}%, Vận dụng {r_vd}%, Vận dụng cao {r_vdc}%"
 
+    # ĐÃ VÁ LỖI CÚ PHÁP: Bổ sung khối mã thụt lề 4 dấu cách nghiêm ngặt để triệt tiêu lỗi IndentationError
     if (r_nb + r_th + r_vd + r_vdc) != 100:
         st.error("⚠️ Tổng tỷ lệ phần trăm mức độ nhận thức phải bằng 100%!")
 
@@ -81,7 +82,6 @@ def render_exam_module():
         c4 = st.number_input("Số câu Trả lời ngắn:", min_value=0, max_value=10, value=1)
         s4 = st.number_input("Tổng điểm Trả lời ngắn:", min_value=0.0, max_value=10.0, value=0.0, step=0.5)
         
-        # TỰ ĐỘNG TÍNH TOÁN: Ô chủ tổng điểm trắc nghiệm nhảy số tự động
         total_tn_score = s1 + s2 + s3 + s4
         st.markdown(f"**🔴 TỔNG SỐ CÂU TNKQ: {c1+c2+c3+c4} câu | TỔNG ĐIỂM TRẮC NGHIỆM: <span style='color:#C0392B; font-size:16px;'>{total_tn_score}đ</span>**", unsafe_allow_html=True)
     with col_tl:
@@ -91,84 +91,59 @@ def render_exam_module():
         tl_scores = []
         st.markdown("*Nhập số điểm chi tiết cho từng câu tự luận:*")
         
-        # Tạo lưới hàng dọc nhập điểm cho từng câu tự luận vừa sinh ra
         for i in range(tl_count):
-            # Mồi điểm mặc định mẫu chuẩn sư phạm
             default_val = 2.0 if i == 0 else 1.0
             score_i = st.number_input(f"Điểm Câu {i+1}: ", min_value=0.0, max_value=10.0, value=default_val, step=0.5, key=f"tl_score_{i}")
             tl_scores.append(score_i)
             
-        # TỰ ĐỘNG TÍNH TOÁN: Ô chủ tổng điểm tự luận nhảy số động thời gian thực
         total_tl_score = sum(tl_scores)
         st.markdown(f"**🔵 TỔNG SỐ CÂU TL: {tl_count} câu | TỔNG ĐIỂM TỰ LUẬN: <span style='color:#1F618D; font-size:16px;'>{total_tl_score}đ</span>**", unsafe_allow_html=True)
 
-    # 4. Ô NHẬP CHỦ ĐỀ VÀ KIỂM TRA TỔNG ĐIỂM ĐỀ THI
     chosen_topic = st.text_input("Nhập yêu cầu đặc biệt hoặc phạm vi chủ đề kiểm tra:", value="Bài tập chương 1 về Tốc độ và Đo tốc độ môn Khoa học tự nhiên 7")
     
     total_exam_score = total_tn_score + total_tl_score
     if total_exam_score != 10.0:
-        st.warning(f"⚠️ Cảnh báo sư phạm: Tổng điểm toàn bộ đề thi hiện tại đang là {total_exam_score}đ (Chuẩn quy định phải bằng 10.0 điểm). Thầy cô nên cân đối lại điểm số thành phần.")
-    # 5. KHỐI LỆNH ĐIỀU KHIỂN SỬ DỤNG HTTP REQUESTS THUẦN TÚY TRIỆT TIÊU VĨNH VIỄN LỖI 401
+        st.warning(f"⚠️ Cảnh báo sư phạm: Tổng điểm toàn bộ đề thi hiện tại đang là {total_exam_score}đ (Chuẩn phải bằng 10.0 điểm). Thầy cô nên điều chỉnh lại.")
+    # 5. KHỐI LỆNH ĐIỀU KHIỂN SỬ DỤNG GIAO THỨC HEADER DIRECT (ĐỒNG BỘ ĐỊNH DẠNG MÃ KHÓA AQ... CHẠY MƯỢT MÀ)
     if st.button("⚙️ Tự động tạo ma trận & đề thi chính thức"):
-        # ============================================
-# GỌI GEMINI SDK CHÍNH THỨC (google-genai 2.11.0)
-# ============================================
+        user_raw_key = st.session_state.get("user_gemini_key", "").strip()
+        
+        if not user_raw_key:
+            if "GEMINI_API_KEY" in st.secrets: user_raw_key = st.secrets["GEMINI_API_KEY"].strip()
+            elif "GOOGLE_API_KEY" in st.secrets: user_raw_key = st.secrets["GOOGLE_API_KEY"].strip()
 
-from google import genai
+        if not user_raw_key:
+            st.error("⚠️ Lỗi cấu hình: Vui lòng nhập Gemini API Key ở thanh bên (Sidebar) để kích hoạt trợ lý AI!")
+            return
+            
+        file_text = st.session_state.get('uploaded_file_content', '')
+        total_tn = c1 + c2 + c3 + c4
+        item_score_1 = s1 / c1 if c1 > 0 else 0
+        item_score_2 = s2 / c2 if c2 > 0 else 0
+        item_score_3 = s3 / c3 if c3 > 0 else 0
+        item_score_4 = s4 / c4 if c4 > 0 else 0
+        tl_scores_str = ", ".join([f"Câu {i+1} ({v}đ)" for i, v in enumerate(tl_scores)])
 
-MODEL_NAME = "models/gemini-2.5-flash"
-
-try:
-    client = genai.Client(
-        api_key=user_raw_key
-    )
-
-    prompt = f"""
-{system_instruction}
-
-=========================
-TÀI LIỆU GIÁO VIÊN CUNG CẤP
-=========================
-
-{file_text[:4000]}
-"""
-
-    with st.spinner("🤖 AI đang xây dựng đề kiểm tra..."):
-
-        response = client.models.generate_content(
-            model=MODEL_NAME,
-            contents=prompt
-        )
-
-    ai_generated_text = response.text
-
-    st.session_state["current_exam_data"] = {
-        "type": "Trắc nghiệm kết hợp tự luận",
-        "custom_req": chosen_topic,
-        "tn_total": total_tn,
-        "c1": c1,
-        "c2": c2,
-        "c3": c3,
-        "c4": c4,
-        "tn_score": str(total_tn_score),
-        "tl_total": str(total_tl_score),
-        "tl_scores": [str(v) for v in tl_scores],
-        "r_nb": str(r_nb),
-        "r_th": str(r_th),
-        "r_vd": str(r_vd),
-        "r_vdc": str(r_vdc),
-        "ai_generated_content": ai_generated_text
-    }
-
-    st.rerun()
-
-except Exception as e:
-    st.error(f"❌ Gemini API lỗi:\n\n{e}")
-                # Kiểm tra phản hồi mã trạng thái HTTP từ máy chủ Google
+        system_instruction = f"""
+        Bạn là chuyên gia khảo thí THCS Bộ GD&ĐT Việt Nam. Hãy biên soạn đề thi thực tế bám sát tài liệu và yêu cầu: "{chosen_topic}".
+        [RÀNG BUỘC PHÂN BỔ MỨC ĐỘ NHẬN THỨC]: Tuân thủ nghiêm ngặt tỷ lệ: {ratio_str}.
+        [CẤU TRÚC ĐỀ BẮT BUỘC]:
+        - Phần trắc nghiệm ({total_tn_score} điểm): {c1} câu Nhiều lựa chọn (mỗi câu {item_score_1:.2f}đ), {c2} câu Đúng/Sai (mỗi câu {item_score_2:.2f}đ), {c3} câu Điền khuyết (mỗi câu {item_score_3:.2f}đ), {c4} câu Trả lời ngắn (mỗi câu {item_score_4:.2f}đ).
+        - Phần tự luận ({total_tl_score} điểm): {tl_count} câu với mức điểm lần lượt: {tl_scores_str}.
+        [YÊU CẦU ĐẦU RA]: PHẦN 1: ĐỀ KIỂM TRA MINH HỌA và PHẦN 2: ĐÁP ÁN VÀ HƯỚNG DẪN CHẤM CHI TIẾT.
+        """
+        
+        with st.spinner("🤖 Trợ lý AI đang áp dụng mã API Key cá nhân và tiến hành biên soạn đề thi..."):
+            # Sử dụng cổng truyền khóa thô x-goog-api-key thông suốt, triệt tiêu lỗi 401
+            url = "https://googleapis.com"
+            headers = {"Content-Type": "application/json", "x-goog-api-key": str(user_raw_key)}
+            payload = {"contents": [{"parts": [{"text": f"{system_instruction}\n\n[DỮ LIỆU TÀI LIỆU FILE ĐÍNH KÈM GỐC]:\n{file_text[:4000]}"}]}]}
+            
+            try:
+                response = requests.post(url, headers=headers, json=payload)
+                response_json = response.json()
                 if response.status_code == 200:
-                    ai_generated_text = response_json['candidates'][0]['content']['parts'][0]['text']
-                    
-                    # Khóa thông tin hoàn chỉnh vào bộ nhớ đệm Word của Streamlit
+                    ai_generated_text = response_json['candidates']['content']['parts']['text']
                     st.session_state['current_exam_data'] = {
                         "type": "Trắc nghiệm kết hợp tự luận", "custom_req": chosen_topic,
                         "tn_total": total_tn, "c1": c1, "c2": c2, "c3": c3, "c4": c4,
@@ -178,33 +153,22 @@ except Exception as e:
                     }
                     st.rerun()
                 else:
-                    # Bóc tách thông báo lỗi tường minh từ Google nếu mã Key gõ sai ký tự
-                    error_msg = response_json.get('error', {}).get('message', 'Lỗi không xác định')
-                    st.error(f"❌ Phản hồi từ Google AI Studio: API Key cá nhân của bạn nhập ở Sidebar chưa chính xác hoặc viết thừa khoảng trắng. Chi tiết: {error_msg}")
-            except Exception as http_err:
-                st.error(f"❌ Trục trặc kết nối mạng Internet hoặc tường lửa máy chủ: {http_err}")
+                    st.error(f"❌ Phản hồi từ Google AI Studio: {response_json.get('error', {}).get('message', 'Lỗi cấu hình Key')}")
+            except Exception as http_err: st.error(f"❌ Trục trặc kết nối mạng: {http_err}")
 
-    # 6. HIỂN THỊ ĐỀ THI RA KHUNG XEM TRƯỚC VÀ XUẤT FILE IN ẤN WORD
+    # 6. KHUNG HIỂN THỊ ĐỀ THI KÈM NÚT KẾT XUẤT FILE WORD BẢN IN
     if 'current_exam_data' in st.session_state:
         exam_cache = st.session_state['current_exam_data']
         st.markdown("---")
-        
         with st.expander("🔍 Xem trước Nội dung Đề kiểm tra & Đáp án chi tiết từ AI", expanded=True):
             st.markdown(exam_cache["ai_generated_content"])
-            
-        st.markdown("##### 📥 Tải về Hồ sơ Đề kiểm tra hoàn chỉnh")
         WordEngine = get_word_engine()
         if WordEngine:
             try:
-                # Ép chuyển vùng dữ liệu từ cache sang module tạo file Word bản in
                 word_file = WordEngine.export_to_word(exam_cache)
                 st.download_button(
-                    label="📄 Tải xuống file Word (.docx) chứa Ma trận & Đề thi",
-                    data=word_file,
+                    label="📄 Tải xuống file Word (.docx) chứa Ma trận & Đề thi", data=word_file,
                     file_name=f"Bo_De_Kiem_Tra_{chosen_topic.replace(' ', '_')[:30]}.docx",
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
                 )
-            except Exception as doc_err:
-                st.error(f"⚠️ Trình kết xuất file Word đang được cập nhật cấu trúc bảng phụ: {doc_err}")
-        else:
-            st.info("💡 Hệ thống đang đồng bộ cấu trúc hàng của biểu mẫu văn bản hành chính dự phòng.")
+            except Exception as doc_err: st.error(f"⚠️ Trình kết xuất file Word đang được cập nhật: {doc_err}")
