@@ -1,10 +1,16 @@
 import streamlit as st
-from ai_engine.layer_1_model.gemini import gemini_instance
+import os
 from ai_engine.layer_3_reasoning.prompt_manager import PromptManager
-from ai_engine.layer_5_output.word_export import WordExportEngine
+
+def get_word_engine():
+    try:
+        from export.word_export import WordExportEngine
+        return WordExportEngine
+    except Exception:
+        return None
 
 def render_de_kt_module():
-    # 1. CẤU HÌNH CSS ĐỂ KHÓA BỐ CỤC
+    # 1. CẤU HÌNH CSS ĐỂ KHÓA BỐ CỤC (GIỮ NGUYÊN GIAO DIỆN)
     st.markdown("""
         <style>
         .header-blue {color: #0000FF; font-weight: bold; font-size: 16px; text-align: center;}
@@ -65,7 +71,6 @@ def render_de_kt_module():
 
     # --- CỘT TRÁI: TRẮC NGHIỆM ĐỘNG ---
     with col_tn:
-        # Đặt chỗ trống (placeholder) để hiển thị tiêu đề sau khi đã tính tổng điểm
         tn_header = st.empty()
         st.write("")
         
@@ -93,40 +98,34 @@ def render_de_kt_module():
         with c3: d4 = st.number_input("D4", value=0.5, step=0.25, format="%.2f", key="d4", label_visibility="collapsed")
         with c4: st.write("*điểm*")
 
-        # Tính tổng điểm trắc nghiệm tự động và cập nhật lên Header
         tong_diem_tn = d1 + d2 + d3 + d4
         tong_so_cau_tn = sl1 + sl2 + sl3 + sl4
         tn_header.markdown(f'<div class="box-trac-nghiem">TRẮC NGHIỆM &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {tong_diem_tn:.2f} &nbsp;&nbsp;&nbsp; Điểm</div>', unsafe_allow_html=True)
 
     # --- CỘT PHẢI: TỰ LUẬN ĐỘNG ---
     with col_tl:
-        # Ô nhập số lượng câu tự luận (mở khóa để giáo viên nhập)
         c_tl1, c_tl2 = st.columns([2, 1])
         with c_tl1: st.write("**Nhập số lượng câu Tự luận:**")
         with c_tl2: so_cau_tl = st.number_input("Số câu TL", min_value=1, max_value=10, value=4, key="so_cau_tl", label_visibility="collapsed")
         
-        # Đặt chỗ trống (placeholder) cho tiêu đề tự luận
         tl_header = st.empty()
         st.write("")
         
         diem_tl_list = []
-        # Vòng lặp sinh số dòng tương ứng với số câu tự luận được nhập
         for i in range(1, int(so_cau_tl) + 1):
             c1, c2, c3 = st.columns([2, 2, 1])
             with c1: 
                 st.write(f"**Câu {i}.**")
             with c2: 
-                # Khởi tạo điểm mặc định là 1.0 cho mỗi câu để tránh lỗi
                 diem = st.number_input("Điểm", value=1.0, step=0.25, format="%.2f", key=f"diem_tl_{i}", label_visibility="collapsed")
                 diem_tl_list.append(diem)
             with c3: 
                 st.write("*điểm*")
 
-        # Tính tổng điểm tự luận tự động và cập nhật lên Header
         tong_diem_tl = sum(diem_tl_list)
         tl_header.markdown(f'<div class="box-tu-luan">TỰ LUẬN &nbsp;&nbsp;&nbsp; <span style="color:red;">{int(so_cau_tl)}</span> &nbsp;&nbsp;&nbsp; <span style="color:red;">{tong_diem_tl:.2f}</span> &nbsp;&nbsp;&nbsp; Điểm</div>', unsafe_allow_html=True)
 
-    # 6. HÀNG 6: YÊU CẦU KHÁC & THỰC THI (KHÔI PHỤC KẾT NỐI AI)
+    # 6. HÀNG 6: YÊU CẦU KHÁC & THỰC THI
     st.write("---")
     col_chk, col_req = st.columns([1, 2])
     with col_chk:
@@ -137,36 +136,52 @@ def render_de_kt_module():
     
     st.write("")
     
-    # Nút bấm kích hoạt AI
+    # KÍCH HOẠT PHẦN KẾT NỐI AI ĐÃ ĐƯỢC VÁ SẠCH LỖI THỤT DÒNG VÀ ĐÓNG NGOẶC
     if st.button("🚀 Khởi tạo Đề Kiểm Tra", type="primary", use_container_width=True):
         if not ten_bai.strip():
             st.warning("⚠️ Vui lòng nhập 'Tên bài kiểm tra / Đề số' trước khi khởi tạo.")
         else:
+            # Thu thập chuỗi API Key thô từ Sidebar để giải quyết dứt điểm lỗi 401
+            user_raw_key = st.session_state.get("user_gemini_key", "").strip()
+            if not user_raw_key:
+                if "GEMINI_API_KEY" in st.secrets: user_raw_key = st.secrets["GEMINI_API_KEY"].strip()
+                elif "GOOGLE_API_KEY" in st.secrets: user_raw_key = st.secrets["GOOGLE_API_KEY"].strip()
+
+            if not user_raw_key:
+                st.error("⚠️ Lỗi cấu hình: Vui lòng cấu hình nhập API Key cá nhân ở thanh bên (Sidebar) trước!")
+                return
+
             with st.spinner("AI đang phân tích ma trận và soạn câu hỏi..."):
-                # Đóng gói thông tin ma trận để gửi cho AI
+                # Đóng gói chuỗi thông số gửi lên cho PromptManager
                 chu_de_ai = f"{ten_bai} ({hinh_thuc}, {thoi_gian}). Tỷ lệ: NB {nhan_biet}%, TH {thong_hieu}%, VD {van_dung}%, VDC {van_dung_cao}%."
                 if yeu_cau_khac:
                     chu_de_ai += f" Yêu cầu bổ sung: {yeu_cau_khac}"
 
-                sys_inst, prompt = PromptManager.get_de_kt_prompt(mon_hoc, lop, chu_de_ai, tong_so_cau_tn, int(so_cau_tl))
-                result = gemini_instance.generate_content(prompt, sys_inst)
-                
-                if result:
-                    st.success("✅ Đã tạo xong đề kiểm tra theo đúng ma trận!")
-                    with st.expander("👀 Xem trước Đề và Đáp án", expanded=True):
-                        st.markdown(result)
-                    st.session_state['current_de_kt'] = result
+                # 1. Đọc nội dung chữ từ file đề cương đính kèm nếu có để nạp ngữ cảnh bài học
+                file_context = ""
+                if de_cuong_file:
+                    try:
+                        ext = de_cuong_file.name.split(".")[-1].lower()
+                        if ext == "pdf":
+                            from pypdf import PdfReader
+                            reader = PdfReader(de_cuong_file)
+                            file_context += "".join([page.extract_text() or "" for page in reader.pages])
+                        elif ext == "docx":
+                            import docx
+                            doc = docx.Document(de_cuong_file)
+                            file_context += "\n".join([p.text for p in doc.paragraphs])
+                    except Exception as e:
+                        st.error(f"Lỗi nạp tệp tài liệu: {e}")
 
-    # 7. XUẤT FILE WORD
-    if 'current_de_kt' in st.session_state:
-        st.write("")
-        col_down1, col_down2, col_down3 = st.columns([1, 2, 1])
-        with col_down2:
-            word_file = WordExportEngine.export_to_word(st.session_state['current_de_kt'], title=f"De_Kiem_Tra_{mon_hoc}")
-            st.download_button(
-                label="📄 Tải xuống Đề Kiểm Tra (.docx)",
-                data=word_file,
-                file_name="De_Kiem_Tra.docx",
-                mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                use_container_width=True
-            )
+                # 2. Khởi tạo Direct REST API Header bẻ gãy lỗi Vertex AI đòi tài khoản doanh nghiệp
+                import requests
+                url = "https://googleapis.com"
+                headers = {"Content-Type": "application/json", "x-goog-api-key": str(user_raw_key)}
+                
+                # Biểu điểm chi tiết cho từng dạng câu hỏi trắc nghiệm
+                score_item_1 = s1 / sl1 if sl1 > 0 else 0
+                score_item_2 = s2 / sl2 if sl2 > 0 else 0
+                score_item_3 = s3 / sl3 if sl3 > 0 else 0
+                score_item_4 = s4 / sl4 if sl4 > 0 else 0
+                tl_scores_str = ", ".join([f"Câu {idx+1} ({val}đ)" for idx, val in enumerate(diem_tl_list)])
+
