@@ -4,7 +4,12 @@
 import streamlit as st
 import os
 import requests
+import sys
+import os
+# Thêm đường dẫn thư mục gốc vào hệ thống để thấy được folder 'export'
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../..')))
 
+from export.export_word import WordExportEngine
 def get_word_engine():
     try:
         from export.export_word import WordExportEngine
