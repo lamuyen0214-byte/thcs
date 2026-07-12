@@ -240,7 +240,7 @@ def render_de_kt_module():
         
     exam_cache = st.session_state.get('current_exam_data')
     
-    # Khởi tạo hoặc lấy file Word từ session_state để chống mất dữ liệu khi rerun
+    # Khởi tạo vùng lưu trữ tệp Word bền vững trong session_state
     if 'cached_word_file_de_kt' not in st.session_state:
         st.session_state['cached_word_file_de_kt'] = None
 
@@ -248,7 +248,7 @@ def render_de_kt_module():
         with st.expander("📝 Xem trước Nội dung Đề kiểm tra & Đáp án chi tiết từ AI", expanded=True):
             st.markdown(exam_cache["ai_generated_content"])
             
-        # Chỉ biên dịch ra file Word một lần duy nhất nếu chưa có trong bộ nhớ tạm
+        # Thực hiện gọi Engine biên dịch và găm dữ liệu thẳng vào session_state
         if st.session_state['cached_word_file_de_kt'] is None:
             WordEngine = get_word_engine()
             if WordEngine:
@@ -263,7 +263,7 @@ def render_de_kt_module():
             st.sidebar.success(" Đã lưu cấu hình đề thi vào RAM phiên an toàn!")
             
     with col_download:
-        # Sử dụng dữ liệu lưu trữ bền vững từ session_state để nút luôn sáng đèn khả dụng
+        # LUỒNG LOGIC ÉP BUỘC: Chỉ hiển thị nút tải thực khi dữ liệu trong session_state đã được sinh thành công
         if exam_cache is not None and st.session_state['cached_word_file_de_kt'] is not None:
             saved_title = exam_cache.get("ten_bai_save", "Moi").replace(" ", "_")
             st.download_button(
@@ -272,13 +272,15 @@ def render_de_kt_module():
                 file_name=f"Bo_De_Kiem_Tra_{saved_title}.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                 use_container_width=True, 
-                key="btn_dl_word_de_kt"
+                key="btn_dl_word_de_kt_active_branch"
             )
         else:
+            # Nếu chưa có dữ liệu hoặc biên dịch thất bại, khóa nút lập tức
             st.button("📥 Tải file về máy", disabled=True, use_container_width=True, key="btn_dl_word_de_kt_dis")
             
     with col_delete:
         if st.button("🗑️ Xóa file", use_container_width=True, disabled=(exam_cache is None), key="btn_del_de_kt"):
             st.session_state['delete_action_trigger'] = True
             st.rerun()
+
 
