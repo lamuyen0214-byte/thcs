@@ -31,7 +31,7 @@ def render_rubric_module():
     st.markdown('<p class="header-red-title">Tên nhiệm vụ / Sản phẩm cần đánh giá:</p>', unsafe_allow_html=True)
     ten_nhiem_vu = st.text_input("Nhiệm vụ", placeholder="Ví dụ: Đánh giá dự án thiết kế hệ thống tiết kiệm điện thông minh...", label_visibility="collapsed")
 
-    col1, col2, col3 = st.columns([1.5, 1.5, 2])
+    col1, col2, col3, col4 = st.columns([1.2, 1, 1.2, 1.6])
     with col1:
         st.markdown('<p class="header-blue">Môn học:</p>', unsafe_allow_html=True)
         mon_hoc = st.selectbox("Môn học Rubric", ["Khoa học tự nhiên", "Vật lý", "Hóa học", "Sinh học", "Toán", "Công nghệ"], label_visibility="collapsed", index=0)
@@ -41,6 +41,28 @@ def render_rubric_module():
     with col3:
         st.markdown('<p class="header-blue">Thang điểm:</p>', unsafe_allow_html=True)
         thang_diem = st.selectbox("Thang điểm", ["Thang điểm 10", "Thang điểm 100", "Theo mức độ (Tốt, Khá, Đạt, CĐ)"], label_visibility="collapsed", index=0)
+    with col4:
+        st.markdown('<p class="header-blue">Chọn Rubric đánh giá:</p>', unsafe_allow_html=True)
+        loai_rubric = st.selectbox(
+            "Loại Rubric", 
+            [
+                "Đánh giá năng lực thực hành, thí nghiệm",
+                "Đánh giá năng lực tư duy khoa học",
+                "Đánh giá năng lực giao tiếp",
+                "Đánh giá năng lực sử dụng CNTT",
+                "Đánh giá theo năng lực",
+                "Đánh giá theo sản phẩm học tập",
+                "Đánh giá theo hoạt động",
+                "Đánh giá theo bài kiểm tra",
+                "Đánh giá theo quá trình",
+                "Đánh giá phẩm chất",
+                "Đánh giá năng lực chung",
+                "Đánh giá năng lực đặc thù môn học",
+                "Đánh giá khác"
+            ], 
+            label_visibility="collapsed", 
+            index=0
+        )
 
     st.markdown('<p class="header-blue">Các tiêu chí trọng tâm (Tùy chọn):</p>', unsafe_allow_html=True)
     tieu_chi = st.text_area("Tiêu chí", placeholder="Ví dụ: Tính sáng tạo, Hoạt động nhóm, Khả năng ứng dụng thực tế, Trình bày báo cáo...", height=70, label_visibility="collapsed")
