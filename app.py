@@ -60,13 +60,22 @@ else:
 # --- 4. GỌI PHÂN HỆ ROUTER THÔNG SUỐT ---
 # ĐÃ HIỆU CHỈNH: Tích hợp cơ chế tìm kiếm đa cấp bẻ gãy hoàn toàn bẫy lỗi KeyError
 # SỬA LẠI ĐOẠN NÀY TRONG FILE app.py (Dòng 63 - 68):
+# =====================================================================
+# ĐOẠN MÃ SỬA ĐỔI HOÀN CHỈNH CHO FILE: app.py (Thay thế dòng 63 - 69)
+# =====================================================================
 try:
-    from core.router import route_teacher_screen
-except (ModuleNotFoundError, KeyError):
-    try:
-        # Đường dẫn dự phòng chuẩn xác trên Streamlit Cloud (bỏ tiền tố main.)
-        from core.router import route_teacher_screen
-    except ModuleNotFoundError:
+    # 1. Gọi chính xác tên hàm định tuyến từ lõi hệ thống core/router.py
+    from core.router import route_teacher
+    
+    # 2. Thực thi kích hoạt giao diện phân hệ Giáo viên
+    route_teacher()
+    
+except (ModuleNotFoundError, ImportError, KeyError) as router_err:
+    # Luồng dự phòng tối cao hiển thị cảnh báo trực quan nếu trục trặc cấu trúc tệp tin
+    st.error(f"🛑 Trục trặc khởi chạy phân hệ: Không thể nạp cấu trúc định tuyến hệ thống.")
+    st.info(f"💡 Chi tiết kỹ thuật: {router_err}. Vui lòng kiểm tra lại sự tồn tại của file 'core/router.py' trên GitHub.")
+# =====================================================================
+
         st.error("🛑 Không tìm thấy module cấu hình hệ thống 'core.router'. Vui lòng kiểm tra lại cấu trúc thư mục trên GitHub!")
 
 def main():
