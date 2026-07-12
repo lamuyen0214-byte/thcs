@@ -26,18 +26,19 @@ def route_teacher():
         except Exception as e:
             st.error(f"💡 Hệ thống đang đồng bộ Tab KHBD: {e}")
         
-        # --- TAB 2: XÂY DỰNG ĐỀ KIỂM TRA (ĐÃ ĐỒNG BỘ MODULE ĐỒ HỌA MÀU SẮC CỦA THẦY) ---
+            # --- TAB 2: XÂY DỰNG ĐỀ KIỂM TRA (SỬA ĐƯỜNG DẪN IMPORT TRỎ THẲNG VÀO DE_KT_BUILDER GỐC) ---
     with tabs[1]:
         try:
-            # Gọi trực tiếp hàm render_de_kt_module từ file de_kt_builder.py
+            # ÉP CHUẨN ĐƯỜNG DẪN: Gọi trực tiếp hàm render_de_kt_module từ đúng file de_kt_builder.py của thầy
             from modules.danh_cho_giao_vien.de_kt.de_kt_builder import render_de_kt_module
             render_de_kt_module()
         except KeyError:
+            # Khử lỗi nghẽn bộ nhớ đệm cache RAM của máy chủ deploy bằng import alias trực tiếp
             import modules.danh_cho_giao_vien.de_kt.de_kt_builder as de_kt_mod
             de_kt_mod.render_de_kt_module()
         except Exception as e:
             st.error(f"💡 Hệ thống đang đồng bộ Tab Đề kiểm tra: {e}")
-        
+
     # --- TAB 3: THIẾT KẾ BÀI DẠY STEM ---
     with tabs[2]:
         try:
