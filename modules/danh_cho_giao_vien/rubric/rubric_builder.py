@@ -87,16 +87,19 @@ def render_rubric_module():
             try:
                 client = genai.Client(api_key=str(user_raw_key))
                 
-                system_instruction = f"""
-Bạn là Chuyên gia Đo lường và Đánh giá Giáo dục. Nhiệm vụ của bạn là thiết kế một bảng Rubric đánh giá chi tiết cho môn {mon_hoc} {lop}.
-Nhiệm vụ/Sản phẩm học sinh cần thực hiện: {ten_nhiem_vu}.
-Thang điểm áp dụng: {thang_diem}.
-Các tiêu chí trọng tâm cần có: {tieu_chi if tieu_chi else 'Kiến thức chuyên môn, Kỹ năng thực hành, Trình bày & Thái độ'}.
+               system_instruction = f"""
+Bạn là Chuyên gia Đo lường và Đánh giá Giáo dục, am hiểu sâu sắc Chương trình GDPT 2018. Nhiệm vụ của bạn là thiết kế một bảng Rubric đánh giá chi tiết cho môn {mon_hoc} {lop}.
 
-Yêu cầu định dạng đầu ra:
-1. Mô tả ngắn gọn mục đích của bảng Rubric này.
-2. Trình bày Rubric dưới dạng **BẢNG MARKDOWN**. Các cột bao gồm: Tiêu chí, Trọng số (%), và 4 mức độ đạt được (Tốt, Khá, Đạt, Cần cố gắng) với mô tả hành vi cụ thể cho từng mức độ.
-3. Cung cấp một biểu mẫu nhỏ để giáo viên ghi chú nhanh.
+Thông tin dự án/nhiệm vụ:
+- Nhiệm vụ/Sản phẩm học sinh cần thực hiện: {ten_nhiem_vu}.
+- Thang điểm áp dụng: {thang_diem}.
+- Loại hình/Đối tượng đánh giá: {loai_rubric}.
+- Các tiêu chí trọng tâm cần ưu tiên: {tieu_chi if tieu_chi else 'Kiến thức chuyên môn, Kỹ năng thực hành, Trình bày & Thái độ'}.
+
+Yêu cầu định dạng đầu ra (Định dạng Markdown):
+1. Mô tả ngắn gọn mục đích của bảng Rubric này dựa trên loại hình đánh giá là {loai_rubric}.
+2. Trình bày Rubric dưới dạng **BẢNG MARKDOWN**. Các cột bao gồm: Tiêu chí, Trọng số (%), và 4 mức độ đạt được (Tốt, Khá, Đạt, Cần cố gắng) với mô tả hành vi/năng lực cụ thể cho từng mức độ bám sát GDPT 2018.
+3. Cung cấp một biểu mẫu nhỏ để giáo viên ghi chú nhanh các minh chứng đạt được của học sinh.
                 """
                 
                 response = client.models.generate_content(
