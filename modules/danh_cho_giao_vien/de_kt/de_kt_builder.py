@@ -228,48 +228,57 @@ def render_de_kt_module():
                     }
                     st.success("✅ Đã tạo ma trận và đề thi thành công!")
                     st.rerun()
-
-    # =====================================================================
     # 8. BỘ 3 NÚT CHỨC NĂNG KẾT XUẤT HỒ SƠ ĐỀ KIỂM TRA CỐ ĐỊNH NGOÀI GIAO DIỆN
-    # =====================================================================
     st.markdown("---")
-    st.markdown("##### 📥 Kết Xuất Hồ Sơ Đề Kiểm Tra Chuyên Nghiệp")
+    st.markdown("##### Kết Xuất Hồ Sơ Đề Kiểm Tra Chuyên Nghiệp")
     
     if st.session_state.get('delete_action_trigger'):
         if 'current_exam_data' in st.session_state: del st.session_state['current_exam_data']
+        if 'cached_word_file_de_kt' in st.session_state: del st.session_state['cached_word_file_de_kt']
         st.session_state['delete_action_trigger'] = False
         st.rerun()
-
+        
     exam_cache = st.session_state.get('current_exam_data')
-    word_file = None
+    
+    # Khởi tạo hoặc lấy file Word từ session_state để chống mất dữ liệu khi rerun
+    if 'cached_word_file_de_kt' not in st.session_state:
+        st.session_state['cached_word_file_de_kt'] = None
 
     if exam_cache:
-        with st.expander("🔍 Xem trước Nội dung Đề kiểm tra & Đáp án chi tiết từ AI", expanded=True):
+        with st.expander("📝 Xem trước Nội dung Đề kiểm tra & Đáp án chi tiết từ AI", expanded=True):
             st.markdown(exam_cache["ai_generated_content"])
-        
-        WordEngine = get_word_engine()
-        if WordEngine:
-            try:
-                word_file = WordEngine.export_to_word(exam_cache)
-            except Exception as e:
-                st.error(f"💡 Trình dịch khung bảng biểu Word đang đồng bộ cấu trúc: {e}")
-
+            
+        # Chỉ biên dịch ra file Word một lần duy nhất nếu chưa có trong bộ nhớ tạm
+        if st.session_state['cached_word_file_de_kt'] is None:
+            WordEngine = get_word_engine()
+            if WordEngine:
+                try:
+                    st.session_state['cached_word_file_de_kt'] = WordEngine.export_to_word(exam_cache)
+                except Exception as e:
+                    st.error(f"⚠️ Trình dịch khung bảng biểu Word đang đồng bộ cấu trúc: {e}")
+                
     col_save, col_download, col_delete = st.columns(3)
     with col_save:
         if st.button("💾 Lưu file tạm thời", use_container_width=True, disabled=(exam_cache is None), key="btn_save_de_kt"):
-            st.sidebar.success("💾 Đã lưu cấu hình đề thi vào RAM phiên an toàn!")
+            st.sidebar.success(" Đã lưu cấu hình đề thi vào RAM phiên an toàn!")
+            
     with col_download:
-        if word_file is not None and exam_cache is not None:
+        # Sử dụng dữ liệu lưu trữ bền vững từ session_state để nút luôn sáng đèn khả dụng
+        if exam_cache is not None and st.session_state['cached_word_file_de_kt'] is not None:
             saved_title = exam_cache.get("ten_bai_save", "Moi").replace(" ", "_")
             st.download_button(
-                label="📄 Tải file về máy", data=word_file,
+                label="📥 Tải file về máy", 
+                data=st.session_state['cached_word_file_de_kt'],
                 file_name=f"Bo_De_Kiem_Tra_{saved_title}.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                use_container_width=True, key="btn_dl_word_de_kt"
+                use_container_width=True, 
+                key="btn_dl_word_de_kt"
             )
         else:
-            st.button("📄 Tải file về máy", disabled=True, use_container_width=True, key="btn_dl_word_de_kt_dis")
+            st.button("📥 Tải file về máy", disabled=True, use_container_width=True, key="btn_dl_word_de_kt_dis")
+            
     with col_delete:
-        if st.button("❌ Xóa file", use_container_width=True, disabled=(exam_cache is None), key="btn_del_de_kt"):
+        if st.button("🗑️ Xóa file", use_container_width=True, disabled=(exam_cache is None), key="btn_del_de_kt"):
             st.session_state['delete_action_trigger'] = True
             st.rerun()
+
