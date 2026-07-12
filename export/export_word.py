@@ -55,11 +55,11 @@ class WordExportEngine:
         table.cell(1, 9).text = "TL"
         
         # Tiến hành trộn dọc cô lập cho các cột không chia tầng
-        for col_idx in:
+        for col_idx in [0, 10]:
             table.cell(0, col_idx).merge(table.cell(1, col_idx))
 
         # ĐÃ VÁ LỖI CHÍ MẠNG OUT OF RANGE: Duyệt trực tiếp qua tập hợp cell thực tế thay vì tọa độ cứng range(11)
-        for r_idx in:
+        for r_idx in range(2, 4):
             for cell in table.rows[r_idx].cells:
                 bg_cell(cell, "F2F4F4")
                 if cell.paragraphs and cell.paragraphs[0].runs:
