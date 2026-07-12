@@ -135,17 +135,20 @@ def render_khbd_module():
                     }
                     st.success("✅ Đã khởi tạo giáo án điện tử thành công!")
                     st.rerun()
-    # 6. KHU VỰC KẾT XUẤT HỒ SƠ GIÁO ÁN VÀ BÓC TÁCH BỘ 3 NÚT CHỨC NĂNG ĐỘC LẬP
+    # =====================================================================
+    # 6. KHU VỰC KẾT XUẤT HỒ SƠ GIÁO ÁN VÀ ĐỒNG BỘ MỞ KHÓA LUỒNG TẢI FILE WORD CHUẨN XỊN
+    # =====================================================================
     st.markdown("---")
     st.markdown("##### 📥 Kết Xuất Hồ Sơ Giáo Án Sư Phạm Chuyên Nghiệp")
     
     if st.session_state.get('khbd_delete_trigger'):
-        if 'current_khbd_data' in st.session_state: del st.session_state['current_khbd_data']
+        if 'current_khbd_data' in st.session_state: 
+            del st.session_state['current_khbd_data']
         st.session_state['khbd_delete_trigger'] = False
         st.rerun()
 
     khbd_cache = st.session_state.get('current_khbd_data')
-    word_file = None  # Thiết lập luồng thô tĩnh ban đầu giống hệt phân hệ đề kiểm tra
+    word_file = None  # Khởi tạo luồng bytes thô ban đầu
 
     if khbd_cache:
         with st.expander("🔍 Xem trước Tiến trình Giáo án chi tiết (Chuẩn 5512)", expanded=True):
@@ -154,29 +157,40 @@ def render_khbd_module():
         WordEngine = get_word_engine()
         if WordEngine:
             try:
+                # ĐÃ ĐỒNG BỘ: Ép cấu hình đồng nhất hai từ khóa nội dung để tệp export bốc dữ liệu sạch lỗi ngầm
+                if "ai_generated_content" not in khbd_cache:
+                    khbd_cache["ai_generated_content"] = khbd_cache["ai_content_raw"]
+                
+                # Thực thi luồng trích xuất Byte lưu trực tiếp vào bộ nhớ tạm thời của trang Web
                 word_file = WordEngine.export_to_word(khbd_cache)
             except Exception as e:
-                st.error(f"💡 Trình dịch biểu mẫu Word đang đồng bộ: {e}")
+                st.error(f"💡 Trình dịch biểu mẫu Word đang đồng bộ cấu trúc văn bản: {e}")
 
-    # ĐÃ SỬA TUYỆT ĐỐI: Ép cứng khung 3 nút hành chính hiển thị 100% ra màn hình theo cấu trúc của thầy
+    # ĐÃ KHÓA CỐ ĐỊNH HÌNH 3: Luôn luôn dựng khung 3 nút hàng ngang song song kịch lề máy tính laptop
     col_save, col_download, col_delete = st.columns(3)
     
     with col_save:
         if st.button("💾 Lưu file tạm thời", use_container_width=True, disabled=(khbd_cache is None), key="btn_save_khbd_v7"):
-            st.sidebar.success("💾 Đã lưu cấu hình giáo án vào RAM phiên an toàn!")
+            st.sidebar.success("💾 Đã lưu cấu hình giáo án vào RAM phiên làm việc an toàn!")
+            
     with col_download:
-        if word_file and khbd_cache:
-            # Nhặt chính xác chuỗi tên bài đã khóa tĩnh trong cache 'ten_bai_save'
+        # ĐÃ MỞ KHÓA THÀNH CÔNG: Khi có luồng văn bản Word, nút bấm tải file lập tức sáng đèn xanh lá 100% khả dụng
+        if word_file is not None and khbd_cache is not None:
             saved_khbd_title = khbd_cache.get("ten_bai_save", "Moi").replace(" ", "_")
             st.download_button(
-                label="📄 Tải file về máy", data=word_file,
-                file_name=f"Giao_An_Kết_Nối_Tri_Thức_{saved_khbd_title}.docx",
+                label="📄 Tải file về máy", 
+                data=word_file,
+                file_name=f"Giao_An_Ket_Noi_Tri_Thuc_{saved_khbd_title}.docx",
                 mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-                use_container_width=True, key="btn_dl_word_khbd_v7"
+                use_container_width=True, 
+                key="btn_dl_word_khbd_v7_active"
             )
         else:
-            st.button("📄 Tải file về máy", disabled=True, use_container_width=True, key="btn_dl_word_khbd_v7_dis")
+            # Khung nút mặc định màu xám khi trạng thái chờ, bảo vệ giao diện không bị co lệch hàng dòng
+            st.button("📄 Tải file về máy", disabled=True, use_container_width=True, key="btn_dl_word_khbd_v7_disabled")
+            
     with col_delete:
         if st.button("❌ Xóa file", use_container_width=True, disabled=(khbd_cache is None), key="btn_del_khbd_v7"):
             st.session_state['khbd_delete_trigger'] = True
             st.rerun()
+
