@@ -21,3 +21,4 @@ Phân bổ mức độ:
 •	Đầu ra Markdown chuẩn.
 •	Bảng biểu Markdown phải có tiêu đề cột rõ ràng, không để trống ô.
 •	Đảm bảo mỗi phần cách nhau bằng dấu --- để dễ dàng copy vào MS Word.
+✓ Kiểm tra tổng điểm: Phải tự cộng tổng điểm tất cả các câu hỏi (trắc nghiệm và tự luận). Nếu tổng điểm không bằng 10.0, bắt buộc phải điều chỉnh lại điểm của từng câu cho đến khi tổng bằng 10.0 rồi mới được xuất kết quả. Ghi chú rõ "Tổng điểm đã được chuẩn hóa bằng 10.0" ở cuối phần đề.
