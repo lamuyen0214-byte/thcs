@@ -12,3 +12,7 @@ streamlit-quill
 google-genai
 google-generativeai
 requests
+langchain-google-genai
+langchain
+langchain-community
+chromadb
