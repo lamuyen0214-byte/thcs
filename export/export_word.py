@@ -1,5 +1,5 @@
 # =====================================================================
-# FILE: export/export_word.py (VÁ SẠCH LỖI VÒNG LẶP DUYỆT BẢNG - MỞ KHÓA NÚT TẢI FILE)
+# FILE: export/export_word.py (VÁ SẠCH CHỈ SỐ MẢNG Ô - MỞ KHÓA NÚT TẢI FILE)
 # =====================================================================
 import docx
 from docx.shared import Pt, Inches
@@ -12,6 +12,7 @@ import re
 class WordExportEngine:
     @staticmethod
     def clean_math_formulas(text_line):
+        """Bộ lọc quét sạch mã rác toán LaTeX chuyển sang định dạng in ấn sạch"""
         text_line = text_line.replace("$", "")
         text_line = re.sub(r'\\frac\{([^}]+)\}\{([^}]+)\}', r'(\1/\2)', text_line)
         text_line = re.sub(r'\\sqrt\{([^}]+)\}', r'√(\1)', text_line)
@@ -26,7 +27,7 @@ class WordExportEngine:
 
     @staticmethod
     def build_matrix_table(doc, exam_data):
-        """Vẽ bảng ma trận trộn ô 2 tầng Công văn 799"""
+        """Vẽ bảng ma trận trộn ô 2 tầng Công văn 799 chuẩn xác chỉ số hàng ô"""
         table = doc.add_table(rows=4, cols=11)
         table.style = 'Table Grid'
         table.autofit = False
@@ -38,26 +39,26 @@ class WordExportEngine:
 
         r0 = table.rows[0].cells
         r1 = table.rows[1].cells
+        
         r0[0].text, r0[1].text, r0[2].text = "STT", "Chủ đề", "Nội dung"
         r0[3].text, r0[5].text, r0[7].text, r0[9].text, r0[10].text = "Nhận biết", "Thông hiểu", "Vận dụng", "VDC", "Tổng"
         
-        # Đã vá cú pháp mảng duyệt i
-        for i in: 
+        # SỬA CHUẨN CÚ PHÁP: Duyệt mảng hàng ô trộn ngang tầng 1 và tầng 2 cho đề kiểm tra
+        for i in:
             r0[i].merge(r0[i+1])
             r1[i].text, r1[i+1].text = "TN", "TL"
         r1[9].text = "TL"
         
-        # Đã vá cú pháp mảng dọc
-        for i in: 
-            r0[i].merge(r1[i])
+        # Duyệt mảng trộn dọc cô lập cho các cột STT, Chủ đề, Nội dung, VDC và Tổng
+        for idx in:
+            r0[idx].merge(r1[idx])
 
-        # Đã sửa lỗi font: duyệt qua từng ô ở 2 hàng đầu tiên để bôi đậm
-        for r_idx in:
-            for cell in table.rows[r_idx].cells:
-                bg_cell(cell, "F2F4F4")
-                if cell.paragraphs and cell.paragraphs[0].runs:
-                    cell.paragraphs[0].runs[0].font.bold = True
-                cell.paragraphs[0].paragraph_format.space_after = Pt(3)
+        # Đổ màu nền và khóa font chữ đậm tiêu đề
+        for cell in table.rows[0].cells + table.rows[1].cells:
+            bg_cell(cell, "F2F4F4")
+            if cell.paragraphs and cell.paragraphs[0].runs:
+                cell.paragraphs[0].runs[0].font.bold = True
+            cell.paragraphs[0].paragraph_format.space_after = Pt(3)
 
         topic = exam_data.get("custom_req", "Nội dung đề thi")
         c1 = exam_data.get("c1", 12)
@@ -86,13 +87,11 @@ class WordExportEngine:
             
     @staticmethod
     def build_specification_table(doc, exam_data):
-        """Vẽ bảng đặc tả kĩ thuật tự co giãn thông minh khóa chiều rộng"""
         table = doc.add_table(rows=3, cols=5)
         table.style = 'Table Grid'
         table.autofit = False
         
         col_widths = [Inches(0.5), Inches(1.5), Inches(3.7), Inches(0.8), Inches(0.8)]
-        
         def bg_cell(cell, hex_color):
             cell._tc.get_or_add_tcPr().append(parse_xml(f'<w:shd {nsdecls("w")} w:fill="{hex_color}"/>'))
 
@@ -120,6 +119,7 @@ class WordExportEngine:
 
     @staticmethod
     def export_to_word(data_cache):
+        """Hàm điều phối hợp nhất kết xuất tệp Word hành chính khít lề 3pt dòng"""
         doc = docx.Document()
         for section in doc.sections:
             section.top_margin, section.bottom_margin = Inches(0.79), Inches(0.79)
@@ -132,7 +132,7 @@ class WordExportEngine:
             p_top = doc.add_paragraph()
             p_top.alignment = WD_ALIGN_PARAGRAPH.CENTER
             p_top.add_run(f"KẾ HOẠCH BÀI DẠY MÔN {data_cache.get('subject','').upper()} - {data_cache.get('grade','').upper()}").bold = True
-            ai_text = data_cache.get("ai_content_raw", "")
+            ai_text = data_cache.get("ai_generated_content", "")
         else:
             WordExportEngine.build_matrix_table(doc, data_cache)
             doc.add_paragraph("\n")
@@ -147,7 +147,7 @@ class WordExportEngine:
                 p_item = doc.add_paragraph(processed)
                 p_item.paragraph_format.space_before = Pt(0)
                 p_item.paragraph_format.space_after = Pt(3)
-                if line.strip().startswith("I.") or line.strip().startswith("II.") or "Hoạt động" in line or "MỤC TIÊU" in line:
+                if line.strip().startswith("I.") or line.strip().startswith("II.") or "Hoạt động" in line or "MỤC TIÊU" in line or "TIẾN TRÌNH" in line:
                     if p_item.runs: p_item.runs[0].font.bold = True
 
         bio = io.BytesIO()
