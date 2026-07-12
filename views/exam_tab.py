@@ -104,7 +104,7 @@ def render_exam_module():
     total_exam_score = total_tn_score + total_tl_score
     if total_exam_score != 10.0:
         st.warning(f"⚠️ Cảnh báo sư phạm: Tổng điểm toàn bộ đề thi hiện tại đang là {total_exam_score}đ (Chuẩn phải bằng 10.0 điểm). Thầy cô nên điều chỉnh lại.")
-    # 5. KHỐI LỆNH ĐIỀU KHIỂN SỬ DỤNG GIAO THỨC HEADER DIRECT (ĐỒNG BỘ ĐỊNH DẠNG MÃ KHÓA AQ... CHẠY MƯỢT MÀ)
+    # 5. KHỐI LỆNH ĐIỀU KHIỂN ĐÃ SỬA LỖI ĐỊNH DẠNG HEADER JSON (BẺ GÃY HOÀN TOÀN LỖI EXPECTING VALUE)
     if st.button("⚙️ Tự động tạo ma trận & đề thi chính thức"):
         user_raw_key = st.session_state.get("user_gemini_key", "").strip()
         
@@ -133,17 +133,25 @@ def render_exam_module():
         [YÊU CẦU ĐẦU RA]: PHẦN 1: ĐỀ KIỂM TRA MINH HỌA và PHẦN 2: ĐÁP ÁN VÀ HƯỚNG DẪN CHẤM CHI TIẾT.
         """
         
-        with st.spinner("🤖 Trợ lý AI đang áp dụng mã API Key cá nhân và tiến hành biên soạn đề thi..."):
-            # Sử dụng cổng truyền khóa thô x-goog-api-key thông suốt, triệt tiêu lỗi 401
+        with st.spinner("🤖 Trợ lý AI đang tiếp nhận API Key cá nhân và tiến hành ra đề thi..."):
             url = "https://googleapis.com"
-            headers = {"Content-Type": "application/json", "x-goog-api-key": str(user_raw_key)}
+            
+            # ĐÃ SỬA CHUẨN KỸ THUẬT: Định cấu hình Header Content-Type sang JSON thuần túy
+            headers = {
+                "Content-Type": "application/json", 
+                "x-goog-api-key": str(user_raw_key)
+            }
+            
             payload = {"contents": [{"parts": [{"text": f"{system_instruction}\n\n[DỮ LIỆU TÀI LIỆU FILE ĐÍNH KÈM GỐC]:\n{file_text[:4000]}"}]}]}
             
             try:
                 response = requests.post(url, headers=headers, json=payload)
                 response_json = response.json()
+                
                 if response.status_code == 200:
-                    ai_generated_text = response_json['candidates']['content']['parts']['text']
+                    # Trích xuất chuỗi chữ từ mảng cấu trúc phản hồi của Google
+                    ai_generated_text = response_json['candidates'][0]['content']['parts'][0]['text']
+                    
                     st.session_state['current_exam_data'] = {
                         "type": "Trắc nghiệm kết hợp tự luận", "custom_req": chosen_topic,
                         "tn_total": total_tn, "c1": c1, "c2": c2, "c3": c3, "c4": c4,
@@ -153,8 +161,9 @@ def render_exam_module():
                     }
                     st.rerun()
                 else:
-                    st.error(f"❌ Phản hồi từ Google AI Studio: {response_json.get('error', {}).get('message', 'Lỗi cấu hình Key')}")
-            except Exception as http_err: st.error(f"❌ Trục trặc kết nối mạng: {http_err}")
+                    st.error(f"❌ Phản hồi từ Google AI Studio: {response_json.get('error', {}).get('message', 'Mã API Key chưa chính xác')}")
+            except Exception as http_err: 
+                st.error(f"❌ Trục trặc phân tích dữ liệu: {http_err}")
 
     # 6. KHUNG HIỂN THỊ ĐỀ THI KÈM NÚT KẾT XUẤT FILE WORD BẢN IN
     if 'current_exam_data' in st.session_state:
