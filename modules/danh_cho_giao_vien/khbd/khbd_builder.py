@@ -11,13 +11,33 @@ def get_word_engine():
         return None
 
 def render_khbd_module():
+        # DÁN CHÈN THÊM ĐOẠN NÀY VÀO TRONG CẶP THẺ <style> CỦA CẢ 2 FILE BUILDER KHBD VÀ DE_KT:
     st.markdown("""
         <style>
-        .header-blue {color: #0000FF; font-weight: bold; font-size: 15px; text-align: left; margin-bottom: 2px;}
+        /* Ép toàn bộ khối container chính của Streamlit bung rộng kịch trần lề trái và lề phải */
+        .main .block-container {
+            max-width: 98% !important;
+            padding-left: 2rem !important;
+            padding-right: 2rem !important;
+            padding-top: 1rem !important;
+            padding-bottom: 1rem !important;
+        }
+        
+        /* Giải phóng không gian cho thanh Tab để các phân hệ dàn hàng ngang thênh thang */
+        .stTabs [data-baseweb="tab-list"] {
+            width: 100% !important;
+            max-width: 100% !important;
+        }
+
+        .header-blue {color: #0000FF; font-weight: bold; font-size: 16px; text-align: center;}
         .text-red-italic {color: #FF0000; font-style: italic; font-weight: bold; font-size: 14px;}
-        .header-red-title {color: #FF0000; font-weight: bold; font-size: 15px; margin-bottom: 5px;}
+        .box-trac-nghiem {background-color: #FFF2CC; padding: 10px; border-radius: 5px; color: #0000FF; font-weight: bold; text-align: center; font-size: 18px;}
+        .box-tu-luan {background-color: #D5E8D4; padding: 10px; border-radius: 5px; color: #0000FF; font-weight: bold; text-align: center; font-size: 18px;}
+        .header-red-title {color: #FF0000; font-weight: bold; font-size: 16px; margin-bottom: 5px;}
+        .chu-diem-co-nho {font-size: 11px !important; font-style: italic; white-space: nowrap !important; display: inline-block; margin-top: 10px;}
         </style>
     """, unsafe_allow_html=True)
+
 
     # ĐÃ ĐỒNG BỘ: Gắn key tĩnh 'txt_ten_bai_khbd_5512' khóa cứng chữ gõ của giáo viên chống trống khi rerun
     st.markdown('<p class="header-red-title">Tên bài học / Chủ đề bài dạy:</p>', unsafe_allow_html=True)
