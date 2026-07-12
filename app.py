@@ -9,9 +9,14 @@ sys.path.append(os.getcwd())
 st.set_page_config(layout="wide", page_title="Hệ Sinh Thái Số - Dưỡng Education")
 
 # --- SIDEBAR: Giao diện cố định xuyên suốt ---
+# --- SIDEBAR: Giao diện cố định xuyên suốt ---
 with st.sidebar:
-    # 1. Tiêu đề thương hiệu
-    st.markdown("<h3 style='text-align: center; color: red;'>HỆ SINH THÁI SỐ<br>HỖ TRỢ GIÁO VIÊN</h3>", unsafe_allow_html=True)
+    # 1. Tiêu đề thương hiệu (Tăng size chữ)
+    st.markdown("""
+        <h2 style='text-align: center; color: red; font-size: 24px; margin-bottom: 5px;'>
+        HỆ SINH THÁI SỐ<br>HỖ TRỢ GIÁO VIÊN
+        </h2>
+    """, unsafe_allow_html=True)
     st.markdown("---")
     
     # 2. CHỌN PHÂN HỆ
@@ -29,14 +34,18 @@ with st.sidebar:
     api_key = st.text_input("Nhập Gemini API Key (Bắt đầu bằng AQ...):", type="password", value=st.session_state.get("user_gemini_key", ""))
     if api_key:
         st.session_state["user_gemini_key"] = api_key.strip()
-        st.success("🎯 Đang chạy bằng tài khoản Gemini cá nhân của bạn.")
+        # Giảm size chữ thông báo tài khoản
+        st.markdown("<p style='font-size: 12px; color: green;'>🎯 Đang chạy bằng tài khoản Gemini cá nhân của bạn.</p>", unsafe_allow_html=True)
     
     st.markdown("---")
     
-    # 4. Thông tin tác giả (Cố định dưới cùng)
-    st.markdown("<div style='text-align: center; color: blue; font-weight: bold;'>"
-                "Tác giả: Lê Hồng Dưỡng<br>"
-                "Đơn vị: Trường THCS Nguyễn Chí Thanh</div>", unsafe_allow_html=True)
+    # 4. Thông tin tác giả (Giảm size chữ)
+    st.markdown("""
+        <div style='text-align: center; color: blue; font-weight: bold; font-size: 13px;'>
+        Tác giả: Lê Hồng Dưỡng<br>
+        Đơn vị: Trường THCS Nguyễn Chí Thanh
+        </div>
+    """, unsafe_allow_html=True)
 
 # --- ĐIỀU PHỐI (ROUTER) ---
 def run_router():
