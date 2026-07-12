@@ -93,12 +93,15 @@ def render_de_kt_module():
 # =====================================================================
 # FILE HOÀN CHỈNH: modules/danh_cho_giao_vien/de_kt/de_kt_builder.py - ĐOẠN 3
 # =====================================================================
+    # =====================================================================
+# FILE HOÀN CHỈNH: modules/danh_cho_giao_vien/de_kt/de_kt_builder.py - ĐOẠN 3 (ĐÃ VÁ TỶ LỆ MẢNG ÉP THẲNG HÀNG 100%)
+# =====================================================================
     # --- CỘT TRÁI: THÔNG SỐ BIỂU ĐIỂM TRẮC NGHIỆM ĐỘNG ---
     with col_tn:
         tn_header = st.empty()
         st.write("")
         
-        # ĐÃ SỬA CHÍ MẠNG: Ép tỷ lệ cột rộng [5, 2, 2, 1] để chữ dài không bị xuống hàng nhảy dòng
+        # SỬA DỨT ĐIỂM: Ép mảng tỷ lệ [5, 2, 2, 1] để cột 1 thênh thang, chữ tiêu đề phẳng lỳ không nhảy dòng
         c1, c2, c3, c4 = st.columns([5, 2, 2, 1])
         with c1: st.write("Số câu nhiều lựa chọn:")
         with c2: sl1 = st.number_input("SL1", value=12, key="sl1_de_kt_k", label_visibility="collapsed")
@@ -129,7 +132,7 @@ def render_de_kt_module():
 
     # --- CỘT PHẢI: VÒNG LẶP SỐ CÂU TỰ LUẬN ĐỘNG ---
     with col_tl:
-        c_tl1, c_tl2 = st.columns([8, 4])
+        c_tl1, c_tl2 = st.columns([7, 3])
         with c_tl1: st.write("**Nhập số lượng câu Tự luận:**")
         with c_tl2: so_cau_tl = st.number_input("Số câu TL", min_value=1, max_value=10, value=4, key="so_cau_tl_de_kt_k", label_visibility="collapsed")
         tl_header = st.empty()
@@ -137,7 +140,8 @@ def render_de_kt_module():
         
         diem_tl_list = []
         for i in range(1, int(so_cau_tl) + 1):
-            c1, c2, c3 = st.columns([4, 4, 2])
+            # Ép mảng tỷ lệ [3, 4, 3] cho phần cột tự luận để thẳng hàng đẹp mắt
+            c1, c2, c3 = st.columns([3, 4, 3])
             with c1: st.write(f"**Câu {i}.**")
             with c2: 
                 diem = st.number_input("Điểm", value=1.0, step=0.25, format="%.2f", key=f"diem_tl_{i}_de_kt_k", label_visibility="collapsed")
@@ -153,6 +157,7 @@ def render_de_kt_module():
     with col_req:
         bam_sat = st.checkbox("Bám sát nội dung đề cương/ma trận tải lên", value=True, key="chk_bam_sat_de_kt")
         yeu_cau_khac = st.text_area("Yêu cầu chi tiết", placeholder="Ví dụ: Chú trọng các câu hỏi liên hệ thực tế...", label_visibility="collapsed", key="ta_req_de_kt")
+
 # =====================================================================
 # FILE HOÀN CHỈNH: modules/danh_cho_giao_vien/de_kt/de_kt_builder.py - ĐOẠN 4
 # =====================================================================
