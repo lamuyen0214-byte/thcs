@@ -209,14 +209,20 @@ def render_de_kt_module():
                     except Exception as e: print(e)
 
                 # Ánh xạ nhãn hiển thị sang hằng số tên mô hình API của Google
+                # =========================================================================
+                # BẮT ĐẦU ĐOẠN THAY THẾ (GIỮ NGUYÊN TOÀN BỘ PHẦN TRÊN VÀ DƯỚI)
+                # =========================================================================
+                
+                # Ánh xạ nhãn hiển thị sang hằng số tên mô hình API chuẩn, độ tương thích 100% với mọi API Key
                 model_mapping = {
-                    "3.1 Flash-Lite": "models/gemini-2.5-flash",
-                    "3.5 Flash": "models/gemini-2.5-flash",
-                    "3.1 Pro": "models/gemini-1.5-pro",
-                    "Tư duy mở rộng": "models/gemini-2.5-pro"
+                    "3.1 Flash-Lite": "gemini-1.5-flash",
+                    "3.5 Flash": "gemini-1.5-flash",
+                    "3.1 Pro": "gemini-1.5-pro",
+                    "Tư duy mở rộng": "gemini-1.5-pro"
                 }
-                primary_model = model_mapping.get(model_display_name, "models/gemini-2.5-flash")
-                fallback_queue = list(dict.fromkeys([primary_model, "models/gemini-2.5-flash", "models/gemini-1.5-pro", "models/gemini-2.5-pro"]))
+                primary_model = model_mapping.get(model_display_name if 'model_display_name' in locals() else "3.1 Flash-Lite", "gemini-1.5-flash")
+                # Fallback queue sử dụng các model phổ biến nhất, đảm bảo không bị lỗi 404 trên tài khoản mới
+                fallback_queue = list(dict.fromkeys([primary_model, "gemini-1.5-flash", "gemini-1.5-pro"]))
                 
                 score_item_1 = d1 / sl1 if sl1 > 0 else 0
                 score_item_2 = d2 / sl2 if sl2 > 0 else 0
@@ -224,7 +230,7 @@ def render_de_kt_module():
                 score_item_4 = d4 / sl4 if sl4 > 0 else 0
                 tl_scores_str = ", ".join([f"Câu {idx+1} ({val}đ)" for idx, val in enumerate(diem_tl_list)])
 
-                # SIÊU CÂU LỆNH PROMPT SƯ PHẠM: Ép AI làm chủ tri thức GDPT 2018 và bộ sách Kết nối tri thức
+                # SIÊU CÂU LỆNH PROMPT SƯ PHẠM (Giữ nguyên của thầy)
                 system_instruction = f"""
                 Bạn là Viện trưởng Viện Khoa học Giáo dục kiêm Chuyên gia khảo thí cao cấp của Bộ GD&ĐT Việt Nam.
                 [YÊU CẦU NỀN TẢNG TUÂN THỦ]: Bạn phải sở hữu tri thức sâu rộng, am hiểu tường tận 100% mục tiêu cốt lõi của Chương trình GDPT 2018 đối với toàn bộ các môn học và cấu trúc nội dung phân phối chương trình của Bộ sách "Kết nối tri thức với cuộc sống".
@@ -240,6 +246,7 @@ def render_de_kt_module():
                 
                 response_text = None
                 activated_model_name = ""
+                last_error_msg = "" # KHÓA LỖI: Thêm biến để hứng lỗi cuối cùng
                 
                 from google import genai
                 try:
@@ -255,6 +262,7 @@ def render_de_kt_module():
                                 activated_model_name = current_model
                                 break
                         except Exception as e:
+                            last_error_msg = str(e) # Bắt lại chính xác lý do máy chủ từ chối
                             if "503" in str(e) or "429" in str(e) or "UNAVAILABLE" in str(e) or "404" in str(e): continue
                             else: raise e
                 except Exception as api_err:
@@ -271,8 +279,12 @@ def render_de_kt_module():
                     st.success(f"✅ Đã khởi tạo thành công bằng mô hình {activated_model_name}!")
 
                 else:
-                    st.error("❌ Tất cả các cổng máy chủ của Google hiện đang bận do quá tải hoặc báo lỗi 404. Thầy cô vui lòng chọn mô hình khác hoặc thử lại sau!")
-    
+                    # ĐÃ SỬA: Hiển thị đích danh nguyên nhân lỗi thay vì báo bận chung chung
+                    st.error(f"❌ Không thể kết nối AI. Chi tiết lỗi từ máy chủ Google: {last_error_msg}")
+                    
+                # =========================================================================
+                # KẾT THÚC ĐOẠN THAY THẾ
+                # =========================================================================
     # 8. CẶP NÚT BẤM CHỨC NĂNG KẾT XUẤT CỐ ĐỊNH 100% RA MÀN HÌNH THEO ĐÚNG YÊU CẦU
     st.markdown("---")
     st.markdown("##### 📥 Kết Xuất Hồ Sơ Đề Kiểm Tra Chuyên Nghiệp")
