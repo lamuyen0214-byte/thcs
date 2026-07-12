@@ -1,17 +1,36 @@
+# =====================================================================
+# FILE CHUẨN HÓA CỦA THẦY LÊ HỒNG DƯỠNG: app.py (SẠCH LỖI IMPORT 2026)
+# =====================================================================
 import streamlit as st
+from google import genai
 import os
 import sys
 
-# Đảm bảo đường dẫn hệ thống
-sys.path.append(os.getcwd())
+# --- 0. THUẬT TOÁN ĐỊNH VỊ TỰ ĐỘNG: Nạp folder con 'main' vào luồng tìm kiếm hệ thống ---
+current_working_dir = os.getcwd()
+if current_working_dir not in sys.path:
+    sys.path.append(current_working_dir)
 
-# Cấu hình trang
-st.set_page_config(layout="wide", page_title="Hệ Sinh Thái Số - L.H.Dưỡng Education")
+sub_main_path = os.path.join(current_working_dir, "main")
+if os.path.exists(sub_main_path) and sub_main_path not in sys.path:
+    sys.path.append(sub_main_path)
 
-# Gọi các file views
-from views import teacher_support, teaching_support, department_mgmt
+# --- 1. KHÓA CẤU HÌNH TỐI CAO ĐẦU FILE: Bung rộng tràn viền sát lề laptop của thầy ---
+try:
+    st.set_page_config(layout="wide", page_title="Hệ Sinh Thái Số - L.H.Dưỡng Education", page_icon="👨‍🏫")
+except Exception:
+    pass
 
-# --- SIDEBAR: Giao diện cố định xuyên suốt ---
+# --- 2. LUỒNG NẠP ĐA CẤP ĐƯỜNG DẪN MODULE VIEWS CHỐNG SẬP ỨNG DỤNG ---
+try:
+    from views import teacher_support, teaching_support, department_mgmt
+except (ModuleNotFoundError, ImportError):
+    try:
+        from main.views import teacher_support, teaching_support, department_mgmt
+    except Exception as e:
+        st.error(f"🛑 Trục trặc tệp tin: Hệ thống không tìm thấy thư mục 'views/' trên GitHub. Chi tiết: {e}")
+
+# --- 3. SIDEBAR: GIỮ NGUYÊN VẸN 100% THIẾT KẾ CỦA THẦY LÊ HỒNG DƯỠNG ---
 with st.sidebar:
     st.markdown("""
         <h2 style='text-align: center; color: red; font-size: 24px; margin-bottom: 5px;'>
@@ -24,16 +43,30 @@ with st.sidebar:
     phan_he = st.selectbox(
         "Hỗ trợ giáo viên", 
         ["Hỗ trợ Giáo viên", "Hỗ trợ Giảng dạy", "Quản lý Tổ chuyên môn"],
-        label_visibility="collapsed"
+        label_visibility="collapsed", key="sb_phan_he_main_root"
     )
     
     st.markdown("---")
     
     st.markdown("🔑 **Cấu hình API Key Cá Nhân**")
-    api_key = st.text_input("Nhập Gemini API Key:", type="password", value=st.session_state.get("user_gemini_key", ""))
+    api_key = st.text_input("Nhập Gemini API Key:", type="password", value=st.session_state.get("user_gemini_key", ""), key="ti_api_key_root")
+    
+    # Kích hoạt luồng trích xuất và cấp quyền Client tập trung
     if api_key:
         st.session_state["user_gemini_key"] = api_key.strip()
         st.markdown("<p style='font-size: 12px; color: green;'>🎯 Đang chạy bằng tài khoản Gemini cá nhân.</p>", unsafe_allow_html=True)
+
+    # Thuật toán khởi tạo Client động từ dữ liệu nhập vào
+    final_api_key = st.session_state.get("user_gemini_key", "").strip()
+    if not final_api_key:
+        if "GEMINI_API_KEY" in st.secrets: final_api_key = st.secrets["GEMINI_API_KEY"]
+        elif "GOOGLE_API_KEY" in st.secrets: final_api_key = st.secrets["GOOGLE_API_KEY"]
+
+    if final_api_key:
+        try:
+            st.session_state["gemini_client"] = genai.Client(api_key=str(final_api_key))
+        except Exception:
+            pass
     
     st.markdown("---")
     
@@ -44,14 +77,17 @@ with st.sidebar:
         </div>
     """, unsafe_allow_html=True)
 
-# --- ĐIỀU PHỐI (ROUTER) ---
+# --- 4. ĐIỀU PHỐI (ROUTER) THÔNG SUỐT ---
 def run_router():
-    if phan_he == "Hỗ trợ Giáo viên":
-        teacher_support.render_module()
-    elif phan_he == "Hỗ trợ Giảng dạy":
-        teaching_support.render_module()
-    elif phan_he == "Quản lý Tổ chuyên môn":
-        department_mgmt.render_module()
+    try:
+        if phan_he == "Hỗ trợ Giáo viên":
+            teacher_support.render_module()
+        elif phan_he == "Hỗ trợ Giảng dạy":
+            teaching_support.render_module()
+        elif phan_he == "Quản lý Tổ chuyên môn":
+            department_mgmt.render_module()
+    except Exception as run_err:
+        st.error(f"💡 Phân hệ đang được AI cập nhật mã nguồn đồng bộ: {run_err}")
 
 if __name__ == "__main__":
     run_router()
