@@ -34,16 +34,15 @@ def render_module():
             ["Tài liệu tải lên (PDF, DOCX, Ảnh)", "Đường dẫn Website"],
             horizontal=True
         )
-        
-        # Khung tải tài liệu
-     uploaded_file = None
-     hinh_thuc_url = None
-
-     if hinh_thuc_url_radio == "Tài liệu tải lên (PDF, DOCX, Ảnh)":
-         st.write("Tải lên tài liệu của thầy/cô (PDF, DOCX, PNG, JPG):")
-         uploaded_file = st.file_uploader("", type=['pdf', 'docx', 'png', 'jpg'], label_visibility="collapsed")
-     else:
-         hinh_thuc_url = st.text_input("Nhập đường dẫn Website (URL):")
+       # Đảm bảo các dòng này thẳng hàng với nhau
+    uploaded_file = None
+    hinh_thuc_url = None
+    
+    if hinh_thuc_url_radio == "Tài liệu tải lên (PDF, DOCX, Ảnh)":
+        st.write("Tải lên tài liệu của thầy/cô (PDF, DOCX, PNG, JPG):")
+        uploaded_file = st.file_uploader("", type=['pdf', 'docx', 'png', 'jpg'], label_visibility="collapsed")
+    else:
+        hinh_thuc_url = st.text_input("Nhập đường dẫn Website (URL):")
 
      # Gọi module RAG để xử lý Bước 2
      process_rag_engine(uploaded_file, hinh_thuc_url)
