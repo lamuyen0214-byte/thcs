@@ -31,7 +31,8 @@ def render_rubric_module():
     st.markdown('<p class="header-red-title">Tên nhiệm vụ / Sản phẩm cần đánh giá:</p>', unsafe_allow_html=True)
     ten_nhiem_vu = st.text_input("Nhiệm vụ", placeholder="Ví dụ: Đánh giá dự án thiết kế hệ thống tiết kiệm điện thông minh...", label_visibility="collapsed")
 
-    col1, col2, col3, col4 = st.columns([1.2, 1, 1.2, 1.6])
+    # --- ĐOẠN CHIA 4 CỘT CÙNG HÀNG Ở ĐÂY ---
+    col1, col2, col3, col4 = st.columns([1, 1, 1, 1.5])
     with col1:
         st.markdown('<p class="header-blue">Môn học:</p>', unsafe_allow_html=True)
         mon_hoc = st.selectbox("Môn học Rubric", ["Khoa học tự nhiên", "Vật lý", "Hóa học", "Sinh học", "Toán", "Công nghệ"], label_visibility="collapsed", index=0)
@@ -42,7 +43,7 @@ def render_rubric_module():
         st.markdown('<p class="header-blue">Thang điểm:</p>', unsafe_allow_html=True)
         thang_diem = st.selectbox("Thang điểm", ["Thang điểm 10", "Thang điểm 100", "Theo mức độ (Tốt, Khá, Đạt, CĐ)"], label_visibility="collapsed", index=0)
     with col4:
-        st.markdown('<p class="header-blue">Chọn Rubric đánh giá:</p>', unsafe_allow_html=True)
+        st.markdown('<p class="header-blue">Loại Rubric:</p>', unsafe_allow_html=True)
         loai_rubric = st.selectbox(
             "Loại Rubric", 
             [
@@ -69,7 +70,7 @@ def render_rubric_module():
 
     st.write("")
 
-    # XỬ LÝ AI VỚI KEY THÔ BỀN BỈ
+    # XỬ LÝ AI VỚI MÃ LỆNH MỚI BÁM SÁT GDPT 2018
     if st.button("🚀 TỰ ĐỘNG LẬP BẢNG RUBRIC", type="primary", use_container_width=True):
         if not ten_nhiem_vu.strip():
             st.warning("⚠️ Vui lòng nhập 'Tên nhiệm vụ' trước khi khởi tạo.")
@@ -87,7 +88,7 @@ def render_rubric_module():
             try:
                 client = genai.Client(api_key=str(user_raw_key))
                 
-               system_instruction = f"""
+                system_instruction = f"""
 Bạn là Chuyên gia Đo lường và Đánh giá Giáo dục, am hiểu sâu sắc Chương trình GDPT 2018. Nhiệm vụ của bạn là thiết kế một bảng Rubric đánh giá chi tiết cho môn {mon_hoc} {lop}.
 
 Thông tin dự án/nhiệm vụ:
@@ -109,7 +110,7 @@ Yêu cầu định dạng đầu ra (Định dạng Markdown):
                 
                 if response and response.text:
                     st.session_state['current_rubric_data'] = {
-                        "is_khbd": False, # Để xuất dưới dạng bảng ma trận Word
+                        "is_khbd": False, 
                         "custom_req": ten_nhiem_vu,
                         "ai_generated_content": response.text
                     }
