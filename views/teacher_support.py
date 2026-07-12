@@ -5,6 +5,7 @@ from modules.danh_cho_giao_vien.de_kt.de_kt_builder import render_de_kt_module
 from modules.danh_cho_giao_vien.stem.stem_builder import render_stem_module
 from modules.danh_cho_giao_vien.rubric.rubric_builder import render_rubric_module
 from modules.danh_cho_giao_vien.organization.homeroom_builder import render_homeroom_module
+from modules.danh_cho_giao_vien.quan_ly_diem.quan_ly_diem_builder import render_quan_ly_diem_module
 def render_module():
     st.markdown("## 👨‍🏫 Phân hệ: Hỗ trợ Giáo viên")
     
@@ -35,7 +36,7 @@ def render_module():
     with tabs[5]:
         st.subheader("📈 Quản lý điểm số")
         st.info("⏳ Giao diện đang được cập nhật...")
-        
+        render_quan_ly_diem_module()
     with tabs[6]:
         st.subheader("💡 Công cụ Tạo prompt")
         st.info("⏳ Giao diện đang được cập nhật...")
