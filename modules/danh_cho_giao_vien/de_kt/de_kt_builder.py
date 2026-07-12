@@ -158,8 +158,10 @@ def render_de_kt_module():
 
                 # ĐÃ VÁ DỨT ĐIỂM: Khôi phục link URL chuẩn và đóng gói Payload sạch lỗi cú pháp JSON
                 url = "https://googleapis.com"
-                headers = {"Content-Type": "application/json", "x-goog-api-key": str(user_raw_key)}
-                
+                headers = {
+                    "Content-Type": "application/json", 
+                    "x-goog-api-key": str(user_raw_key).strip()
+                }
                 score_item_1 = d1 / sl1 if sl1 > 0 else 0
                 score_item_2 = d2 / sl2 if sl2 > 0 else 0
                 score_item_3 = d3 / sl3 if sl3 > 0 else 0
