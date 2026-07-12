@@ -23,6 +23,7 @@ class WordExportEngine:
         text_line = text_line.replace("^2", "²").replace("^3", "³")
         text_line = text_line.replace("\\", "")
         return text_line.strip()
+
     @staticmethod
     def build_matrix_table(doc, exam_data):
         """Vẽ bảng ma trận có trộn ô Nhận biết/Thông hiểu phân tách 2 tầng TN và TL tách biệt"""
@@ -41,15 +42,19 @@ class WordExportEngine:
         r0[0].text, r0[1].text, r0[2].text = "STT", "Chủ đề", "Nội dung"
         r0[3].text, r0[5].text, r0[7].text, r0[9].text, r0[10].text = "Nhận biết", "Thông hiểu", "Vận dụng", "VDC", "Tổng"
         
-        # Tiến hành trộn ngang 2 ô TN-TL cho từng phân khúc năng lực
-        for i in: r0[i].merge(r0[i+1])
-        for i in: r1[i].text, r1[i+1 if i<9 else i].text = "TN", "TL"
+        # ĐÃ SỬA: Tiến hành trộn ngang 2 ô TN-TL cho từng phân khúc năng lực (Cột 3, 5, 7)
+        for i in [3, 5, 7]: 
+            r0[i].merge(r0[i+1])
+            r1[i].text, r1[i+1].text = "TN", "TL"
+            
+        r1[9].text = "TL" # Vận dụng cao thường chỉ có Tự luận
         
-        # Trộn dọc cô lập cho các cột STT, Chủ đề, Tổng
-        for i in: r0[i].merge(r1[i])
+        # ĐÃ SỬA: Trộn dọc cô lập cho các cột STT (0), Chủ đề (1), Nội dung (2), VDC (9) và Tổng (10)
+        for i in [0, 1, 2, 9, 10]: 
+            r0[i].merge(r1[i])
 
-        # Đổ màu nền và sửa triệt lội list object font bold bằng cách duyệt qua từng ô cụ thể
-        for r_idx in:
+        # ĐÃ SỬA: Đổ màu nền và sửa triệt để list object font bold bằng cách duyệt qua từng ô ở 2 hàng đầu
+        for r_idx in [0, 1]:
             for cell in table.rows[r_idx].cells:
                 bg_cell(cell, "F2F4F4")
                 if cell.paragraphs and cell.paragraphs[0].runs:
@@ -79,6 +84,7 @@ class WordExportEngine:
 
         for row in table.rows:
             for idx, w in enumerate(col_widths): row.cells[idx].width = w
+            
     @staticmethod
     def build_specification_table(doc, exam_data):
         """Vẽ bảng đặc tả kĩ thuật tự co giãn thông minh khóa chiều rộng"""
@@ -127,8 +133,10 @@ class WordExportEngine:
         doc.styles['Normal'].font.name = 'Times New Roman'
         doc.styles['Normal'].font.size = Pt(12)
 
-        # 1. Kết xuất bảng ma trận trộn ô 2 tầng Công văn 799
+        # 1. Kết xuất bảng ma trận trộn ô 2 tầng Công văn
         WordExportEngine.build_matrix_table(doc, exam_data)
+        
+        doc.add_paragraph("\n")
         
         # 2. Kết xuất bảng đặc tả kĩ thuật tự co giãn
         WordExportEngine.build_specification_table(doc, exam_data)
