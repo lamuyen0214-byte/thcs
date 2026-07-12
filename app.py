@@ -4,11 +4,8 @@ import sys
 
 # Đảm bảo đường dẫn hệ thống
 sys.path.append(os.getcwd())
-
 # Cấu hình trang
 st.set_page_config(layout="wide", page_title="Hệ Sinh Thái Số -L.H.Dưỡng Education")
-
-# Gọi các file views ở đầu file để đảm bảo tính ổn định
 from views import teacher_support, teaching_support, department_mgmt
 
 # --- SIDEBAR: Giao diện cố định xuyên suốt ---
