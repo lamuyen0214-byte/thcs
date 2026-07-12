@@ -154,18 +154,8 @@ def render_de_kt_module():
     with col_req:
         bam_sat = st.checkbox("Bám sát nội dung đề cương/ma trận tải lên", value=True)
         yeu_cau_khac = st.text_area("Yêu cầu chi tiết", placeholder="Ví dụ: Chú trọng các câu hỏi liên hệ thực tế...", label_visibility="collapsed")
-    # 7. SỰ KIỆN CLICK NÚT BẤM KẾT HỢP DANH MỤC MÔ HÌNH THỰC TẾ TRÊN ẢNH CỦA THẦY
-    col_btn_run, col_model_sel = st.columns([2, 1])
-    with col_model_sel:
-        model_display_name = st.selectbox(
-            "Mô hình", 
-            ["3.1 Flash-Lite", "3.5 Flash", "3.1 Pro", "Tư duy mở rộng"], 
-            label_visibility="collapsed", index=0
-        )
-    with col_btn_run:
-        activated = st.button("🚀 TỰ ĐỘNG KHỞI TẠO MA TRẬN VÀ ĐỀ THI", type="primary", use_container_width=True)
-
-    if activated:
+    # 7. SỰ KIỆN CLICK NÚT BẤM (ĐÃ NÂNG CẤP LÕI AM HIỂU CHƯƠNG TRÌNH GDPT 2018 VÀ BỘ SÁCH KẾT NỐI TRI THỨC)
+    if st.button("🚀 TỰ ĐỘNG KHỞI TẠO MA TRẬN VÀ ĐỀ THI", type="primary", use_container_width=True):
         if not ten_bai.strip():
             st.warning("⚠️ Vui lòng nhập 'Tên bài kiểm tra / Đề số' trước khi khởi tạo.")
         else:
@@ -178,11 +168,11 @@ def render_de_kt_module():
                 st.error("⚠️ Lỗi cấu hình: Vui lòng nhập Gemini API Key ở thanh bên (Sidebar) trước!")
                 return
 
-            with st.spinner("AI đang đối chiếu dữ liệu tệp tin và thực thi chu trình soạn đề..."):
+            with st.spinner("🤖 Trợ lý AI đang kích hoạt kho tri thức GDPT 2018 và biên soạn đề kiểm tra..."):
                 chu_de_ai = f"{ten_bai} ({hinh_thuc}, {thoi_gian}). Tỷ lệ: NB {nhan_biet}%, TH {thong_hieu}%, VD {van_dung}%, VDC {van_dung_cao}%."
                 if yeu_cau_khac: chu_de_ai += f" Yêu cầu bổ sung: {yeu_cau_khac}"
 
-                # Cưỡng ép con trỏ stream quay về vị trí 0 bẻ gãy hoàn toàn lỗi rỗng chữ tệp tin
+                # Khởi tạo luồng trích xuất văn bản thô từ tài liệu đính kèm
                 file_context = ""
                 if de_cuong_file is not None:
                     try:
@@ -199,19 +189,34 @@ def render_de_kt_module():
                             file_context += "\n".join([p.text for p in docx.Document(de_cuong_file).paragraphs])
                     except Exception as e: print(e)
 
-                if not file_context.strip():
-                    file_context = f"Phạm vi đơn vị kiến thức: {ten_bai}."
-
-                # Ánh xạ nhãn hiển thị trong ảnh sang mã hằng số API Google AI Studio chính thống
+                # Ánh xạ nhãn hiển thị sang hằng số tên mô hình API của Google
                 model_mapping = {
                     "3.1 Flash-Lite": "models/gemini-2.5-flash",
                     "3.5 Flash": "models/gemini-2.5-flash",
                     "3.1 Pro": "models/gemini-1.5-pro",
                     "Tư duy mở rộng": "models/gemini-2.5-pro"
                 }
-                
-                primary_model = model_mapping.get(model_display_name, "models/gemini-2.5-flash")
+                primary_model = model_mapping.get(model_display_name if 'model_display_name' in locals() else "3.1 Flash-Lite", "models/gemini-2.5-flash")
                 fallback_queue = list(dict.fromkeys([primary_model, "models/gemini-2.5-flash", "models/gemini-1.5-pro", "models/gemini-2.5-pro"]))
+                score_item_1 = d1 / sl1 if sl1 > 0 else 0
+                score_item_2 = d2 / sl2 if sl2 > 0 else 0
+                score_item_3 = d3 / sl3 if sl3 > 0 else 0
+                score_item_4 = d4 / sl4 if sl4 > 0 else 0
+                tl_scores_str = ", ".join([f"Câu {idx+1} ({val}đ)" for idx, val in enumerate(diem_tl_list)])
+
+                # SIÊU CÂU LỆNH PROMPT SƯ PHẠM: Ép AI làm chủ tri thức GDPT 2018 và bộ sách Kết nối tri thức
+                system_instruction = f"""
+                Bạn là Viện trưởng Viện Khoa học Giáo dục kiêm Chuyên gia khảo thí cao cấp của Bộ GD&ĐT Việt Nam.
+                [YÊU CẦU NỀN TẢNG TUÂN THỦ]: Bạn phải sở hữu tri thức sâu rộng, am hiểu tường tận 100% mục tiêu cốt lõi của Chương trình GDPT 2018 đối với toàn bộ các môn học và cấu trúc nội dung phân phối chương trình của Bộ sách "Kết nối tri thức với cuộc sống".
+                [LUẬT ĐỐI CHIẾU FILE]:
+                - Kiểm tra xem [NỘI DUNG TÀI LIỆU] tải lên có ký tự chữ toán học/khoa học nào thuộc môn "{mon_hoc}" hay không.
+                - NẾU FILE TRỐNG hoặc file bị lỗi trích xuất chữ: Bạn TUYỆT ĐỐI KHÔNG ĐƯỢC TỪ CHỐI RA ĐỀ. Hãy chủ động kích hoạt ngay kho tri thức chuyên gia nội tại của bạn về môn {mon_hoc} {lop} thuộc bộ sách "Kết nối tri thức với cuộc sống" bám sát chủ đề "{ten_bai}" để tự động bù đắp thông tin và tiến hành biên soạn bộ đề đạt chuẩn quốc gia.
+                [TIẾN TRÌNH BIÊN SOẠN BẮT BUỘC]:
+                Mục 1: Thiết lập cấu trúc [MA TRẬN ĐỀ KIỂM TRA CHUẨN] phân hóa rõ ràng các cột dọc và hàng ngang mức độ: Nhận biết, Thông hiểu, Vận dụng, Vận dụng cao phân rõ 2 cột nhỏ TN/TL bám sát tỉ lệ {nhan_biet}:{thong_hieu}:{van_dung}:{van_dung_cao}.
+                Mục 2: Lập [BẢNG ĐẶC TẢ KỸ THUẬT VÀ TIÊU CHÍ CẦU ĐẠT CHI TIẾT] của từng câu hỏi.
+                Mục 3: Biên soạn [NỘI DUNG ĐỀ KIỂM TRA CHÍNH THỨC] môn {mon_hoc} {lop}. Cấu trúc đề: {chu_de_ai}. Trắc nghiệm: {sl1} câu MCQ Nhiều lựa chọn ({score_item_1:.2f}đ), {sl2} câu Đúng/Sai ({score_item_2:.2f}đ), {sl3} câu Điền khuyết ({score_item_3:.2f}đ), {sl4} câu ngắn ({score_item_4:.2f}đ). Tự luận: {int(so_cau_tl)} câu với biểu điểm chi tiết: {tl_scores_str}.
+                Mục 4: Xuất bản [ĐÁP ÁN VÀ HƯỚNG DẪN CHẤM] khóa mã trắc nghiệm và thang điểm tự luận chi tiết đến 0.25đ.
+                """
                 
                 response_text = None
                 activated_model_name = ""
@@ -219,43 +224,22 @@ def render_de_kt_module():
                 from google import genai
                 try:
                     client = genai.Client(api_key=str(user_raw_key))
-                except Exception as c_err:
-                    st.error(f"Lỗi khởi tạo SDK Client: {c_err}")
+                    for current_model in fallback_queue:
+                        try:
+                            response = client.models.generate_content(
+                                model=current_model,
+                                contents=[f"{system_instruction}\n\n[NỘI DUNG TÀI LIỆU GỐC TẢI LÊN]:\n{file_context[:8000]}"]
+                            )
+                            if response and response.text:
+                                response_text = response.text
+                                activated_model_name = current_model
+                                break
+                        except Exception as e:
+                            if "503" in str(e) or "429" in str(e) or "UNAVAILABLE" in str(e): continue
+                            else: raise e
+                except Exception as api_err:
+                    st.error(f"❌ Trục trặc kết nối mô hình AI: {api_err}")
                     return
-
-                score_item_1 = d1 / sl1 if sl1 > 0 else 0
-                score_item_2 = d2 / sl2 if sl2 > 0 else 0
-                score_item_3 = d3 / sl3 if sl3 > 0 else 0
-                score_item_4 = d4 / sl4 if sl4 > 0 else 0
-                tl_scores_str = ", ".join([f"Câu {idx+1} ({val}đ)" for idx, val in enumerate(diem_tl_list)])
-
-                # PROMPT SƯ PHẠM THẮT CHẶT: Ép buộc AI bắt mâu thuẫn môn học và đóng gói ma trận đặc tả
-                system_instruction = f"""
-                Bạn là chuyên gia kiểm định chất lượng khảo thí THCS Bộ GD&ĐT Việt Nam.
-                [NHIỆM VỤ 1 - BẮT MÂU THUẪN]: Hãy đối chiếu môn học được chọn là "{mon_hoc}" với văn bản [NỘI DUNG TÀI LIỆU]. Nếu phát hiện lệch môn học (Ví dụ chọn Khoa học tự nhiên nhưng đề cương tải lên lại chứa bài tập Toán, Văn...), bạn phải lập tức dừng ngay và ghi cảnh báo: "⚠️ CẢNH BÁO: PHÁT HIỆN MÂU THUẪN KIẾN THỨC. FILE TẢI LÊN KHÔNG PHẢI MÔN KHỞI TẠO." và cấm tạo câu hỏi.
-                [NHIỆM VỤ 2 - SOẠN ĐỀ THEO FILE]: Nếu trùng khớp, hãy biên soạn giáo án khảo thí gồm:
-                Mục 1: Thiết lập cấu trúc [MA TRẬN ĐỀ KIỂM TRA CHUẨN] phân chia rõ ràng các cột dọc và hàng ngang mức độ: Nhận biết, Thông hiểu, Vận dụng, Vận dụng cao bám sát tỉ lệ {nhan_biet}:{thong_hieu}:{van_dung}:{van_dung_cao}.
-                Mục 2: Lập [BẢNG ĐẶC TẢ KỸ THUẬT VÀ TIÊU CHÍ CẦU ĐẠT CHI TIẾT] của từng câu hỏi.
-                Mục 3: Biên soạn [NỘI DUNG ĐỀ KIỂM TRA CHÍNH THỨC] môn {mon_hoc} {lop} bám sát 100% tài liệu đính kèm. Cấu trúc đề: {chu_de_ai}. Trắc nghiệm: {sl1} câu MCQ Nhiều lựa chọn ({score_item_1:.2f}đ), {sl2} câu Đúng/Sai ({score_item_2:.2f}đ), {sl3} câu Điền khuyết ({score_item_3:.2f}đ), {sl4} câu ngắn ({score_item_4:.2f}đ). Tự luận: {int(so_cau_tl)} câu với biểu điểm: {tl_scores_str}.
-                Mục 4: Xuất bản [ĐÁP ÁN VÀ HƯỚNG DẪN CHẤM] khóa mã trắc nghiệm và thang điểm tự luận.
-                """
-                
-                for current_model in fallback_queue:
-                    try:
-                        response = client.models.generate_content(
-                            model=current_model,
-                            contents=[f"{system_instruction}\n\n[NỘI DUNG TÀI LIỆU GỐC TẢI LÊN]:\n{file_context[:8000]}"]
-                        )
-                        if response and response.text:
-                            response_text = response.text
-                            activated_model_name = current_model
-                            break
-                    except Exception as single_err:
-                        if "503" in str(single_err) or "429" in str(single_err) or "UNAVAILABLE" in str(single_err):
-                            continue
-                        else:
-                            st.error(f"❌ Lỗi xác thực: {single_err}")
-                            return
 
                 if response_text:
                     st.session_state['current_exam_data'] = {
@@ -265,10 +249,12 @@ def render_de_kt_module():
                         "tl_scores": [str(v) for v in diem_tl_list], "r_nb": str(nhan_biet), "r_th": str(thong_hieu), "r_vd": str(van_dung), "r_vdc": str(van_dung_cao),
                         "ai_generated_content": response_text
                     }
-                    st.success("✅ Hệ thống bóc tách ma trận và soạn đề thi hoàn tất!")
+                    st.success(f"✅ Đã khởi tạo đề thi thành công từ kho tri thức chuyên gia!")
                     st.rerun()
                 else:
-                    st.error("❌ Tất cả các cổng máy chủ của Google đều đang quá tải. Thầy cô vui lòng bấm nút thử lại sau!")
+                    st.error("❌ Tất cả các cổng máy chủ của Google hiện đang bận do quá tải. Thầy cô vui lòng bấm thử lại sau ít phút!")
+    
+    
 
     # 8. CẶP NÚT BẤM CHỨC NĂNG KẾT XUẤT CỐ ĐỊNH 100% RA MÀN HÌNH THEO ĐÚNG YÊU CẦU
     st.markdown("---")
