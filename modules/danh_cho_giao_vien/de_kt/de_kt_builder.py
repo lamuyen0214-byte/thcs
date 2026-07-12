@@ -221,7 +221,7 @@ def render_de_kt_module():
                     Bạn là chuyên gia khảo thí THCS Bộ GD&ĐT Việt Nam.
                     [NHIỆM VỤ 1 - KIỂM TRA MÂU THUẪN]: Đối chiếu môn "{mon_hoc}" với văn bản trong [NỘI DUNG ĐỀ CƯƠNG TẢI LÊN]. Nếu lệch môn học (Ví dụ: chọn môn Khoa học tự nhiên nhưng đề cương lại là Toán, Văn...), hãy dừng ngay và ghi chữ cảnh báo: "⚠️ CẢNH BÁO: PHÁT HIỆN MÂU THUẪN KIẾN THỨC. FILE TẢI LÊN KHÔNG PHẢI MÔN KHỞI TẠO." và dừng lại.
                     [NHIỆM VỤ 2 - SOẠN ĐỀ THEO FILE]: Nếu khớp môn học, hãy soạn đề thi môn {mon_hoc} {lop} bám sát hoàn toàn vào phạm vi kiến thức trong [NỘI DUNG ĐỀ CƯƠNG TẢI LÊN].
-                    Cấu trúc đề thi bắt buộc phân bổ: {chu_de_ai}. Trắc nghiệm: {sl1} câu MCQ Nhiều lựa chọn ({score_item_1:.2f}đ), {sl2} câu Đúng/Sai ({score_item_2:.2f}đ), {sl3} câu Điền khuyết ({score_item_3:.2f}đ), {sl4} câu ngắn ({score_item_6:.2f}đ). Tự luận: {int(so_cau_tl)} câu với biểu điểm chi tiết từng câu: {tl_scores_str}.
+                    Cấu trúc đề thi bắt buộc phân bổ: {chu_de_ai}. Trắc nghiệm: {sl1} câu MCQ Nhiều lựa chọn ({score_item_1:.2f}đ), {sl2} câu Đúng/Sai ({score_item_2:.2f}đ), {sl3} câu Điền khuyết ({score_item_3:.2f}đ), {sl4} câu ngắn ({score_item_4:.2f}đ). Tự luận: {int(so_cau_tl)} câu với biểu điểm chi tiết từng câu: {tl_scores_str}.
                     Yêu cầu chia văn bản rõ ràng thành PHẦN 1: ĐỀ KIỂM TRA MINH HỌA và PHẦN 2: ĐÁP ÁN VÀ HƯỚNG DẪN CHẤM CHI TIẾT.
                     """
                     
