@@ -4,6 +4,17 @@
 import streamlit as st
 from google import genai
 import os
+import sys
+
+# --- 0. THUẬT TOÁN ĐỊNH VỊ TỰ ĐỘNG: Ép Python nạp thư mục con 'main' vào luồng tìm kiếm hệ thống ---
+current_working_dir = os.getcwd()
+if current_working_dir not in sys.path:
+    sys.path.append(current_working_dir)
+
+# Nếu chạy trên cấu trúc GitHub có folder con 'main', tự động nhúng đường dẫn con sạch lỗi KeyError
+sub_main_path = os.path.join(current_working_dir, "main")
+if os.path.exists(sub_main_path) and sub_main_path not in sys.path:
+    sys.path.append(sub_main_path)
 
 # --- 1. GIAO DIỆN NHẬP KEY BẢO MẬT TẠI SIDEBAR ---
 st.sidebar.markdown("---")
@@ -36,7 +47,7 @@ else:
     if final_api_key:
         st.sidebar.info("💡 Đang sử dụng API Key dự phòng của hệ thống.")
 
-# --- 3. KHỔI TẠO BIẾN CLIENT VÀO SESSION STATE ---
+# --- 3. KHỞI TẠO BIẾN CLIENT VÀO SESSION STATE ---
 if final_api_key:
     try:
         gemini_client = genai.Client(api_key=str(final_api_key))
@@ -47,8 +58,14 @@ else:
     st.sidebar.warning("⚠️ Vui lòng cấu hình API Key để kích hoạt Trợ lý AI.")
 
 # --- 4. GỌI PHÂN HỆ ROUTER THÔNG SUỐT ---
-# ĐÃ HIỆU CHỈNH: Chỉ import đúng hàm route_teacher tồn tại trong core/router.py
-from core.router import route_teacher
+# ĐÃ HIỆU CHỈNH: Tích hợp cơ chế tìm kiếm đa cấp bẻ gãy hoàn toàn bẫy lỗi KeyError
+try:
+    from core.router import route_teacher
+except KeyError:
+    # Luồng dự phòng cưỡng ép nạp trực tiếp qua folder con 'main' nếu cache RAM cloud bị đóng băng
+    from main.core.router import route_teacher
+except ModuleNotFoundError:
+    from main.core.router import route_teacher
 
 def main():
     route_teacher()
