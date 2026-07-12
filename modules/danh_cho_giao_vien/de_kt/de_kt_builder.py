@@ -240,7 +240,6 @@ def render_de_kt_module():
                 except Exception as api_err:
                     st.error(f"❌ Trục trặc kết nối mô hình AI: {api_err}")
                     return
-
                 if response_text:
                     st.session_state['current_exam_data'] = {
                         "type": hinh_thuc, "custom_req": ten_bai if ten_bai else "De_Kiem_Tra",
@@ -249,8 +248,9 @@ def render_de_kt_module():
                         "tl_scores": [str(v) for v in diem_tl_list], "r_nb": str(nhan_biet), "r_th": str(thong_hieu), "r_vd": str(van_dung), "r_vdc": str(van_dung_cao),
                         "ai_generated_content": response_text
                     }
-                    st.success(f"✅ Đã khởi tạo đề thi thành công từ kho tri thức chuyên gia!")
-                    st.rerun()
+                    st.success("✅ Đã khởi tạo thành công Ma trận, Đặc tả và Đề thi chuẩn bộ sách Kết nối tri thức!")
+                  # ĐÃ SỬA: Loại bỏ hoàn toàn st.rerun(), giữ dữ liệu đệm khóa chặt trong RAM máy chủ
+
                 else:
                     st.error("❌ Tất cả các cổng máy chủ của Google hiện đang bận do quá tải. Thầy cô vui lòng bấm thử lại sau ít phút!")
     
