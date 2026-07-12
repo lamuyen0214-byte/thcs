@@ -48,7 +48,7 @@ class WordExportEngine:
         table.cell(0, 10).text = "Tổng"
         
         # Tiến hành trộn ngang tầng 1 và điền nhãn TN/TL cho tầng 2 bằng chỉ số tọa độ
-        for col_idx in:
+        for col_idx in range(1, 10, 2):
             table.cell(0, col_idx).merge(table.cell(0, col_idx + 1))
             table.cell(1, col_idx).text = "TN"
             table.cell(1, col_idx + 1).text = "TL"
