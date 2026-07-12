@@ -1,10 +1,10 @@
 import streamlit as st
 import os
 import requests
-
 def get_word_engine():
     try:
-        from export.word_export import WordExportEngine
+        # ĐÃ SỬA CHUẨN: Trỏ đúng vào tệp export_word.py trong thư mục export/
+        from export.export_word import WordExportEngine
         return WordExportEngine
     except Exception:
         return None
