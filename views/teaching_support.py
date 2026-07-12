@@ -1,5 +1,5 @@
 import streamlit as st
-
+from modules.teaching.rag_engine import process_rag_engine
 # Tạm thời khóa dòng import này lại để chờ Streamlit Cloud cài thư viện LangChain
 # from modules.rag_engine import process_rag_engine
 
@@ -36,17 +36,17 @@ def render_module():
         )
         
         # Khung tải tài liệu
-        if hinh_thuc == "Tài liệu tải lên (PDF, DOCX, Ảnh)":
-            st.write("Tải lên tài liệu của thầy/cô (PDF, DOCX, PNG, JPG):")
-            uploaded_file = st.file_uploader("", type=['pdf', 'docx', 'png', 'jpg'], label_visibility="collapsed")
-        else:
-            st.text_input("Nhập đường dẫn Website (URL):")
-            
-        st.markdown("---")
-        
-        # Phần truy vấn AI
-        st.markdown("#### 💬 Bước 2: Tương tác và truy vấn với AI")
-        st.info("💡 Vui lòng hoàn thành Bước 1 (Tải tài liệu và bấm phân tích) để kích hoạt Trợ lý AI.")
+     uploaded_file = None
+     hinh_thuc_url = None
+
+     if hinh_thuc_url_radio == "Tài liệu tải lên (PDF, DOCX, Ảnh)":
+         st.write("Tải lên tài liệu của thầy/cô (PDF, DOCX, PNG, JPG):")
+         uploaded_file = st.file_uploader("", type=['pdf', 'docx', 'png', 'jpg'], label_visibility="collapsed")
+     else:
+         hinh_thuc_url = st.text_input("Nhập đường dẫn Website (URL):")
+
+     # Gọi module RAG để xử lý Bước 2
+     process_rag_engine(uploaded_file, hinh_thuc_url)
 
     # --- CÁC THẺ CÒN LẠI (Chờ tích hợp) ---
     with tabs[1]:
