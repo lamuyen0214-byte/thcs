@@ -125,6 +125,9 @@ def render_de_kt_module():
 # =====================================================================
 # FILE: modules/danh_cho_giao_vien/de_kt/de_kt_builder.py - PHẦN 3
 # =====================================================================
+    # =====================================================================
+# FILE: modules/danh_cho_giao_vien/de_kt/de_kt_builder.py - PHẦN 4A
+# =====================================================================
     col_btn_run, col_model_sel = st.columns(2)
     with col_model_sel:
         model_display_name = st.selectbox("Mô hình", ["3.1 Flash-Lite", "3.5 Flash", "3.1 Pro", "Tư duy mở rộng"], label_visibility="collapsed", index=0, key="sb_model_ai_de_kt_run")
@@ -135,7 +138,6 @@ def render_de_kt_module():
         if not ten_bai.strip():
             st.warning("⚠️ Vui lòng nhập 'Tên bài kiểm tra / Đề số' trước khi khởi tạo.")
         else:
-            # ĐÃ ĐỒNG BỘ CHÍ MẠNG: Triệt tiêu lệnh genai.Client cũ, bốc đúng Client tập trung từ file app.py cha
             client = st.session_state.get("gemini_client")
             if not client:
                 st.error("⚠️ Lỗi hệ thống: Chưa tìm thấy API Key hợp lệ tại Sidebar. Vui lòng kiểm tra lại!")
@@ -170,15 +172,18 @@ def render_de_kt_module():
                 response_text = None
                 system_instruction = f"Bạn là Chuyên gia khảo thí của Bộ GD&ĐT Việt Nam. Bộ sách độc tôn năm 2026: 'Kết nối tri thức với cuộc sống'. Hãy soạn ma trận dạng bảng, đặc tả và đề thi môn {mon_hoc} {lop} bám sát chủ đề: {ten_bai}. Tỷ lệ nhận thức: Nhận biết {nhan_biet}%, Thông hiểu {thong_hieu}%, Vận dụng {van_dung}%, Vận dụng cao {van_dung_cao}%."
                 
-                # Quét thông suốt chuỗi dự phòng thông minh bằng luồng Client cha tĩnh
+                # ĐÃ VÁ LỖI CÚ PHÁP CHÍ MẠNG: Dọn sạch dấu ngoặc thừa kẹt luồng Linux
                 for current_model in fallback_models:
                     try:
                         response = client.models.generate_content(model=current_model, contents=[f"{system_instruction}\n\n[DỮ LIỆU TÀI LIỆU]:\n{file_context[:8000]}"])
                         if response and response.text:
                             response_text = response.text
                             break
-                        except Exception: continue
-
+                    except Exception: 
+                        continue
+# =====================================================================
+# FILE: modules/danh_cho_giao_vien/de_kt/de_kt_builder.py - PHẦN 4B
+# =====================================================================
                 if response_text:
                     st.session_state['current_exam_data'] = {
                         "type": hinh_thuc, "custom_req": ten_bai if ten_bai else "De_Kiem_Tra", "ten_bai_save": str(ten_bai),
@@ -208,6 +213,7 @@ def render_de_kt_module():
             try: word_file = WordEngine.export_to_word(exam_cache)
             except Exception as e: st.error(f"💡 Trình dịch Word đang đồng bộ: {e}")
 
+    # KHUNG BIỂU MẪU CỐ ĐỊNH BỘ 3 NÚT BẤM HIỂN THỊ NGANG TĂM TẮP
     col_save, col_download, col_delete = st.columns(3)
     with col_save:
         if st.button("💾 Lưu file tạm thời", use_container_width=True, disabled=(exam_cache is None), key="btn_save_de_kt_final_k"):
@@ -222,3 +228,4 @@ def render_de_kt_module():
         if st.button("❌ Xóa file", use_container_width=True, disabled=(exam_cache is None), key="btn_del_de_kt_final_k"):
             st.session_state['delete_action_trigger'] = True
             st.rerun()
+
