@@ -154,8 +154,20 @@ def render_de_kt_module():
     with col_req:
         bam_sat = st.checkbox("Bám sát nội dung đề cương/ma trận tải lên", value=True)
         yeu_cau_khac = st.text_area("Yêu cầu chi tiết", placeholder="Ví dụ: Chú trọng các câu hỏi liên hệ thực tế...", label_visibility="collapsed")
+    
     # 7. SỰ KIỆN CLICK NÚT BẤM (ĐÃ NÂNG CẤP LÕI AM HIỂU CHƯƠNG TRÌNH GDPT 2018 VÀ BỘ SÁCH KẾT NỐI TRI THỨC)
-    if st.button("🚀 TỰ ĐỘNG KHỞI TẠO MA TRẬN VÀ ĐỀ THI", type="primary", use_container_width=True):
+    # ĐÃ SỬA: Tích hợp menu thả xuống chọn mô hình AI để chủ động phòng tránh lỗi 404
+    col_btn_run, col_model_sel = st.columns([3, 1])
+    with col_model_sel:
+        model_display_name = st.selectbox(
+            "Mô hình", 
+            ["3.1 Flash-Lite", "3.5 Flash", "3.1 Pro", "Tư duy mở rộng"], 
+            label_visibility="collapsed", index=0
+        )
+    with col_btn_run:
+        btn_generate = st.button("🚀 TỰ ĐỘNG KHỞI TẠO MA TRẬN VÀ ĐỀ THI", type="primary", use_container_width=True)
+
+    if btn_generate:
         if not ten_bai.strip():
             st.warning("⚠️ Vui lòng nhập 'Tên bài kiểm tra / Đề số' trước khi khởi tạo.")
         else:
@@ -194,10 +206,11 @@ def render_de_kt_module():
                     "3.1 Flash-Lite": "models/gemini-2.5-flash",
                     "3.5 Flash": "models/gemini-2.5-flash",
                     "3.1 Pro": "models/gemini-1.5-pro",
-                    "T Tư duy mở rộng": "models/gemini-2.5-pro"
+                    "Tư duy mở rộng": "models/gemini-2.5-pro"
                 }
-                primary_model = model_mapping.get(model_display_name if 'model_display_name' in locals() else "3.1 Flash-Lite", "models/gemini-2.5-flash")
+                primary_model = model_mapping.get(model_display_name, "models/gemini-2.5-flash")
                 fallback_queue = list(dict.fromkeys([primary_model, "models/gemini-2.5-flash", "models/gemini-1.5-pro", "models/gemini-2.5-pro"]))
+                
                 score_item_1 = d1 / sl1 if sl1 > 0 else 0
                 score_item_2 = d2 / sl2 if sl2 > 0 else 0
                 score_item_3 = d3 / sl3 if sl3 > 0 else 0
@@ -235,7 +248,8 @@ def render_de_kt_module():
                                 activated_model_name = current_model
                                 break
                         except Exception as e:
-                            if "503" in str(e) or "429" in str(e) or "UNAVAILABLE" in str(e): continue
+                            # Tích hợp thêm lỗi 404 để tự động đẩy sang mô hình khác
+                            if "503" in str(e) or "429" in str(e) or "UNAVAILABLE" in str(e) or "404" in str(e): continue
                             else: raise e
                 except Exception as api_err:
                     st.error(f"❌ Trục trặc kết nối mô hình AI: {api_err}")
@@ -248,11 +262,10 @@ def render_de_kt_module():
                         "tl_scores": [str(v) for v in diem_tl_list], "r_nb": str(nhan_biet), "r_th": str(thong_hieu), "r_vd": str(van_dung), "r_vdc": str(van_dung_cao),
                         "ai_generated_content": response_text
                     }
-                    st.success("✅ Đã khởi tạo thành công Ma trận, Đặc tả và Đề thi chuẩn bộ sách Kết nối tri thức!")
-                  # ĐÃ SỬA: Loại bỏ hoàn toàn st.rerun(), giữ dữ liệu đệm khóa chặt trong RAM máy chủ
+                    st.success(f"✅ Đã khởi tạo thành công bằng mô hình {activated_model_name}!")
 
                 else:
-                    st.error("❌ Tất cả các cổng máy chủ của Google hiện đang bận do quá tải. Thầy cô vui lòng bấm thử lại sau ít phút!")
+                    st.error("❌ Tất cả các cổng máy chủ của Google hiện đang bận do quá tải hoặc báo lỗi 404. Thầy cô vui lòng chọn mô hình khác hoặc thử lại sau!")
     
     
 
