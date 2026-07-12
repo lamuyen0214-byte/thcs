@@ -116,7 +116,10 @@ Yêu cầu: Văn phong chuyên nghiệp, nhân văn, bám sát các nguyên tắ
         tieu_de_luu = "Ho_Tro_HS_Khuyet_Tat"
 
     # 3. NÚT XỬ LÝ
-    if st.button(f"🚀 THỰC THI: {nghiep_vu.split()[1]}", type="primary", use_container_width=True):
+    # Cắt bỏ icon ở đầu, giữ nguyên tên nghiệp vụ và viết hoa
+    ten_hien_thi = " ".join(nghiep_vu.split()[1:]).upper()
+    
+    if st.button(f"🚀 THỰC THI: {ten_hien_thi}", type="primary", use_container_width=True):
         if not noi_dung_input.strip():
             st.warning("⚠️ Thầy/Cô vui lòng nhập thông tin vào khung trống trước khi thực thi.")
             return
