@@ -1,23 +1,32 @@
 import streamlit as st
-# Sử dụng Google GenAI SDK chính thống
-from google import genai 
+from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
+from langchain_community.vectorstores import Chroma
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain.chains import RetrievalQA
+from langchain_community.document_loaders import TextLoader # Hoặc PyPDFLoader nếu dùng PDF
 
 def process_rag_engine(uploaded_file, user_query):
     if not uploaded_file:
-        return "Vui lòng tải tài liệu lên trước."
+        return "Vui lòng tải tài liệu lên."
     
-    # Giả lập xử lý RAG: Đọc nội dung file (Thầy sẽ tích hợp langchain/vector store ở đây sau)
-    file_content = uploaded_file.read().decode("utf-8", errors="ignore")
+    # 1. Lưu file tạm để LangChain đọc
+    with open("temp_file.txt", "wb") as f:
+        f.write(uploaded_file.getbuffer())
     
-    # Gọi AI để trả lời dựa trên file
-    client = st.session_state.get("gemini_client")
-    if not client:
-        return "Chưa cấu hình Gemini API Key."
-        
-    prompt = f"Dựa vào tài liệu sau: {file_content[:5000]}... \n\n Hãy trả lời câu hỏi: {user_query}"
+    # 2. Load và phân tách văn bản (Chunking)
+    loader = TextLoader("temp_file.txt")
+    documents = loader.load()
+    text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
+    texts = text_splitter.split_documents(documents)
     
-    response = client.models.generate_content(
-        model="gemini-1.5-flash",
-        contents=prompt
-    )
-    return response.text
+    # 3. Tạo Vector Database (sử dụng Embedding của Google)
+    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001", google_api_key=st.session_state["user_gemini_key"])
+    db = Chroma.from_documents(texts, embeddings)
+    
+    # 4. Thiết lập chuỗi RetrievalQA với Gemini
+    llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash", google_api_key=st.session_state["user_gemini_key"])
+    qa_chain = RetrievalQA.from_chain_type(llm, retriever=db.as_retriever())
+    
+    # 5. Truy vấn
+    response = qa_chain.invoke({"query": user_query})
+    return response["result"]
