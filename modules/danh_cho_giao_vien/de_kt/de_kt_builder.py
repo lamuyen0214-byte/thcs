@@ -7,7 +7,8 @@ import requests
 
 def get_word_engine():
     try:
-        from export.export_word import WordExportEngine
+        # Sửa dòng 10 trong cả 2 file thành:
+from export.export_word import WordExportEngine
         return WordExportEngine
     except Exception as e:
         print(f"Lỗi nạp module Word: {e}")
