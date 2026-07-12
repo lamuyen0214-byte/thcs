@@ -61,9 +61,22 @@ def render_stem_module():
             st.warning("⚠️ Thầy/Cô vui lòng nhập 'Chủ đề / Tên dự án STEM' trước khi khởi tạo.")
             return
 
-        client = st.session_state.get("gemini_client")
-        if not client:
-            st.error("⚠️ Lỗi xác thực: Vui lòng kiểm tra hoặc nhập lại API Key ở thanh bên (Sidebar)!")
+        # Lấy trực tiếp chuỗi API Key thô từ bộ nhớ hoặc Secrets
+        user_raw_key = st.session_state.get("user_gemini_key", "").strip()
+        if not user_raw_key:
+            if "GEMINI_API_KEY" in st.secrets: user_raw_key = st.secrets["GEMINI_API_KEY"].strip()
+            elif "GOOGLE_API_KEY" in st.secrets: user_raw_key = st.secrets["GOOGLE_API_KEY"].strip()
+
+        if not user_raw_key:
+            st.error("⚠️ Lỗi cấu hình: Vui lòng nhập Gemini API Key ở thanh bên (Sidebar) trước!")
+            return
+            
+        from google import genai
+        try:
+            # Tự động khởi tạo lại Client an toàn
+            client = genai.Client(api_key=str(user_raw_key))
+        except Exception as api_err:
+            st.error(f"❌ Trục trặc khởi tạo máy chủ AI: {api_err}")
             return
 
         with st.spinner("🤖 Trợ lý AI đang áp dụng quy trình EDP để thiết kế giáo án STEM..."):
