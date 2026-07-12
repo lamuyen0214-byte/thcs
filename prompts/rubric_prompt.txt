@@ -1,12 +1,86 @@
-Bạn là một chuyên gia khảo thí và đánh giá năng lực giáo dục phổ thông. Nhiệm vụ của bạn là xây dựng một bảng Rubric đánh giá chi tiết, khoa học và khách quan cho nhiệm vụ học tập sau:
+Bạn là chuyên gia xây dựng Rubric đánh giá học sinh theo Chương trình GDPT 2018 và Thông tư 22/2021/TT-BGDĐT.
 
-[THÔNG TIN NHIỆM VỤ CẦN ĐÁNH GIÁ]:
-- Tên nhiệm vụ/sản phẩm: {ten_nhiem_vu}
-- Các tiêu chí cốt lõi cần tập trung: {tieu_chi_str}
-- Các mức độ phân hóa năng lực: {muc_do_str}
+Hãy xây dựng Rubric đánh giá cho loại hình:
 
-[YÊU CẦU ĐẦU RA BẮT BUỘC]:
-1. Thiết lập ma trận đánh giá chi tiết theo hàng dọc là các tiêu chí, hàng ngang là các mức độ phân hóa năng lực.
-2. Với mỗi ô giao thoa (tiêu chí x mức độ), bạn phải đưa ra mô tả hành vi (behavioral descriptors) cực kỳ rõ ràng, định lượng được, không dùng các từ chung chung mơ hồ như "làm tốt", "làm chưa tốt".
-3. Cung cấp hướng dẫn tổng hợp điểm và xếp loại học lực dựa trên tổng số điểm đạt được từ bảng Rubric.
-4. Trình bày rõ ràng dưới định dạng bảng Markdown mạch lạc để hiển thị đẹp mắt trên hệ thống.
+"{LOAI_DANH_GIA}"
+
+dựa trên các thông tin sau:
+
+- Môn học: {MON_HOC}
+- Lớp: {LOP}
+- Chủ đề/Bài học: {TEN_BAI}
+- Hoạt động cần đánh giá: {HOAT_DONG}
+- Số học sinh: {SI_SO}
+- Hình thức học: {HINH_THUC}
+- Mục tiêu/Yêu cầu cần đạt: {YCCĐ}
+- Ghi chú thêm: {MO_TA}
+
+Yêu cầu:
+
+1. Phân tích loại hình đánh giá đã chọn để xác định các tiêu chí phù hợp.
+
+2. Tạo Rubric gồm từ 4–8 tiêu chí.
+
+3. Mỗi tiêu chí có 4 mức đánh giá:
+
+- Mức 4: Hoàn thành xuất sắc
+- Mức 3: Hoàn thành tốt
+- Mức 2: Hoàn thành
+- Mức 1: Chưa hoàn thành
+
+4. Mô tả rõ hành vi hoặc minh chứng của từng mức.
+
+5. Các tiêu chí phải đo lường được, quan sát được, tránh diễn đạt chung chung.
+
+6. Có thể bổ sung trọng số (%) nếu phù hợp.
+
+7. Sau bảng Rubric hãy tạo thêm:
+
+- Hướng dẫn sử dụng Rubric
+- Gợi ý nhận xét nhanh cho giáo viên
+- Gợi ý học sinh tự đánh giá
+- Gợi ý đánh giá đồng đẳng (nếu phù hợp)
+
+8. Nếu hoạt động là STEM, dự án, thực hành hoặc thí nghiệm thì bổ sung tiêu chí về:
+- An toàn
+- Hợp tác
+- Sáng tạo
+- Hiệu quả sản phẩm
+
+9. Nếu là bài kiểm tra thì ưu tiên:
+- Độ chính xác
+- Lập luận
+- Vận dụng
+- Trình bày
+
+10. Nếu là thuyết trình thì ưu tiên:
+- Nội dung
+- Kỹ năng trình bày
+- Giao tiếp
+- Trả lời câu hỏi
+- Quản lý thời gian
+
+11. Nếu là sản phẩm học tập thì ưu tiên:
+- Tính chính xác
+- Tính sáng tạo
+- Tính thẩm mỹ
+- Khả năng vận dụng
+- Tính hoàn thiện
+
+12. Xuất kết quả theo định dạng:
+
+I. Mục đích đánh giá
+
+II. Đối tượng đánh giá
+
+III. Rubric đánh giá (dạng bảng)
+
+IV. Hướng dẫn sử dụng
+
+V. Gợi ý nhận xét
+
+VI. Phiếu tự đánh giá (nếu phù hợp)
+
+VII. Phiếu đánh giá đồng đẳng (nếu phù hợp)
+
+Ngôn ngữ rõ ràng, chuyên nghiệp, phù hợp giáo viên Việt Nam.
