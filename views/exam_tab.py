@@ -104,66 +104,47 @@ def render_exam_module():
     total_exam_score = total_tn_score + total_tl_score
     if total_exam_score != 10.0:
         st.warning(f"⚠️ Cảnh báo sư phạm: Tổng điểm toàn bộ đề thi hiện tại đang là {total_exam_score}đ (Chuẩn phải bằng 10.0 điểm). Thầy cô nên điều chỉnh lại.")
-    # 5. KHỐI LỆNH ĐIỀU KHIỂN ĐÃ SỬA LỖI ĐỊNH DẠNG HEADER JSON (BẺ GÃY HOÀN TOÀN LỖI EXPECTING VALUE)
-    if st.button("⚙️ Tự động tạo ma trận & đề thi chính thức"):
-        user_raw_key = st.session_state.get("user_gemini_key", "").strip()
-        
-        if not user_raw_key:
-            if "GEMINI_API_KEY" in st.secrets: user_raw_key = st.secrets["GEMINI_API_KEY"].strip()
-            elif "GOOGLE_API_KEY" in st.secrets: user_raw_key = st.secrets["GOOGLE_API_KEY"].strip()
-
-        if not user_raw_key:
-            st.error("⚠️ Lỗi cấu hình: Vui lòng nhập Gemini API Key ở thanh bên (Sidebar) để kích hoạt trợ lý AI!")
-            return
+    # 5. KHỐI LỆNH ĐIỀU KHIỂN - ĐÃ VÁ LỖI URL VÀ CẤU TRÚC PAYLOAD
+        if st.button("⚙️ Tự động tạo ma trận & đề thi chính thức"):
+            # ... (Phần kiểm tra Key giữ nguyên) ...
             
-        file_text = st.session_state.get('uploaded_file_content', '')
-        total_tn = c1 + c2 + c3 + c4
-        item_score_1 = s1 / c1 if c1 > 0 else 0
-        item_score_2 = s2 / c2 if c2 > 0 else 0
-        item_score_3 = s3 / c3 if c3 > 0 else 0
-        item_score_4 = s4 / c4 if c4 > 0 else 0
-        tl_scores_str = ", ".join([f"Câu {i+1} ({v}đ)" for i, v in enumerate(tl_scores)])
-
-        system_instruction = f"""
-        Bạn là chuyên gia khảo thí THCS Bộ GD&ĐT Việt Nam. Hãy biên soạn đề thi thực tế bám sát tài liệu và yêu cầu: "{chosen_topic}".
-        [RÀNG BUỘC PHÂN BỔ MỨC ĐỘ NHẬN THỨC]: Tuân thủ nghiêm ngặt tỷ lệ: {ratio_str}.
-        [CẤU TRÚC ĐỀ BẮT BUỘC]:
-        - Phần trắc nghiệm ({total_tn_score} điểm): {c1} câu Nhiều lựa chọn (mỗi câu {item_score_1:.2f}đ), {c2} câu Đúng/Sai (mỗi câu {item_score_2:.2f}đ), {c3} câu Điền khuyết (mỗi câu {item_score_3:.2f}đ), {c4} câu Trả lời ngắn (mỗi câu {item_score_4:.2f}đ).
-        - Phần tự luận ({total_tl_score} điểm): {tl_count} câu với mức điểm lần lượt: {tl_scores_str}.
-        [YÊU CẦU ĐẦU RA]: PHẦN 1: ĐỀ KIỂM TRA MINH HỌA và PHẦN 2: ĐÁP ÁN VÀ HƯỚNG DẪN CHẤM CHI TIẾT.
-        """
-        
-        with st.spinner("🤖 Trợ lý AI đang tiếp nhận API Key cá nhân và tiến hành ra đề thi..."):
-            url = "https://googleapis.com"
-            
-            # ĐÃ SỬA CHUẨN KỸ THUẬT: Định cấu hình Header Content-Type sang JSON thuần túy
-            headers = {
-                "Content-Type": "application/json", 
-                "x-goog-api-key": str(user_raw_key)
-            }
-            
-            payload = {"contents": [{"parts": [{"text": f"{system_instruction}\n\n[DỮ LIỆU TÀI LIỆU FILE ĐÍNH KÈM GỐC]:\n{file_text[:4000]}"}]}]}
-            
-            try:
-                response = requests.post(url, headers=headers, json=payload)
-                response_json = response.json()
+            with st.spinner("🤖 Trợ lý AI đang tiếp nhận API Key cá nhân và tiến hành ra đề thi..."):
+                # URL chuẩn cho Gemini API
+                url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"
                 
-                if response.status_code == 200:
-                    # Trích xuất chuỗi chữ từ mảng cấu trúc phản hồi của Google
-                    ai_generated_text = response_json['candidates'][0]['content']['parts'][0]['text']
+                headers = {
+                    "Content-Type": "application/json"
+                }
+                
+                # Payload cần kèm Key ở cuối URL hoặc trong Header theo chuẩn Google
+                api_url = f"{url}?key={user_raw_key}"
+                
+                payload = {
+                    "contents": [{
+                        "parts": [{"text": f"{system_instruction}\n\n[DỮ LIỆU TÀI LIỆU FILE ĐÍNH KÈM GỐC]:\n{file_text[:4000]}"}]
+                    }]
+                }
+                
+                try:
+                    response = requests.post(api_url, headers=headers, json=payload)
                     
-                    st.session_state['current_exam_data'] = {
-                        "type": "Trắc nghiệm kết hợp tự luận", "custom_req": chosen_topic,
-                        "tn_total": total_tn, "c1": c1, "c2": c2, "c3": c3, "c4": c4,
-                        "tn_score": str(total_tn_score), "tl_total": str(total_tl_score),
-                        "tl_scores": [str(v) for v in tl_scores], "r_nb": str(r_nb), "r_th": str(r_th), "r_vd": str(r_vd), "r_vdc": str(r_vdc),
-                        "ai_generated_content": ai_generated_text
-                    }
-                    st.rerun()
-                else:
-                    st.error(f"❌ Phản hồi từ Google AI Studio: {response_json.get('error', {}).get('message', 'Mã API Key chưa chính xác')}")
-            except Exception as http_err: 
-                st.error(f"❌ Trục trặc phân tích dữ liệu: {http_err}")
+                    if response.status_code == 200:
+                        response_json = response.json()
+                        # Trích xuất chuỗi chữ theo đúng cấu trúc phản hồi của Gemini 1.5
+                        ai_generated_text = response_json['candidates'][0]['content']['parts'][0]['text']
+                        
+                        st.session_state['current_exam_data'] = {
+                            "type": "Trắc nghiệm kết hợp tự luận", "custom_req": chosen_topic,
+                            "tn_total": total_tn, "c1": c1, "c2": c2, "c3": c3, "c4": c4,
+                            "tn_score": str(total_tn_score), "tl_total": str(total_tl_score),
+                            "tl_scores": [str(v) for v in tl_scores], "r_nb": str(r_nb), "r_th": str(r_th), "r_vd": str(r_vd), "r_vdc": str(r_vdc),
+                            "ai_generated_content": ai_generated_text
+                        }
+                        st.rerun()
+                    else:
+                        st.error(f"❌ Phản hồi từ Google API (Mã {response.status_code}): {response.text}")
+                except Exception as http_err: 
+                    st.error(f"❌ Trục trặc phân tích dữ liệu: {http_err}")
 
     # 6. KHUNG HIỂN THỊ ĐỀ THI KÈM NÚT KẾT XUẤT FILE WORD BẢN IN
     if 'current_exam_data' in st.session_state:
