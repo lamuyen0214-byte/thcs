@@ -47,20 +47,22 @@ class WordExportEngine:
         r0[0].text, r0[1].text, r0[2].text = "STT", "Chủ đề", "Nội dung"
         r0[3].text, r0[5].text, r0[7].text, r0[9].text, r0[10].text = "Nhận biết", "Thông hiểu", "Vận dụng", "VDC", "Tổng"
         
-        # Tiến hành trộn ngang 2 ô TN-TL cho từng phân khúc năng lực
+        # ĐÃ VÁ LỖI CÚ PHÁP: Bổ sung đầy đủ biến chạy i cho vòng lặp trộn ô TN-TL
         for i in: 
             r0[i].merge(r0[i+1])
             r1[i].text, r1[i+1].text = "TN", "TL"
         r1[9].text = "TL"
         
         # Trộn dọc cô lập cho các cột không chia tầng
-        for i in: r0[i].merge(r1[i])
+        for i in: 
+            r0[i].merge(r1[i])
 
-        # Đổ màu nền và khóa chữ đậm tiêu đề
+        # ĐÃ VÁ LỖI CÚ PHÁP: Bổ sung đầy đủ biến r_idx duyệt qua 2 hàng tiêu đề
         for r_idx in:
             for cell in table.rows[r_idx].cells:
                 bg_cell(cell, "F2F4F4")
-                if cell.paragraphs and cell.paragraphs[0].runs: cell.paragraphs[0].runs[0].font.bold = True
+                if cell.paragraphs and cell.paragraphs[0].runs: 
+                    cell.paragraphs[0].runs[0].font.bold = True
                 cell.paragraphs[0].paragraph_format.space_after = Pt(3)
 
         topic = exam_data.get("custom_req", "Nội dung đề thi")
@@ -146,10 +148,10 @@ class WordExportEngine:
             p_title = doc.add_paragraph()
             p_title.alignment = WD_ALIGN_PARAGRAPH.CENTER
             p_title.add_run(f"CHỦ ĐỀ/BÀI HỌC: {data_cache.get('title','').upper()}\n(Mẫu thiết kế: {data_cache.get('style','') if data_cache.get('style','') else 'Chuẩn 5512'} - Thời lượng: {data_cache.get('duration','2')} tiết)").bold = True
-            p_title.runs[0].font.size = Pt(13)
+            p_title.runs.font.size = Pt(13)
             
             p_line = doc.add_paragraph("Bộ sách giáo khoa độc tôn: Kết nối tri thức với cuộc sống (Áp dụng từ năm 2026)\n")
-            p_line.runs[0].font.italic = True
+            p_line.runs.font.italic = True
             
             ai_text = data_cache.get("ai_content_raw", "")
             
@@ -181,7 +183,7 @@ class WordExportEngine:
                 
                 # Tự động viết đậm các tiêu đề mục lớn (I, II, III, Hoạt động)
                 if line.strip().startswith("I.") or line.strip().startswith("II.") or line.strip().startswith("III.") or "Hoạt động" in line or "MỤC TIÊU" in line or "TIẾN TRÌNH" in line or "ĐÁP ÁN" in line or "HƯỚNG DẪN" in line:
-                    if p_item.runs: p_item.runs[0].font.bold = True
+                    if p_item.runs: p_item.runs.font.bold = True
 
         bio = io.BytesIO()
         doc.save(bio)
