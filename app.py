@@ -1,12 +1,12 @@
 # =====================================================================
-# FILE CHUẨN HÓA CỦA THẦY LÊ HỒNG DƯỠNG: app.py (SẠCH LỖI IMPORT 2026)
+# FILE CHUẨN HÓA CỦA THẦY LÊ HỒNG DƯỠNG: app.py (VÁ SẠCH LỖI KHỞI CHẠY)
 # =====================================================================
 import streamlit as st
-from google import genai
 import os
 import sys
 
-# --- 0. THUẬT TOÁN ĐỊNH VỊ TỰ ĐỘNG: Nạp folder con 'main' vào luồng tìm kiếm hệ thống ---
+# --- BƯỚC 0: THUẬT TOÁN ĐỊNH VỊ TỐI CAO - BẮT BUỘC PHẢI ĐẶT TRÊN CÙNG TRƯỚC LUỒNG IMPORT ---
+# Ép Python nạp thư mục hiện tại và folder con 'main' vào luồng tìm kiếm hệ thống
 current_working_dir = os.getcwd()
 if current_working_dir not in sys.path:
     sys.path.append(current_working_dir)
@@ -15,22 +15,31 @@ sub_main_path = os.path.join(current_working_dir, "main")
 if os.path.exists(sub_main_path) and sub_main_path not in sys.path:
     sys.path.append(sub_main_path)
 
-# --- 1. KHÓA CẤU HÌNH TỐI CAO ĐẦU FILE: Bung rộng tràn viền sát lề laptop của thầy ---
+# --- BƯỚC 1: KHÓA CẤU HÌNH TRANG ĐẦU TIÊN - Bung rộng tràn viền sát lề laptop ---
 try:
     st.set_page_config(layout="wide", page_title="Hệ Sinh Thái Số - L.H.Dưỡng Education", page_icon="👨‍🏫")
 except Exception:
     pass
 
-# --- 2. LUỒNG NẠP ĐA CẤP ĐƯỜNG DẪN MODULE VIEWS CHỐNG SẬP ỨNG DỤNG ---
+# --- BƯỚC 2: GỌI CÁC FILE VIEWS ĐA CẤP ĐÃ VÁ LỖI KHÔNG TÌM THẤY MODULE ---
 try:
+    # Thử nạp luồng trực tiếp ở thư mục gốc
     from views import teacher_support, teaching_support, department_mgmt
-except (ModuleNotFoundError, ImportError):
+except (ModuleNotFoundError, ImportError, KeyError):
     try:
+        # Nếu kẹt folder con 'main', luồng dự phòng cưỡng ép nạp xuyên thấu folder con
         from main.views import teacher_support, teaching_support, department_mgmt
-    except Exception as e:
-        st.error(f"🛑 Trục trặc tệp tin: Hệ thống không tìm thấy thư mục 'views/' trên GitHub. Chi tiết: {e}")
+    except Exception as path_err:
+        st.error("🛑 Trục trặc tệp tin: Hệ thống không tìm thấy thư mục 'views' trên kho GitHub của thầy.")
+        st.info(f"💡 Chi tiết kỹ thuật: {path_err}")
 
-# --- 3. SIDEBAR: GIỮ NGUYÊN VẸN 100% THIẾT KẾ CỦA THẦY LÊ HỒNG DƯỠNG ---
+# Nạp thư viện kết nối AI chính hãng của Google
+try:
+    from google import genai
+except ImportError:
+    pass
+
+# --- BƯỚC 3: SIDEBAR - GIỮ NGUYÊN VẸN 100% THIẾT KẾ CỦA THẦY LÊ HỒNG DƯỠNG ---
 with st.sidebar:
     st.markdown("""
         <h2 style='text-align: center; color: red; font-size: 24px; margin-bottom: 5px;'>
@@ -51,12 +60,11 @@ with st.sidebar:
     st.markdown("🔑 **Cấu hình API Key Cá Nhân**")
     api_key = st.text_input("Nhập Gemini API Key:", type="password", value=st.session_state.get("user_gemini_key", ""), key="ti_api_key_root")
     
-    # Kích hoạt luồng trích xuất và cấp quyền Client tập trung
     if api_key:
         st.session_state["user_gemini_key"] = api_key.strip()
         st.markdown("<p style='font-size: 12px; color: green;'>🎯 Đang chạy bằng tài khoản Gemini cá nhân.</p>", unsafe_allow_html=True)
 
-    # Thuật toán khởi tạo Client động từ dữ liệu nhập vào
+    # Khởi tạo và đồng bộ Client tập trung vào RAM hệ thống phục vụ 2 phân hệ KHBD và Đề KT
     final_api_key = st.session_state.get("user_gemini_key", "").strip()
     if not final_api_key:
         if "GEMINI_API_KEY" in st.secrets: final_api_key = st.secrets["GEMINI_API_KEY"]
@@ -77,7 +85,7 @@ with st.sidebar:
         </div>
     """, unsafe_allow_html=True)
 
-# --- 4. ĐIỀU PHỐI (ROUTER) THÔNG SUỐT ---
+# --- BƯỚC 4: ĐIỀU PHỐI (ROUTER) ĐỂ HIỂN THỊ GIAO DIỆN PHÂN HỆ ---
 def run_router():
     try:
         if phan_he == "Hỗ trợ Giáo viên":
@@ -87,7 +95,7 @@ def run_router():
         elif phan_he == "Quản lý Tổ chuyên môn":
             department_mgmt.render_module()
     except Exception as run_err:
-        st.error(f"💡 Phân hệ đang được AI cập nhật mã nguồn đồng bộ: {run_err}")
+        st.error(f"💡 Hệ thống đang đồng bộ mã nguồn của phân hệ: {run_err}")
 
 if __name__ == "__main__":
     run_router()
