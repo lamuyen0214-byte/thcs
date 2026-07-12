@@ -1,6 +1,6 @@
-import streamlit as st  # Dòng này là bắt buộc để file này hiểu 'st' là gì
+import streamlit as st
 
 def render_module():
-    # Toàn bộ code chức năng của thầy ở đây
-    st.subheader("Hỗ trợ Giáo viên")
-    # ...
+    st.header("📚 Phân hệ: Hỗ trợ Giảng dạy")
+    # Toàn bộ code RAG, Trò chơi, Chấm bài của thầy dán ở đây
+    st.write("Nơi hỗ trợ các hoạt động giảng dạy trên lớp.")
