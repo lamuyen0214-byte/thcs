@@ -208,16 +208,6 @@ def render_de_kt_module():
                             file_context += "\n".join([p.text for p in docx.Document(de_cuong_file).paragraphs])
                     except Exception as e: print(e)
 
-                # Ánh xạ nhãn hiển thị sang hằng số tên mô hình API của Google
-                # =========================================================================
-                # BẮT ĐẦU ĐOẠN THAY THẾ (GIỮ NGUYÊN TOÀN BỘ PHẦN TRÊN VÀ DƯỚI)
-                # =========================================================================
-                
-                # Ánh xạ nhãn hiển thị sang hằng số tên mô hình API chuẩn, độ tương thích 100% với mọi API Key
-                # =========================================================================
-                # BẮT ĐẦU ĐOẠN THAY THẾ (GIỮ NGUYÊN TOÀN BỘ PHẦN TRÊN VÀ DƯỚI)
-                # =========================================================================
-                
                 # Cập nhật danh sách định danh mô hình chuẩn xác nhất của Google hiện tại
                 model_mapping = {
                     "3.1 Flash-Lite": "gemini-1.5-flash-8b",
@@ -225,7 +215,7 @@ def render_de_kt_module():
                     "3.1 Pro": "gemini-2.0-flash",
                     "Tư duy mở rộng": "gemini-1.5-pro-latest"
                 }
-                primary_model = model_mapping.get(model_display_name if 'model_display_name' in locals() else "3.1 Flash-Lite", "gemini-1.5-flash")
+                primary_model = model_mapping.get(model_display_name, "gemini-1.5-flash")
                 
                 # Danh sách dự phòng toàn các mô hình cực nhẹ, tốc độ cao, độ tương thích API 100%
                 fallback_queue = list(dict.fromkeys([primary_model, "gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-2.0-flash"]))
@@ -288,26 +278,7 @@ def render_de_kt_module():
                     # In rõ ràng lịch sử "chiến đấu" của vòng lặp để giáo viên không bị rối
                     error_details = "\n\n".join(error_log)
                     st.error(f"❌ Không thể kết nối AI sau khi đã quét toàn bộ các mô hình dự phòng. Chi tiết lỗi hệ thống:\n{error_details}")
-                    
-                # =========================================================================
-                # KẾT THÚC ĐOẠN THAY THẾ
-                # =========================================================================
-                    st.session_state['current_exam_data'] = {
-                        "type": hinh_thuc, "custom_req": ten_bai if ten_bai else "De_Kiem_Tra",
-                        "tn_total": tong_so_cau_tn, "c1": sl1, "c2": sl2, "c3": sl3, "c4": sl4,
-                        "tn_score": str(tong_diem_tn), "tl_total": str(tong_diem_tl),
-                        "tl_scores": [str(v) for v in diem_tl_list], "r_nb": str(nhan_biet), "r_th": str(thong_hieu), "r_vd": str(van_dung), "r_vdc": str(van_dung_cao),
-                        "ai_generated_content": response_text
-                    }
-                    st.success(f"✅ Đã khởi tạo thành công bằng mô hình {activated_model_name}!")
 
-                else:
-                    # ĐÃ SỬA: Hiển thị đích danh nguyên nhân lỗi thay vì báo bận chung chung
-                    st.error(f"❌ Không thể kết nối AI. Chi tiết lỗi từ máy chủ Google: {last_error_msg}")
-                    
-                # =========================================================================
-                # KẾT THÚC ĐOẠN THAY THẾ
-                # =========================================================================
     # 8. CẶP NÚT BẤM CHỨC NĂNG KẾT XUẤT CỐ ĐỊNH 100% RA MÀN HÌNH THEO ĐÚNG YÊU CẦU
     st.markdown("---")
     st.markdown("##### 📥 Kết Xuất Hồ Sơ Đề Kiểm Tra Chuyên Nghiệp")
