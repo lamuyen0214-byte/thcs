@@ -1,15 +1,22 @@
 import streamlit as st
 import os
 import requests
+import sys
 from ai_engine.layer_3_reasoning.prompt_manager import PromptManager
 
 def get_word_engine():
     try:
+        # 1. Chống kẹt bộ nhớ đệm (Cache) của Streamlit
+        module_path = 'export.export_word'
+        if module_path in sys.modules:
+            del sys.modules[module_path]
+            
         # Gọi chính xác đến tệp export_word.py trong thư mục export/
         from export.export_word import WordExportEngine
         return WordExportEngine
     except Exception as e:
-        print(f"Lỗi nạp module Word: {e}")
+        # ĐỔI PRINT THÀNH ST.ERROR ĐỂ LỖI HIỂN THỊ RÕ LÊN MÀN HÌNH THAY VÌ ẨN ĐI
+        st.error(f"⚠️ Không thể tải Module Xuất Word: {e}")
         return None
 
 def render_de_kt_module():
@@ -156,7 +163,7 @@ def render_de_kt_module():
         yeu_cau_khac = st.text_area("Yêu cầu chi tiết", placeholder="Ví dụ: Chú trọng các câu hỏi liên hệ thực tế...", label_visibility="collapsed")
     
     # 7. SỰ KIỆN CLICK NÚT BẤM (ĐÃ NÂNG CẤP LÕI AM HIỂU CHƯƠNG TRÌNH GDPT 2018 VÀ BỘ SÁCH KẾT NỐI TRI THỨC)
-    # ĐÃ SỬA: Tích hợp menu thả xuống chọn mô hình AI để chủ động phòng tránh lỗi 404
+    # Tích hợp menu thả xuống chọn mô hình AI để chủ động phòng tránh lỗi 404
     col_btn_run, col_model_sel = st.columns([3, 1])
     with col_model_sel:
         model_display_name = st.selectbox(
@@ -248,7 +255,6 @@ def render_de_kt_module():
                                 activated_model_name = current_model
                                 break
                         except Exception as e:
-                            # Tích hợp thêm lỗi 404 để tự động đẩy sang mô hình khác
                             if "503" in str(e) or "429" in str(e) or "UNAVAILABLE" in str(e) or "404" in str(e): continue
                             else: raise e
                 except Exception as api_err:
@@ -267,8 +273,6 @@ def render_de_kt_module():
                 else:
                     st.error("❌ Tất cả các cổng máy chủ của Google hiện đang bận do quá tải hoặc báo lỗi 404. Thầy cô vui lòng chọn mô hình khác hoặc thử lại sau!")
     
-    
-
     # 8. CẶP NÚT BẤM CHỨC NĂNG KẾT XUẤT CỐ ĐỊNH 100% RA MÀN HÌNH THEO ĐÚNG YÊU CẦU
     st.markdown("---")
     st.markdown("##### 📥 Kết Xuất Hồ Sơ Đề Kiểm Tra Chuyên Nghiệp")
@@ -290,7 +294,6 @@ def render_de_kt_module():
             try:
                 word_file = WordEngine.export_to_word(exam_cache)
                 
-                # THAY ĐỔI: Chia 3 cột đều nhau cho 3 nút
                 col_save, col_dl, col_del = st.columns(3)
                 
                 with col_save:
@@ -313,9 +316,20 @@ def render_de_kt_module():
                         st.rerun()
                         
             except Exception as doc_err:
-                st.error(f"⚠️ Trình kết xuất file Word đang đồng bộ: {doc_err}")
+                st.error(f"⚠️ Trình kết xuất file Word đang báo lỗi: {doc_err}")
+                # KHÓA BỐ CỤC: Bổ sung 3 nút vô hiệu hóa khi quá trình xuất Word nội bộ gặp lỗi để bảo toàn giao diện
+                col_save, col_dl, col_del = st.columns(3)
+                with col_save: st.button("💾 Lưu file tạm thời", type="secondary", use_container_width=True, disabled=True)
+                with col_dl: st.button("📄 Tải file về máy", type="secondary", use_container_width=True, disabled=True)
+                with col_del: st.button("❌ Xóa file", type="secondary", use_container_width=True, disabled=True)
+        else:
+            # KHÓA BỐ CỤC: Nếu file Word hoàn toàn không thể nạp (bị mất), vẫn duy trì 3 nút ở dạng chờ trên màn hình
+            col_save, col_dl, col_del = st.columns(3)
+            with col_save: st.button("💾 Lưu file tạm thời", type="secondary", use_container_width=True, disabled=True)
+            with col_dl: st.button("📄 Tải file về máy", type="secondary", use_container_width=True, disabled=True)
+            with col_del: st.button("❌ Xóa file", type="secondary", use_container_width=True, disabled=True)
     else:
-        # THAY ĐỔI: 3 cột chứa 3 nút trạng thái chờ (vô hiệu hóa) để giữ nguyên cấu trúc
+        # Trạng thái chờ mặc định khi chưa có đề thi
         col_save, col_dl, col_del = st.columns(3)
         with col_save: st.button("💾 Lưu file tạm thời", type="secondary", use_container_width=True, disabled=True)
         with col_dl: st.button("📄 Tải file về máy", type="secondary", use_container_width=True, disabled=True)
