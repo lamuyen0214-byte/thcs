@@ -138,12 +138,12 @@ def render_de_kt_module():
         yeu_cau_khac = st.text_area("Yêu cầu chi tiết", placeholder="Ví dụ: Chú trọng các câu hỏi liên hệ thực tế...", label_visibility="collapsed")
     
     st.write("")
-    # 7. SỰ KIỆN CLICK NÚT BẤM (GIAO THỨC TIMEOUT THEO ĐÚNG LOGIC ĐÃ FIX LỖI 401 CỦA THẦY)
+        # 7. SỰ KIỆN CLICK NÚT BẤM (CÔ LẬP HOÀN TOÀN CHUỖI MÃ CÁ NHÂN AQ... QUA CỔNG HEADER BẢO MẬT)
     if st.button("🚀 Khởi tạo Đề Kiểm Tra", type="primary", use_container_width=True):
         if not ten_bai.strip():
             st.warning("⚠️ Vui lòng nhập 'Tên bài kiểm tra / Đề số' trước khi khởi tạo.")
         else:
-            # Thu thập chuỗi API Key dạng AQ.Ah8... động từ Sidebar của giáo viên
+            # Thu thập chuỗi API Key dạng aq.ab8rn... cá nhân từ Sidebar của giáo viên
             user_raw_key = st.session_state.get("user_gemini_key", "").strip()
             if not user_raw_key:
                 if "GEMINI_API_KEY" in st.secrets: user_raw_key = st.secrets["GEMINI_API_KEY"].strip()
@@ -165,18 +165,25 @@ def render_de_kt_module():
                         ext = de_cuong_file.name.split(".")[-1].lower()
                         if ext == "pdf":
                             from pypdf import PdfReader
-                            file_context += "".join([page.extract_text() or "" for page in PdfReader(de_cuong_file).pages])
+                            reader = PdfReader(de_cuong_file)
+                            file_context += "".join([page.extract_text() or "" for page in reader.pages])
                         elif ext == "docx":
                             import docx
-                            file_context += "\n".join([p.text for p in docx.Document(de_cuong_file).paragraphs])
+                            doc = docx.Document(de_cuong_file)
+                            file_context += "\n".join([p.text for p in doc.paragraphs])
                     except Exception as e:
                         st.error(f"Lỗi nạp tệp đính kèm: {e}")
 
-                # ÉP CHUẨN ĐƯỜNG DẪN REST API: Đính khóa ?key= vào link thô bẻ gãy bẫy xác thực OAuth2 doanh nghiệp
-                url = f"https://googleapis.com{user_raw_key}"
-                headers = {"Content-Type": "application/json"}
+                # ĐÃ VÁ TRIỆT ĐỂ: Link URL thô cố định 100%, tuyệt đối không cộng chuỗi chứa dấu chấm để tránh dính chữ
+                url = "https://googleapis.com"
                 
-                # Phân bổ ma trận biểu điểm chi tiết từng câu hỏi bám sát giao diện của thầy
+                # ÉP CHUẨN KỸ THUẬT GOOGLE AI STUDIO: Truyền mã khóa qua Header x-goog-api-key độc lập
+                headers = {
+                    "Content-Type": "application/json",
+                    "x-goog-api-key": str(user_raw_key).strip()
+                }
+                
+                # Cấu hình phân bổ biểu điểm chi tiết từng câu hỏi bám sát giao diện của thầy
                 score_item_1 = d1 / sl1 if sl1 > 0 else 0
                 score_item_2 = d2 / sl2 if sl2 > 0 else 0
                 score_item_3 = d3 / sl3 if sl3 > 0 else 0
@@ -195,13 +202,13 @@ def render_de_kt_module():
                 payload = {"contents": [{"parts": [{"text": f"{system_instruction}\n\n[DỮ LIỆU TÀI LIỆU GỐC]:\n{file_context[:4000]}"}]}]}
                 
                 try:
-                    # Giao thức truyền tin thắt chặt tích hợp bộ lọc gỡ lỗi nâng cao của thầy
+                    # Gửi gói tin HTTP POST với timeout bảo vệ luồng chạy
                     response = requests.post(url, headers=headers, json=payload, timeout=120)
                     
                     if response.status_code != 200:
                         st.error(f"❌ Lỗi máy chủ Google (Status {response.status_code}): {response.text}")
                         return
-                        
+                    
                     response_json = response.json()
                     ai_result = response_json['candidates']['content']['parts']['text']
                     st.success("✅ Đã tạo đề thi và ma trận đặc tả kỹ thuật thành công!")
