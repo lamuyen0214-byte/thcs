@@ -95,12 +95,14 @@ Thông tin dự án/nhiệm vụ:
 - Nhiệm vụ/Sản phẩm học sinh cần thực hiện: {ten_nhiem_vu}.
 - Thang điểm áp dụng: {thang_diem}.
 - Loại hình/Đối tượng đánh giá: {loai_rubric}.
-- Các tiêu chí trọng tâm cần ưu tiên: {tieu_chi if tieu_chi else 'Kiến thức chuyên môn, Kỹ năng thực hành, Trình bày & Thái độ'}.
+- Các tiêu chí trọng tâm: {tieu_chi if tieu_chi else 'Kiến thức chuyên môn, Kỹ năng thực hành, Trình bày & Thái độ'}.
 
-Yêu cầu định dạng đầu ra (Định dạng Markdown):
-1. Mô tả ngắn gọn mục đích của bảng Rubric này dựa trên loại hình đánh giá là {loai_rubric}.
-2. Trình bày Rubric dưới dạng **BẢNG MARKDOWN**. Các cột bao gồm: Tiêu chí, Trọng số (%), và 4 mức độ đạt được (Tốt, Khá, Đạt, Cần cố gắng) với mô tả hành vi/năng lực cụ thể cho từng mức độ bám sát GDPT 2018.
-3. Cung cấp một biểu mẫu nhỏ để giáo viên ghi chú nhanh các minh chứng đạt được của học sinh.
+YÊU CẦU ĐỊNH DẠNG ĐẦU RA (BẮT BUỘC):
+1. NGÔN NGỮ: Bắt buộc viết 100% bằng Tiếng Việt. Văn phong khoa học, chuẩn sư phạm.
+2. CẤU TRÚC TRÌNH BÀY:
+   - Phần 1: Mục đích đánh giá (Viết ngắn gọn 2-3 dòng).
+   - Phần 2: Bảng Rubric chính (Trình bày bằng BẢNG MARKDOWN). Gồm các cột: Tiêu chí, Trọng số (%), Tốt, Khá, Đạt, Cần cố gắng. Mô tả hành vi năng lực phải rõ ràng.
+   - Phần 3: Biểu mẫu ghi chú. TUYỆT ĐỐI KHÔNG dùng các đường kẻ ngang liên tục. Hãy tạo một Bảng Markdown gồm 3 cột: "STT", "Họ tên học sinh/Nhóm", "Ghi chú minh chứng".
                 """
                 
                 response = client.models.generate_content(
