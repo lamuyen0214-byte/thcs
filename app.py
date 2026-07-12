@@ -6,12 +6,13 @@ import sys
 sys.path.append(os.getcwd())
 
 # Cấu hình trang
-st.set_page_config(layout="wide", page_title="Hệ Sinh Thái Số - Dưỡng Education")
+st.set_page_config(layout="wide", page_title="Hệ Sinh Thái Số -L.H.Dưỡng Education")
+
+# Gọi các file views ở đầu file để đảm bảo tính ổn định
+from views import teacher_support, teaching_support, department_mgmt
 
 # --- SIDEBAR: Giao diện cố định xuyên suốt ---
-# --- SIDEBAR: Giao diện cố định xuyên suốt ---
 with st.sidebar:
-    # 1. Tiêu đề thương hiệu (Tăng size chữ)
     st.markdown("""
         <h2 style='text-align: center; color: red; font-size: 24px; margin-bottom: 5px;'>
         HỆ SINH THÁI SỐ<br>HỖ TRỢ GIÁO VIÊN
@@ -19,7 +20,6 @@ with st.sidebar:
     """, unsafe_allow_html=True)
     st.markdown("---")
     
-    # 2. CHỌN PHÂN HỆ
     st.markdown("<h4 style='text-align: center; color: blue;'>CHỌN PHÂN HỆ</h4>", unsafe_allow_html=True)
     phan_he = st.selectbox(
         "Hỗ trợ giáo viên", 
@@ -29,17 +29,14 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # 3. Cấu hình API Key
     st.markdown("🔑 **Cấu hình API Key Cá Nhân**")
-    api_key = st.text_input("Nhập Gemini API Key (Bắt đầu bằng AQ...):", type="password", value=st.session_state.get("user_gemini_key", ""))
+    api_key = st.text_input("Nhập Gemini API Key:", type="password", value=st.session_state.get("user_gemini_key", ""))
     if api_key:
         st.session_state["user_gemini_key"] = api_key.strip()
-        # Giảm size chữ thông báo tài khoản
-        st.markdown("<p style='font-size: 12px; color: green;'>🎯 Đang chạy bằng tài khoản Gemini cá nhân của bạn.</p>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size: 12px; color: green;'>🎯 Đang chạy bằng tài khoản Gemini cá nhân.</p>", unsafe_allow_html=True)
     
     st.markdown("---")
     
-    # 4. Thông tin tác giả (Giảm size chữ)
     st.markdown("""
         <div style='text-align: center; color: blue; font-weight: bold; font-size: 13px;'>
         Tác giả: Lê Hồng Dưỡng<br>
@@ -49,9 +46,6 @@ with st.sidebar:
 
 # --- ĐIỀU PHỐI (ROUTER) ---
 def run_router():
-    # Gọi các file views đã xây dựng
-    from views import teacher_support, teaching_support, department_mgmt
-    
     if phan_he == "Hỗ trợ Giáo viên":
         teacher_support.render_module()
     elif phan_he == "Hỗ trợ Giảng dạy":
