@@ -194,7 +194,7 @@ def render_de_kt_module():
                     "3.1 Flash-Lite": "models/gemini-2.5-flash",
                     "3.5 Flash": "models/gemini-2.5-flash",
                     "3.1 Pro": "models/gemini-1.5-pro",
-                    "Tư duy mở rộng": "models/gemini-2.5-pro"
+                    "T Tư duy mở rộng": "models/gemini-2.5-pro"
                 }
                 primary_model = model_mapping.get(model_display_name if 'model_display_name' in locals() else "3.1 Flash-Lite", "models/gemini-2.5-flash")
                 fallback_queue = list(dict.fromkeys([primary_model, "models/gemini-2.5-flash", "models/gemini-1.5-pro", "models/gemini-2.5-pro"]))
@@ -276,23 +276,34 @@ def render_de_kt_module():
         if WordEngine:
             try:
                 word_file = WordEngine.export_to_word(exam_cache)
-                col_dl, col_del = st.columns(2)
+                
+                # THAY ĐỔI: Chia 3 cột đều nhau cho 3 nút
+                col_save, col_dl, col_del = st.columns(3)
+                
+                with col_save:
+                    if st.button("💾 Lưu file tạm thời", use_container_width=True, key="save_temp_action"):
+                        st.success("✅ Đã lưu an toàn đề thi vào bộ nhớ hệ thống!")
+                
                 with col_dl:
                     st.download_button(
-                        label="📄 Tải xuống file Word (.docx) chứa Ma trận & Đề thi hoàn chỉnh",
+                        label="📄 Tải file về máy",
                         data=word_file,
                         file_name=f"Bo_De_Kiem_Tra_{ten_bai.replace(' ', '_') if ten_bai else 'Moi'}.docx",
                         mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                         use_container_width=True,
                         key="dl_docx_final_fixed_v6_ready"
                     )
+                
                 with col_del:
-                    if st.button("❌ Xóa đề thi hiện tại khỏi bộ đệm", type="secondary", use_container_width=True, key="clear_cache_final_fixed_v6_ready"):
+                    if st.button("❌ Xóa file", type="secondary", use_container_width=True, key="clear_cache_final_fixed_v6_ready"):
                         st.session_state['delete_action_trigger'] = True
                         st.rerun()
+                        
             except Exception as doc_err:
                 st.error(f"⚠️ Trình kết xuất file Word đang đồng bộ: {doc_err}")
     else:
-        col_dl, col_del = st.columns(2)
-        with col_dl: st.button("📄 Tải xuống file Word (.docx) chứa Ma trận & Đề thi hoàn chỉnh", type="secondary", use_container_width=True, disabled=True)
-        with col_del: st.button("❌ Xóa đề thi hiện tại khỏi bộ đệm", type="secondary", use_container_width=True, disabled=True)
+        # THAY ĐỔI: 3 cột chứa 3 nút trạng thái chờ (vô hiệu hóa) để giữ nguyên cấu trúc
+        col_save, col_dl, col_del = st.columns(3)
+        with col_save: st.button("💾 Lưu file tạm thời", type="secondary", use_container_width=True, disabled=True)
+        with col_dl: st.button("📄 Tải file về máy", type="secondary", use_container_width=True, disabled=True)
+        with col_del: st.button("❌ Xóa file", type="secondary", use_container_width=True, disabled=True)
