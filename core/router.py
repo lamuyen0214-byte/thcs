@@ -1,13 +1,18 @@
 # =====================================================================
-# FILE: core/router.py (CẤU TRÚC ĐỊNH TUYẾN DỘNG AN TOÀN TRÁNH LỖI CACHE)
+# FILE: core/router.py (CẤU TRÚC ĐỊNH TUYẾN CHUẨN - VÁ TRIỆT ĐỂ LỖI THỤT LỀ NUỐT TAB)
 # =====================================================================
 import streamlit as st
 import sys
 import os
 
-# Bảo đảm thư mục gốc luôn nằm trong luồng tìm kiếm của hệ thống
-if os.getcwd() not in sys.path:
-    sys.path.append(os.getcwd())
+# Bảo đảm thư mục gốc luôn nằm trong luồng tìm kiếm của hệ thống bất chấp folder con main/
+current_dir = os.getcwd()
+if current_dir not in sys.path:
+    sys.path.append(current_dir)
+
+sub_main_folder = os.path.join(current_dir, "main")
+if os.path.exists(sub_main_folder) and sub_main_folder not in sys.path:
+    sys.path.append(sub_main_folder)
 
 def route_teacher():
     st.header("👨‍🏫 Phân hệ: Dành Cho Giáo Viên")
@@ -23,19 +28,26 @@ def route_teacher():
         try:
             from modules.danh_cho_giao_vien.khbd.khbd_builder import render_khbd_module
             render_khbd_module()
+        except KeyError:
+            try:
+                import main.modules.danh_cho_giao_vien.khbd.khbd_builder as khbd_alt
+                khbd_alt.render_khbd_module()
+            except Exception as inner_e:
+                st.error(f"Lỗi nạp bộ đệm Giáo án: {inner_e}")
         except Exception as e:
             st.error(f"💡 Hệ thống đang đồng bộ Tab KHBD: {e}")
         
-            # --- TAB 2: XÂY DỰNG ĐỀ KIỂM TRA (SỬA ĐƯỜNG DẪN IMPORT TRỎ THẲNG VÀO DE_KT_BUILDER GỐC) ---
+    # --- TAB 2: ĐÃ SỬA CẤU TRÚC: Tách biệt hoàn toàn độc lập, bẻ gãy lỗi nuốt Tab cũ ---
     with tabs[1]:
         try:
-            # ÉP CHUẨN ĐƯỜNG DẪN: Gọi trực tiếp hàm render_de_kt_module từ đúng file de_kt_builder.py của thầy
             from modules.danh_cho_giao_vien.de_kt.de_kt_builder import render_de_kt_module
             render_de_kt_module()
         except KeyError:
-            # Khử lỗi nghẽn bộ nhớ đệm cache RAM của máy chủ deploy bằng import alias trực tiếp
-            import modules.danh_cho_giao_vien.de_kt.de_kt_builder as de_kt_mod
-            de_kt_mod.render_de_kt_module()
+            try:
+                import main.modules.danh_cho_giao_vien.de_kt.de_kt_builder as de_kt_alt
+                de_kt_alt.render_de_kt_module()
+            except Exception as inner_e:
+                st.error(f"Lỗi nạp bộ đệm Đề kiểm tra: {inner_e}")
         except Exception as e:
             st.error(f"💡 Hệ thống đang đồng bộ Tab Đề kiểm tra: {e}")
 
