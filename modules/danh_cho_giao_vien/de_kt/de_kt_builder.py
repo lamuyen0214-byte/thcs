@@ -4,6 +4,7 @@ import requests
 
 def get_word_engine():
     try:
+        # Gọi chính xác tệp export_word.py trong thư mục export/
         from export.export_word import WordExportEngine
         return WordExportEngine
     except Exception as e:
@@ -11,7 +12,7 @@ def get_word_engine():
         return None
 
 def render_de_kt_module():
-    # 1. CẤU HÌNH CSS ĐỂ KHÓA BỐ CỤC CỐ ĐỊNH (THU NHỎ CHỮ ĐIỂM CHỐNG NHẢY HÀNG)
+    # 1. CẤU HÌNH CSS ĐỂ KHÓA BỐ CỤC CỐ ĐỊNH CHỐNG NHẢY DÒNG CHỮ
     st.markdown("""
         <style>
         .header-blue {color: #0000FF; font-weight: bold; font-size: 16px; text-align: center;}
@@ -19,12 +20,20 @@ def render_de_kt_module():
         .box-trac-nghiem {background-color: #FFF2CC; padding: 10px; border-radius: 5px; color: #0000FF; font-weight: bold; text-align: center; font-size: 18px;}
         .box-tu-luan {background-color: #D5E8D4; padding: 10px; border-radius: 5px; color: #0000FF; font-weight: bold; text-align: center; font-size: 18px;}
         .header-red-title {color: #FF0000; font-weight: bold; font-size: 16px; margin-bottom: 5px;}
-        .chu-diem-co-nho {font-size: 11px !important; font-style: italic; white-space: nowrap !important; display: inline-block; margin-top: 10px;}
+        
+        /* Thu nhỏ chữ điểm bám sát ô số, ép không cho phép xuống hàng */
+        .chu-diem-co-nho {
+            font-size: 11px !important;
+            font-style: italic;
+            white-space: nowrap !important;
+            display: inline-block;
+            margin-top: 10px;
+        }
         </style>
     """, unsafe_allow_html=True)
 
-    # 2. HÀNG 1: MENU ĐIỀU HƯỚNG CƠ BẢN CỐ ĐỊNH
-    col1, col2, col3, col4 = st.columns(4)
+    # 2. HÀNG 1: MENU ĐIỀU HƯỚNG CƠ BẢN CỐ ĐỊNH (CHIA TỶ LỆ MẢNG ĐỘ RỘNG MÀN HÌNH)
+    col1, col2, col3, col4 = st.columns([1, 1, 1, 1])
     with col1:
         st.markdown('<p class="header-blue">Chọn môn học</p>', unsafe_allow_html=True)
         mon_hoc = st.selectbox(
@@ -57,7 +66,7 @@ def render_de_kt_module():
     st.write("")
     # 3. HÀNG 2: TỶ LỆ MỨC ĐỘ NHẬN THỨC CỐ ĐỊNH
     st.markdown('<p class="header-red-title">Tỷ lệ mức độ nhận thức (%):</p>', unsafe_allow_html=True)
-    col_tl1, col_tl2, col_tl3, col_tl4 = st.columns(4)
+    col_tl1, col_tl2, col_tl3, col_tl4 = st.columns([1, 1, 1, 1])
     with col_tl1: nhan_biet = st.number_input("**Nhận biết:**", value=40, step=5, format="%d")
     with col_tl2: thong_hieu = st.number_input("**Thông hiểu:**", value=30, step=5, format="%d")
     with col_tl3: van_dung = st.number_input("**Vận dụng:**", value=20, step=5, format="%d")
@@ -68,8 +77,8 @@ def render_de_kt_module():
     if (nhan_biet + thong_hieu + van_dung + van_dung_cao) != 100:
         st.error("⚠️ Tổng tỷ lệ phần trăm mức độ nhận thức phải bằng 100%!")
 
-    # 4. HÀNG 3: ĐỒNG BỘ: Gắn key tĩnh 'txt_ten_bai_de_kt' để bảo vệ chữ gõ, chống trống tên sau rerun
-    col_ten, col_file1, col_file2 = st.columns(3)
+    # 4. HÀNG 3: GẮN KEY TĨNH BẢO VỆ CHỮ GÕ CHỐNG TRỐNG TÊN SAU RERUN
+    col_ten, col_file1, col_file2 = st.columns([2, 1, 1])
     with col_ten:
         st.markdown('<p class="header-red-title">Tên bài kiểm tra / Đề số:</p>', unsafe_allow_html=True)
         ten_bai = st.text_input("Tên bài", placeholder="Ví dụ: Kiểm tra đánh giá giữa kì I", label_visibility="collapsed", key="txt_ten_bai_de_kt")
@@ -81,31 +90,34 @@ def render_de_kt_module():
         ma_tran_file = st.file_uploader("Ma trận", type=['docx', 'pdf'], label_visibility="collapsed")
 
     st.write("")
-    col_tn, spacer, col_tl = st.columns(3)
+    
+    # 5. HÀNG 4: THIẾT LẬP TỶ LỆ MẢNG RỘNG RÃI CHO HAI CỘT TRÁI/PHẢI (CHỐNG CO HẸP GIAO DIỆN)
+    col_tn, spacer, col_tl = st.columns([12, 1, 12])
     # --- CỘT TRÁI: TRẮC NGHIỆM ĐỘNG GIAO DIỆN CỐ ĐỊNH ---
     with col_tn:
         tn_header = st.empty()
         st.write("")
         
-        c1, c2, c3, c4 = st.columns(4)
+        # ĐÃ SỬA CỘT TRÀN DÒNG: Mở rộng cột c1 lên tỷ lệ 5, co nhỏ c2, c3 để chữ điểm nằm vừa vặn 1 hàng ngang
+        c1, c2, c3, c4 = st.columns([5, 2, 2, 1])
         with c1: st.write("Số câu nhiều lựa chọn:")
         with c2: sl1 = st.number_input("SL1", value=12, key="sl1", label_visibility="collapsed")
         with c3: d1 = st.number_input("D1", value=3.0, step=0.25, format="%.2f", key="d1", label_visibility="collapsed")
         with c4: st.markdown('<span class="chu-diem-co-nho">điểm</span>', unsafe_allow_html=True)
 
-        c1, c2, c3, c4 = st.columns(4)
+        c1, c2, c3, c4 = st.columns([5, 2, 2, 1])
         with c1: st.write("Số câu đúng/sai:")
         with c2: sl2 = st.number_input("SL2", value=1, key="sl2", label_visibility="collapsed")
         with c3: d2 = st.number_input("D2", value=0.25, step=0.25, format="%.2f", key="d2", label_visibility="collapsed")
         with c4: st.markdown('<span class="chu-diem-co-nho">điểm</span>', unsafe_allow_html=True)
 
-        c1, c2, c3, c4 = st.columns(4)
+        c1, c2, c3, c4 = st.columns([5, 2, 2, 1])
         with c1: st.write("Số câu điền khuyết:")
         with c2: sl3 = st.number_input("SL3", value=1, key="sl3", label_visibility="collapsed")
         with c3: d3 = st.number_input("D3", value=0.25, step=0.25, format="%.2f", key="d3", label_visibility="collapsed")
         with c4: st.markdown('<span class="chu-diem-co-nho">điểm</span>', unsafe_allow_html=True)
 
-        c1, c2, c3, c4 = st.columns(4)
+        c1, c2, c3, c4 = st.columns([5, 2, 2, 1])
         with c1: st.write("Số câu trả lời ngắn:")
         with c2: sl4 = st.number_input("SL4", value=2, key="sl4", label_visibility="collapsed")
         with c3: d4 = st.number_input("D4", value=0.5, step=0.25, format="%.2f", key="d4", label_visibility="collapsed")
@@ -117,7 +129,7 @@ def render_de_kt_module():
 
     # --- CỘT PHẢI: TỰ LUẬN ĐỘNG GIAO DIỆN CỐ ĐỊNH ---
     with col_tl:
-        c_tl1, c_tl2 = st.columns(2)
+        c_tl1, c_tl2 = st.columns([3, 1])
         with c_tl1: st.write("**Nhập số lượng câu Tự luận:**")
         with c_tl2: so_cau_tl = st.number_input("Số câu TL", min_value=1, max_value=10, value=4, key="so_cau_tl", label_visibility="collapsed")
         
@@ -126,7 +138,7 @@ def render_de_kt_module():
         
         diem_tl_list = []
         for i in range(1, int(so_cau_tl) + 1):
-            c1, c2, c3 = st.columns(3)
+            c1, c2, c3 = st.columns([3, 3, 1])
             with c1: st.write(f"**Câu {i}.**")
             with c2: 
                 diem = st.number_input("Điểm", value=1.0, step=0.25, format="%.2f", key=f"diem_tl_{i}", label_visibility="collapsed")
@@ -137,13 +149,13 @@ def render_de_kt_module():
         tl_header.markdown(f'<div class="box-tu-luan">TỰ LUẬN &nbsp;&nbsp;&nbsp; <span style="color:red;">{int(so_cau_tl)}</span> &nbsp;&nbsp;&nbsp; <span style="color:red;">{tong_diem_tl:.2f}</span> &nbsp;&nbsp;&nbsp; Điểm</div>', unsafe_allow_html=True)
 
     st.write("---")
-    col_chk, col_req = st.columns(2)
+    col_chk, col_req = st.columns([1, 2])
     with col_chk: st.markdown('<p class="text-red-italic">Yêu cầu khác:</p>', unsafe_allow_html=True)
     with col_req:
         bam_sat = st.checkbox("Bám sát nội dung đề cương/ma trận tải lên", value=True)
         yeu_cau_khac = st.text_area("Yêu cầu chi tiết", placeholder="Ví dụ: Chú trọng các câu hỏi liên hệ thực tế...", label_visibility="collapsed")
-    # 7. SỰ KIỆN CLICK NÚT BẤM KẾT HỢP DANH MỤC MÔ HÌNH CHUẨN XỊN TRÊN SIDEBAR THEO HÌNH
-    col_btn_run, col_model_sel = st.columns(2)
+    # 7. SỰ KIỆN CLICK NÚT BẤM KẾT HỢP DANH MỤC MÔ HÌNH TRÊN SIDEBAR
+    col_btn_run, col_model_sel = st.columns([3, 1])
     with col_model_sel:
         model_display_name = st.selectbox(
             "Mô hình", ["3.1 Flash-Lite", "3.5 Flash", "3.1 Pro", "Tư duy mở rộng"], label_visibility="collapsed", index=0
@@ -183,9 +195,8 @@ def render_de_kt_module():
 
                 if not file_context.strip(): file_context = f"Phạm vi kiến thức cần làm đề kiểm tra: {ten_bai}."
 
-                model_mapping = {"3.1 Flash-Lite": "models/gemini-2.5-flash", "3.5 Flash": "models/gemini-2.5-flash", "3.1 Pro": "models/gemini-2.5-pro", "Tư duy mở rộng": "models/gemini-2.5-pro"}
-                primary_model = model_mapping.get(model_display_name, "models/gemini-2.5-flash")
-                fallback_models = list(dict.fromkeys([primary_model, "models/gemini-2.5-flash", "models/gemini-2.5-pro"]))
+                from config.models import get_fallback_queue
+                fallback_models = get_fallback_queue(model_display_name)
 
                 response_text = None
                 from google import genai
@@ -195,7 +206,7 @@ def render_de_kt_module():
                     
                     for current_model in fallback_models:
                         try:
-                            response = client.models.generate_content(model=current_model, contents=[f"{system_instruction}\n\n[TÀI LIỆU]:\n{file_context[:8000]}"])
+                            response = client.models.generate_content(model=current_model, contents=[f"{system_instruction}\n\n[TÀI LIỆU]:\n{file_context[:800]}"])
                             if response and response.text:
                                 response_text = response.text
                                 break
@@ -205,7 +216,6 @@ def render_de_kt_module():
                     return
 
                 if response_text:
-                    # ĐÃ ĐỒNG BỘ: Khóa vĩnh viễn giá trị tên bài 'ten_bai_save' vào bộ đệm tĩnh, chống bay màu dữ liệu khi rerun
                     st.session_state['current_exam_data'] = {
                         "type": hinh_thuc, "custom_req": ten_bai if ten_bai else "De_Kiem_Tra", "ten_bai_save": str(ten_bai),
                         "tn_total": tong_so_cau_tn, "c1": sl1, "c2": sl2, "c3": sl3, "c4": sl4,
@@ -216,7 +226,7 @@ def render_de_kt_module():
                     st.success("✅ Đã tạo ma trận và đề thi thành công!")
                     st.rerun()
 
-    # 8. BỘ 3 NÚT CHỨC NĂNG KẾT XUẤT HỒ SƠ CỐ ĐỊNH PHÂN TÁCH BIẾN ĐỘC LẬP THEO PHƯƠNG ÁN CỦA THẦY
+    # 8. BỘ 3 NÚT CHỨC NĂNG KẾT XUẤT HỒ SƠ CỐ ĐỊNH CHUẨN ĐỒ HỌA MỚI (BẠN BÈ TẤT CẢ LÀ BIẾN ĐỘC LẬP)
     st.markdown("---")
     st.markdown("##### 📥 Kết Xuất Hồ Sơ Đề Kiểm Tra Chuyên Nghiệp")
     
@@ -226,21 +236,21 @@ def render_de_kt_module():
         st.rerun()
 
     exam_cache = st.session_state.get('current_exam_data')
-    word_file = None  # Khởi tạo luồng thô tĩnh ban đầu giống hệt thuật toán thầy thiết kế
+    word_file = None
 
     if exam_cache:
         with st.expander("🔍 Xem trước Nội dung Đề kiểm tra & Đáp án chi tiết từ AI", expanded=True):
             st.markdown(exam_cache["ai_generated_content"])
         
-        # BÓC TÁCH CHUYÊN SƯ PHẠM: Đưa hàm xuất bảng ra khối ngoại lệ riêng để cứu 2 nút Lưu/Xóa
+        # BỐC TÁCH KHỐI NGOẠI LỆ: Nếu xuất Word bảng biểu dính lỗi thì 2 nút Lưu/Xóa vẫn hiển thị hoạt động tốt!
         WordEngine = get_word_engine()
         if WordEngine:
             try:
                 word_file = WordEngine.export_to_word(exam_cache)
             except Exception as e:
-                st.error(f"💡 Trình dịch khung bảng biểu Word đang đồng bộ: {e}")
+                st.error(f"💡 Trình dịch khung bảng biểu Word đang đồng bộ cấu trúc: {e}")
 
-    # ĐÃ SỬA TUYỆT ĐỐI: Đưa bộ 3 nút ra ngoài hoàn toàn, luôn luôn hiển thị 100% ra màn hình
+    # ĐÃ ĐỒNG BỘ: Đưa bộ 3 nút ra ngoài hoàn toàn, luôn hiển thị ngang tăm tắp
     col_save, col_download, col_delete = st.columns(3)
     
     with col_save:
@@ -248,7 +258,6 @@ def render_de_kt_module():
             st.sidebar.success("💾 Đã lưu cấu hình đề thi vào RAM phiên an toàn!")
     with col_download:
         if word_file and exam_cache:
-            # Nhặt chính xác tên bài đã lưu trong bộ đệm 'ten_bai_save' để xuất file
             saved_title = exam_cache.get("ten_bai_save", "Moi").replace(" ", "_")
             st.download_button(
                 label="📄 Tải file về máy", data=word_file,
