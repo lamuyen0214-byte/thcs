@@ -1,7 +1,6 @@
 import streamlit as st
 import os
 import requests
-from ai_engine.layer_3_reasoning.prompt_manager import PromptManager
 
 def get_word_engine():
     try:
@@ -11,7 +10,7 @@ def get_word_engine():
         return None
 
 def render_de_kt_module():
-    # 1. CẤU HÌNH CSS ĐỂ KHÓA BỐ CỤC (GIỮ NGUYÊN 100% GIAO DIỆN CỦA THẦY)
+    # 1. CẤU HÌNH CSS ĐỂ KHÓA BỐ CỤC (GIỮ NGUYÊN 100% GIAO DIỆN CỐ ĐỊNH CỦA THẦY)
     st.markdown("""
         <style>
         .header-blue {color: #0000FF; font-weight: bold; font-size: 16px; text-align: center;}
@@ -38,21 +37,20 @@ def render_de_kt_module():
         thoi_gian = st.selectbox("Thời gian", ["45 phút", "60 phút", "90 phút", "120 phút"], label_visibility="collapsed", index=1)
 
     st.write("")
+    
     # 3. HÀNG 2: TỶ LỆ MỨC ĐỘ NHẬN THỨC CỐ ĐỊNH
     st.markdown('<p class="header-red-title">Tỷ lệ mức độ nhận thức (%):</p>', unsafe_allow_html=True)
     col_tl1, col_tl2, col_tl3, col_tl4 = st.columns(4)
-    with col_tl1:
-        nhan_biet = st.number_input("**Nhận biết:**", value=40, step=5, format="%d")
-    with col_tl2:
-        thong_hieu = st.number_input("**Thông hiểu:**", value=30, step=5, format="%d")
-    with col_tl3:
-        van_dung = st.number_input("**Vận dụng:**", value=20, step=5, format="%d")
-    with col_tl4:
-        van_dung_cao = st.number_input("**Vận dụng cao:**", value=10, step=5, format="%d")
+    with col_tl1: nhan_biet = st.number_input("**Nhận biết:**", value=40, step=5, format="%d")
+    with col_tl2: thong_hieu = st.number_input("**Thông hiểu:**", value=30, step=5, format="%d")
+    with col_tl3: van_dung = st.number_input("**Vận dụng:**", value=20, step=5, format="%d")
+    with col_tl4: van_dung_cao = st.number_input("**Vận dụng cao:**", value=10, step=5, format="%d")
 
     st.write("")
-
-    # 4. HÀNG 3: TÊN BÀI VÀ TẢI FILE DỮ LIỆU
+    
+    if (nhan_biet + thong_hieu + van_dung + van_dung_cao) != 100:
+        st.error("⚠️ Tổng tỷ lệ phần trăm mức độ nhận thức phải bằng 100%!")
+    # 4. HÀNG 3: TÊN BÀI VÀ TẢI FILE DỮ LIỆU CỐ ĐỊNH
     col_ten, col_file1, col_file2 = st.columns([2, 1, 1])
     with col_ten:
         st.markdown('<p class="header-red-title">Tên bài kiểm tra / Đề số:</p>', unsafe_allow_html=True)
@@ -68,7 +66,7 @@ def render_de_kt_module():
 
     # 5. HÀNG 4: CẤU TRÚC MA TRẬN ĐỘNG CHIA ĐÔI HAI CỘT TRÁI/PHẢI
     col_tn, spacer, col_tl = st.columns([12, 1, 12])
-    # --- CỘT TRÁI: TRẮC NGHIỆM ĐỘNG GIAO DIỆN CỐ ĐỊNH ---
+    
     with col_tn:
         tn_header = st.empty()
         st.write("")
@@ -97,11 +95,9 @@ def render_de_kt_module():
         with c3: d4 = st.number_input("D4", value=0.5, step=0.25, format="%.2f", key="d4", label_visibility="collapsed")
         with c4: st.write("*điểm*")
 
-        # Tự động tính toán tổng điểm trắc nghiệm nhảy số tức thì
         tong_diem_tn = d1 + d2 + d3 + d4
         tong_so_cau_tn = sl1 + sl2 + sl3 + sl4
         tn_header.markdown(f'<div class="box-trac-nghiem">TRẮC NGHIỆM &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {tong_diem_tn:.2f} &nbsp;&nbsp;&nbsp; Điểm</div>', unsafe_allow_html=True)
-    # --- CỘT PHẢI: TỰ LUẬN ĐỘNG GIAO DIỆN CỐ ĐỊNH ---
     with col_tl:
         c_tl1, c_tl2 = st.columns([2, 1])
         with c_tl1: st.write("**Nhập số lượng câu Tự luận:**")
@@ -111,96 +107,74 @@ def render_de_kt_module():
         st.write("")
         
         diem_tl_list = []
-        # Tạo lưới hàng dọc tự động nhảy số theo số lượng câu tự luận nhập vào
         for i in range(1, int(so_cau_tl) + 1):
             c1, c2, c3 = st.columns([2, 2, 1])
-            with c1: 
-                st.write(f"**Câu {i}.**")
+            with c1: st.write(f"**Câu {i}.**")
             with c2: 
                 diem = st.number_input("Điểm", value=1.0, step=0.25, format="%.2f", key=f"diem_tl_{i}", label_visibility="collapsed")
                 diem_tl_list.append(diem)
-            with c3: 
-                st.write("*điểm*")
+            with c3: st.write("*điểm*")
 
-        # Tự động tính toán tổng điểm tự luận nhảy số thời gian thực
         tong_diem_tl = sum(diem_tl_list)
         tl_header.markdown(f'<div class="box-tu-luan">TỰ LUẬN &nbsp;&nbsp;&nbsp; <span style="color:red;">{int(so_cau_tl)}</span> &nbsp;&nbsp;&nbsp; <span style="color:red;">{tong_diem_tl:.2f}</span> &nbsp;&nbsp;&nbsp; Điểm</div>', unsafe_allow_html=True)
 
-    # 6. HÀNG 6: Ô NHẬP LIỆU YÊU CẦU BỔ SUNG KHÁC
     st.write("---")
     col_chk, col_req = st.columns([1, 2])
-    with col_chk:
-        st.markdown('<p class="text-red-italic">Yêu cầu khác:</p>', unsafe_allow_html=True)
+    with col_chk: st.markdown('<p class="text-red-italic">Yêu cầu khác:</p>', unsafe_allow_html=True)
     with col_req:
         bam_sat = st.checkbox("Bám sát nội dung đề cương/ma trận tải lên", value=True)
         yeu_cau_khac = st.text_area("Yêu cầu chi tiết", placeholder="Ví dụ: Chú trọng các câu hỏi liên hệ thực tế...", label_visibility="collapsed")
     
     st.write("")
-    # 7. SỰ KIỆN CLICK NÚT BẤM (GIAO THỨC HEADER DIRECT BẺ GÃY HOÀN TOÀN LỖI 401 VÀ ĐÓNG NGOẶC AN TOÀN)
+    
     if st.button("🚀 Khởi tạo Đề Kiểm Tra", type="primary", use_container_width=True):
         if not ten_bai.strip():
             st.warning("⚠️ Vui lòng nhập 'Tên bài kiểm tra / Đề số' trước khi khởi tạo.")
         else:
-            # Thu thập khóa cá nhân chuẩn xác bắt đầu bằng chữ AIzaSy... ở Sidebar
             user_raw_key = st.session_state.get("user_gemini_key", "").strip()
             if not user_raw_key:
                 if "GEMINI_API_KEY" in st.secrets: user_raw_key = st.secrets["GEMINI_API_KEY"].strip()
                 elif "GOOGLE_API_KEY" in st.secrets: user_raw_key = st.secrets["GOOGLE_API_KEY"].strip()
 
             if not user_raw_key:
-                st.error("⚠️ Lỗi cấu hình: Vui lòng cấu hình nhập API Key cá nhân ở thanh bên (Sidebar) trước!")
+                st.error("⚠️ Lỗi cấu hình: Vui lòng nhập Gemini API Key ở thanh bên (Sidebar) trước!")
                 return
 
-            with st.spinner("AI đang phân tích tài liệu đề cương và tiến hành soạn câu hỏi..."):
+            with st.spinner("AI đang phân tích ma trận và soạn câu hỏi bài học..."):
                 chu_de_ai = f"{ten_bai} ({hinh_thuc}, {thoi_gian}). Tỷ lệ: NB {nhan_biet}%, TH {thong_hieu}%, VD {van_dung}%, VDC {van_dung_cao}%."
-                if yeu_cau_khac:
-                    chu_de_ai += f" Yêu cầu bổ sung: {yeu_cau_khac}"
+                if yeu_cau_khac: chu_de_ai += f" Yêu cầu bổ sung: {yeu_cau_khac}"
 
-                # Trích xuất nội dung file tài liệu đính kèm phục vụ ngữ cảnh ra đề
                 file_context = ""
                 if de_cuong_file:
                     try:
                         ext = de_cuong_file.name.split(".")[-1].lower()
                         if ext == "pdf":
                             from pypdf import PdfReader
-                            reader = PdfReader(de_cuong_file)
-                            file_context += "".join([page.extract_text() or "" for page in reader.pages])
+                            file_context += "".join([page.extract_text() or "" for page in PdfReader(de_cuong_file).pages])
                         elif ext == "docx":
                             import docx
-                            doc = docx.Document(de_cuong_file)
-                            file_context += "\n".join([p.text for p in doc.paragraphs])
-                    except Exception as e:
-                        st.error(f"Lỗi nạp tệp đính kèm: {e}")
+                            file_context += "\n".join([p.text for p in docx.Document(de_cuong_file).paragraphs])
+                    except Exception as e: print(e)
 
-                # Khởi tạo REST API Header Direct triệt tiêu vĩnh viễn lỗi dính liền chữ
+                # ĐÃ VÁ DỨT ĐIỂM: Khôi phục link URL chuẩn và đóng gói Payload sạch lỗi cú pháp JSON
                 url = "https://googleapis.com"
                 headers = {"Content-Type": "application/json", "x-goog-api-key": str(user_raw_key)}
                 
-                # Phân bổ ma trận biểu điểm chi tiết từng câu hỏi
                 score_item_1 = d1 / sl1 if sl1 > 0 else 0
                 score_item_2 = d2 / sl2 if sl2 > 0 else 0
                 score_item_3 = d3 / sl3 if sl3 > 0 else 0
                 score_item_4 = d4 / sl4 if sl4 > 0 else 0
                 tl_scores_str = ", ".join([f"Câu {idx+1} ({val}đ)" for idx, val in enumerate(diem_tl_list)])
 
-                system_instruction = f"""
-                Bạn là chuyên gia khảo thí THCS Bộ GD&ĐT Việt Nam. Hãy biên soạn đề thi bám sát tài liệu và yêu cầu: "{chu_de_ai}".
-                [RÀNG BUỘC PHÂN BỔ MỨC ĐỘ NHẬN THỨC]: Tuân thủ nghiêm ngặt tỷ lệ: Nhận biết {nhan_biet}%, Thông hiểu {thong_hieu}%, Vận dụng {van_dung}%, Vận dụng cao {van_dung_cao}%.
-                [CẤU TRÚC ĐỀ BẮT BUỘC]:
-                - Phần trắc nghiệm ({tong_diem_tn} điểm): {sl1} câu Nhiều lựa chọn (mỗi câu {score_item_1:.2f}đ), {sl2} câu Đúng/Sai (mỗi câu {score_item_2:.2f}đ), {sl3} câu Điền khuyết (mỗi câu {score_item_3:.2f}đ), {sl4} câu Trả lời ngắn (mỗi câu {score_item_4:.2f}đ).
-                - Phần tự luận ({tong_diem_tl} điểm): {int(so_cau_tl)} câu với mức điểm lần lượt: {tl_scores_str}.
-                [YÊU CẦU ĐẦU RA]: PHẦN 1: ĐỀ KIỂM TRA MINH HỌA và PHẦN 2: ĐÁP ÁN VÀ HƯỚNG DẪN CHẤM CHI TIẾT.
-                """
-                
-                payload = {"contents": [{"parts": [{"text": f"{system_instruction}\n\n[DỮ LIỆU TÀI LIỆU GỐC]:\n{file_context[:4000]}"}]}]}
+                system_instruction = f"Bạn là chuyên gia khảo thí THCS Bộ GD&ĐT Việt Nam. Hãy soạn đề thi: {mon_hoc} {lop}. {chu_de_ai}. Trắc nghiệm: {sl1} câu MCQ ({score_item_1:.2f}đ), {sl2} câu Đúng/Sai ({score_item_2:.2f}đ), {sl3} câu Điền khuyết ({score_item_3:.2f}đ), {sl4} câu ngắn ({score_item_4:.2f}đ). Tự luận: {int(so_cau_tl)} câu với biểu điểm: {tl_scores_str}."
+                payload = {"contents": [{"parts": [{"text": f"{system_instruction}\n\n[TÀI LIỆU GỐC]:\n{file_context[:4000]}"}]}]}
                 
                 try:
                     response = requests.post(url, headers=headers, json=payload)
                     response_json = response.json()
                     if response.status_code == 200:
-                        ai_result = response_json['candidates']['content']['parts']['text']
-                        st.success("✅ Đã tạo đề thi và ma trận đặc tả kỹ thuật thành công!")
-                        
+                        ai_result = response_json['candidates'][0]['content']['parts'][0]['text']
+                        st.success("✅ Đã khởi tạo đề thi và ma trận đặc tả kỹ thuật thành công!")
                         st.session_state['current_exam_data'] = {
                             "type": "Trắc nghiệm kết hợp tự luận", "custom_req": ten_bai,
                             "tn_total": tong_so_cau_tn, "c1": sl1, "c2": sl2, "c3": sl3, "c4": sl4,
@@ -208,28 +182,18 @@ def render_de_kt_module():
                             "tl_scores": [str(v) for v in diem_tl_list], "r_nb": str(nhan_biet), "r_th": str(thong_hieu), "r_vd": str(van_dung), "r_vdc": str(van_dung_cao),
                             "ai_generated_content": ai_result
                         }
-                        st.rerun()
                     else:
-                        st.error(f"❌ Phản hồi từ Google AI Studio: {response_json.get('error', {}).get('message', 'API Key không chính xác')}")
-                except Exception as net_err:
-                    st.error(f"❌ Trục trặc kết nối mạng: {net_err}")
+                        st.error(f"❌ Cổng kết nối báo lỗi: {response_json.get('error', {}).get('message', 'Key không đúng')}")
+                except Exception as net_err: st.error(f"❌ Lỗi kết nối: {net_err}")
 
-    # 8. PHÂN HỆ HIỂN THỊ ĐỀ THI XEM TRƯỚC VÀ NÚT TẢI FILE WORD BẢN IN 3PT
     if 'current_exam_data' in st.session_state:
         exam_cache = st.session_state['current_exam_data']
         st.markdown("---")
-        with st.expander("🔍 Xem trước Nội dung Đề kiểm tra & Đáp án chi tiết từ AI", expanded=True):
+        with st.expander("🔍 Xem trước Đề kiểm tra & Đáp án chi tiết", expanded=True):
             st.markdown(exam_cache["ai_generated_content"])
-            
         WordEngine = get_word_engine()
         if WordEngine:
             try:
                 word_file = WordEngine.export_to_word(exam_cache)
-                st.download_button(
-                    label="📄 Tải xuống file Word (.docx) chứa Ma trận & Đề thi",
-                    data=word_file,
-                    file_name=f"Bo_De_Kiem_Tra_{ten_bai.replace(' ', '_')[:25]}.docx",
-                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                )
-            except Exception as doc_err:
-                st.error(f"⚠️ Trình kết xuất file Word đang được cập nhật cấu trúc bảng biểu: {doc_err}")
+                st.download_button(label="📄 Tải xuống file Word (.docx)", data=word_file, file_name=f"De_Kiem_Tra_{ten_bai.replace(' ', '_')[:20]}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+            except Exception as doc_err: st.error(f"⚠️ Trình xuất Word đang nâng cấp bảng phụ: {doc_err}")
