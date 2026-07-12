@@ -2,7 +2,7 @@ import streamlit as st
 from ai_engine.layer_1_model.gemini import gemini_instance
 from ai_engine.layer_3_reasoning.prompt_manager import PromptManager
 from ai_engine.layer_5_output.word_export import WordExportEngine
-from services.google_sheet import luu_lich_su_de_kt
+
 def render_de_kt_module():
     # 1. CẤU HÌNH CSS ĐỂ KHÓA BỐ CỤC
     st.markdown("""
@@ -17,26 +17,15 @@ def render_de_kt_module():
 
     # 2. HÀNG 1: MENU ĐIỀU HƯỚNG CƠ BẢN
     col1, col2, col3, col4 = st.columns(4)
-    
     with col1:
         st.markdown('<p class="header-blue">MENU MÔN HỌC</p>', unsafe_allow_html=True)
-        danh_sach_mon = [
-            "Ngữ văn", "Toán", "Tiếng Anh", "Giáo dục công dân", "Lịch sử và Địa lí", 
-            "Khoa học tự nhiên: KHTN (Vật lý)", "KHTN (Hoá học)", "KHTN (Sinh học)", 
-            "Công nghệ", "Tin học", "Giáo dục địa phương", "Hoạt động trải nghiệm, hướng nghiệp"
-        ]
-        # Mặc định trỏ vào KHTN (Vật lý) ở vị trí index=5
-        mon_hoc = st.selectbox("Môn", danh_sach_mon, label_visibility="collapsed", index=5)
-        
+        mon_hoc = st.selectbox("Môn", ["Khoa học Tự nhiên", "Toán học", "Vật lý", "Hóa học"], label_visibility="collapsed", index=0)
     with col2:
         st.markdown('<p class="header-blue">MENU LỚP</p>', unsafe_allow_html=True)
         lop = st.selectbox("Lớp", ["Lớp 6", "Lớp 7", "Lớp 8", "Lớp 9"], label_visibility="collapsed", index=3)
-        
     with col3:
         st.markdown('<p class="header-blue">HÌNH THỨC KT</p>', unsafe_allow_html=True)
-        # Đã cập nhật 3 hình thức kiểm tra
-        hinh_thuc = st.selectbox("Hình thức", ["Trắc nghiệm kết hợp tự luận", "Trắc nghiệm", "Tự luận"], label_visibility="collapsed")
-        
+        hinh_thuc = st.selectbox("Hình thức", ["Giữa kì", "Cuối kì", "Thường xuyên"], label_visibility="collapsed")
     with col4:
         st.markdown('<p class="header-blue">THỜI GIAN</p>', unsafe_allow_html=True)
         thoi_gian = st.selectbox("Thời gian", ["45 phút", "60 phút", "90 phút", "120 phút"], label_visibility="collapsed", index=1)
@@ -164,13 +153,6 @@ def render_de_kt_module():
                 
                 if result:
                     st.success("✅ Đã tạo xong đề kiểm tra theo đúng ma trận!")
-                    
-                    # --- GỌI HÀM LƯU VÀO GOOGLE SHEETS TẠI ĐÂY ---
-                    luu_thanh_cong = luu_lich_su_de_kt(mon_hoc, lop, ten_bai, hinh_thuc, tong_diem_tn, tong_diem_tl)
-                    if luu_thanh_cong:
-                        st.toast("☁️ Đã lưu thông tin đề lên hệ thống Google Sheets!", icon="✅")
-                    # ----------------------------------------------
-                    
                     with st.expander("👀 Xem trước Đề và Đáp án", expanded=True):
                         st.markdown(result)
                     st.session_state['current_de_kt'] = result
