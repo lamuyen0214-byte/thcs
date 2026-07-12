@@ -1,12 +1,18 @@
 # =====================================================================
-# FILE: app.py (HỆ THỐNG KHỞI CHẠY CHÍNH ĐÃ ĐỒNG BỘ ROUTER SẠCH LỖI)
+# FILE: app.py (HỆ THỐNG KHỞI CHẠY CHÍNH ĐÃ ĐỒNG BỘ ROUTER CHUẨN ĐỒ HỌA 2026)
 # =====================================================================
 import streamlit as st
 from google import genai
 import os
 import sys
 
-# --- 0. THUẬT TOÁN ĐỊNH VỊ TỰ ĐỘNG: Ép Python nạp thư mục con 'main' vào luồng tìm kiếm hệ thống ---
+# --- 1. KHÓA CẤU HÌNH TỐI CAO ĐẦU FILE: Bắt buộc phải là câu lệnh đầu tiên để bung sát lề laptop ---
+try:
+    st.set_page_config(layout="wide", page_title="Trợ Lý Giáo Viên AI", page_icon="👨‍🏫")
+except Exception:
+    pass
+
+# --- 2. THUẬT TOÁN ĐỊNH VỊ TỰ ĐỘNG: Ép Python nạp thư mục con 'main' vào luồng tìm kiếm hệ thống ---
 current_working_dir = os.getcwd()
 if current_working_dir not in sys.path:
     sys.path.append(current_working_dir)
@@ -16,7 +22,7 @@ sub_main_path = os.path.join(current_working_dir, "main")
 if os.path.exists(sub_main_path) and sub_main_path not in sys.path:
     sys.path.append(sub_main_path)
 
-# --- 1. GIAO DIỆN NHẬP KEY BẢO MẬT TẠI SIDEBAR ---
+# --- 3. GIAO DIỆN NHẬP KEY BẢO MẬT TẠI SIDEBAR ---
 st.sidebar.markdown("---")
 st.sidebar.subheader("🔑 Cấu hình API Key Cá Nhân")
 
@@ -32,7 +38,7 @@ user_key_input = st.sidebar.text_input(
 if user_key_input:
     st.session_state["user_gemini_key"] = user_key_input.strip()
 
-# --- 2. THUẬT TOÁN PHÂN CẤP TRÍCH XUẤT API KEY ---
+# --- 4. THUẬT TOÁN PHÂN CẤP TRÍCH XUẤT API KEY ---
 final_api_key = None
 
 if st.session_state.get("user_gemini_key"):
@@ -47,7 +53,7 @@ else:
     if final_api_key:
         st.sidebar.info("💡 Đang sử dụng API Key dự phòng của hệ thống.")
 
-# --- 3. KHỞI TẠO BIẾN CLIENT VÀ INTO SESSION STATE ---
+# --- 5. KHỞI TẠO BIẾN CLIENT VÀ INTO SESSION STATE ---
 if final_api_key:
     try:
         gemini_client = genai.Client(api_key=str(final_api_key))
@@ -57,19 +63,20 @@ if final_api_key:
 else:
     st.sidebar.warning("⚠️ Vui lòng cấu hình API Key để kích hoạt Trợ lý AI.")
 
-# --- 4. GỌI PHÂN HỆ ROUTER THÔNG SUỐT VÀ THỰC THI CHƯƠNG TRÌNH ---
+# --- 6. GỌI PHÂN HỆ ROUTER THÔNG SUỐT VÀ THỰC THI CHƯƠNG TRÌNH ---
 def main():
     try:
-        # 1. Gọi chính xác tên hàm định tuyến từ lõi hệ thống core/router.py
+        # Gọi chính xác tên hàm định tuyến từ lõi hệ thống core/router.py
         from core.router import route_teacher
-        
-        # 2. Thực thi kích hoạt giao diện phân hệ Giáo viên
         route_teacher()
-        
-    except (ModuleNotFoundError, ImportError, KeyError) as router_err:
-        # Luồng dự phòng hiển thị cảnh báo trực quan nếu trục trặc cấu trúc tệp tin
-        st.error(f"🛑 Trục trặc khởi chạy phân hệ: Không thể nạp cấu trúc định tuyến hệ thống.")
-        st.info(f"💡 Chi tiết kỹ thuật: {router_err}. Vui lòng kiểm tra lại sự tồn tại của file 'core/router.py' trên GitHub.")
+    except (ModuleNotFoundError, ImportError, KeyError):
+        try:
+            # Luồng dự phòng nếu cấu trúc thư mục chứa folder con main/ ngầm
+            from main.core.router import route_teacher
+            route_teacher()
+        except Exception as router_err:
+            st.error(f"🛑 Trục trặc khởi chạy phân hệ: Không thể nạp cấu trúc định tuyến hệ thống.")
+            st.info(f"💡 Chi tiết kỹ thuật: {router_err}. Vui lòng rà soát lại tệp 'core/router.py' trên GitHub.")
 
 if __name__ == "__main__":
     main()
