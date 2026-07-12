@@ -112,8 +112,11 @@ YÊU CẦU ĐỊNH DẠNG ĐẦU RA (BẮT BUỘC):
                 
                 if response and response.text:
                     st.session_state['current_rubric_data'] = {
-                        "is_khbd": False, 
-                        "custom_req": ten_nhiem_vu,
+                        "is_khbd": True, # Mượn cờ True để dùng cấu trúc xuất Word ổn định nhất
+                        "title": f"Rubric - {ten_nhiem_vu}",
+                        "subject": mon_hoc,
+                        "grade": lop,
+                        "ten_bai_save": "Rubric_Danh_Gia",
                         "ai_generated_content": response.text
                     }
                     st.success("✅ Đã khởi tạo bảng Rubric thành công!")
@@ -133,12 +136,21 @@ YÊU CẦU ĐỊNH DẠNG ĐẦU RA (BẮT BUỘC):
             try:
                 word_file = WordEngine.export_to_word(rubric_cache)
             except Exception as e:
-                pass
+                st.error(f"⚠️ Trình xuất Word đang gặp sự cố đồng bộ: {e}")
 
         col_dl, col_del = st.columns(2)
         with col_dl:
             if word_file:
-                st.download_button("📄 Tải Rubric (Word)", data=word_file, file_name="Rubric_Danh_Gia.docx", use_container_width=True)
+                st.download_button(
+                    label="📄 Tải Rubric (Word)", 
+                    data=word_file, 
+                    file_name="Rubric_Danh_Gia.docx", 
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                    use_container_width=True
+                )
+            else:
+                st.button("📄 Tải Rubric (Đang chờ xử lý)", disabled=True, use_container_width=True)
+                
         with col_del:
             if st.button("❌ Xóa bản nháp", use_container_width=True):
                 del st.session_state['current_rubric_data']
