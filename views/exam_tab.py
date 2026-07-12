@@ -105,7 +105,7 @@ def render_exam_module():
     if total_exam_score != 10.0:
         st.warning(f"⚠️ Cảnh báo sư phạm: Tổng điểm toàn bộ đề thi hiện tại đang là {total_exam_score}đ (Chuẩn phải bằng 10.0 điểm). Thầy cô nên điều chỉnh lại.")
     # 5. KHỐI LỆNH ĐIỀU KHIỂN - ĐÃ VÁ LỖI URL VÀ CẤU TRÚC PAYLOAD
-        if st.button("⚙️ Tự động tạo ma trận & đề thi chính thức"):
+    if st.button("⚙️ Tự động tạo ma trận & đề thi chính thức"):
             # ... (Phần kiểm tra Key giữ nguyên) ...
             
             with st.spinner("🤖 Trợ lý AI đang tiếp nhận API Key cá nhân và tiến hành ra đề thi..."):
