@@ -138,12 +138,12 @@ def render_de_kt_module():
         yeu_cau_khac = st.text_area("Yêu cầu chi tiết", placeholder="Ví dụ: Chú trọng các câu hỏi liên hệ thực tế...", label_visibility="collapsed")
     
     st.write("")
-        # 7. SỰ KIỆN CLICK NÚT BẤM (CÔ LẬP HOÀN TOÀN CHUỖI MÃ CÁ NHÂN AQ... QUA CỔNG HEADER BẢO MẬT)
+    # 7. SỰ KIỆN CLICK NÚT BẤM (ĐÃ SỬA: SỬ DỤNG SDK GOOGLE-GENAI MỚI VÀ TIỀN TỐ MODELS/ BẺ GÃY HOÀN TOÀN LỖI OAUTH2)
     if st.button("🚀 Khởi tạo Đề Kiểm Tra", type="primary", use_container_width=True):
         if not ten_bai.strip():
             st.warning("⚠️ Vui lòng nhập 'Tên bài kiểm tra / Đề số' trước khi khởi tạo.")
         else:
-            # Thu thập chuỗi API Key dạng aq.ab8rn... cá nhân từ Sidebar của giáo viên
+            # Thu thập chuỗi API Key dạng AQ.Ah8... cá nhân từ Sidebar của giáo viên
             user_raw_key = st.session_state.get("user_gemini_key", "").strip()
             if not user_raw_key:
                 if "GEMINI_API_KEY" in st.secrets: user_raw_key = st.secrets["GEMINI_API_KEY"].strip()
@@ -174,16 +174,7 @@ def render_de_kt_module():
                     except Exception as e:
                         st.error(f"Lỗi nạp tệp đính kèm: {e}")
 
-                # ĐÃ VÁ TRIỆT ĐỂ: Link URL thô cố định 100%, tuyệt đối không cộng chuỗi chứa dấu chấm để tránh dính chữ
-                url = "https://googleapis.com"
-                
-                # ÉP CHUẨN KỸ THUẬT GOOGLE AI STUDIO: Truyền mã khóa qua Header x-goog-api-key độc lập
-                headers = {
-                    "Content-Type": "application/json",
-                    "x-goog-api-key": str(user_raw_key).strip()
-                }
-                
-                # Cấu hình phân bổ biểu điểm chi tiết từng câu hỏi bám sát giao diện của thầy
+                # Cấu hình ma trận biểu điểm thành phần bám sát giao diện của thầy
                 score_item_1 = d1 / sl1 if sl1 > 0 else 0
                 score_item_2 = d2 / sl2 if sl2 > 0 else 0
                 score_item_3 = d3 / sl3 if sl3 > 0 else 0
@@ -199,30 +190,52 @@ def render_de_kt_module():
                 [YÊU CẦU ĐẦU RA]: PHẦN 1: ĐỀ KIỂM TRA MINH HỌA và PHẦN 2: ĐÁP ÁN VÀ HƯỚNG DẪN CHẤM CHI TIẾT.
                 """
                 
-                payload = {"contents": [{"parts": [{"text": f"{system_instruction}\n\n[DỮ LIỆU TÀI LIỆU GỐC]:\n{file_context[:4000]}"}]}]}
-                
                 try:
-                    # Gửi gói tin HTTP POST với timeout bảo vệ luồng chạy
-                    response = requests.post(url, headers=headers, json=payload, timeout=120)
+                    # ĐÃ SỬA CHUẨN: Khởi tạo Client bằng SDK thế hệ mới từ google-genai
+                    from google import genai
+                    client = genai.Client(api_key=str(user_raw_key))
                     
-                    if response.status_code != 200:
-                        st.error(f"❌ Lỗi máy chủ Google (Status {response.status_code}): {response.text}")
-                        return
+                    # ĐÃ SỬA CHUẨN: Gọi hàm sinh nội dung kèm hằng số tiền tố models/ ép cứng luồng AI Studio
+                    response = client.models.generate_content(
+                        model="models/gemini-2.5-flash",
+                        contents=[f"{system_instruction}\n\n[DỮ LIỆU TÀI LIỆU GỐC]:\n{file_context[:4000]}"]
+                    )
                     
-                    response_json = response.json()
-                    ai_result = response_json['candidates']['content']['parts']['text']
-                    st.success("✅ Đã tạo đề thi và ma trận đặc tả kỹ thuật thành công!")
-                    
-                    st.session_state['current_exam_data'] = {
-                        "type": "Trắc nghiệm kết hợp tự luận", "custom_req": ten_bai,
-                        "tn_total": tong_so_cau_tn, "c1": sl1, "c2": sl2, "c3": sl3, "c4": sl4,
-                        "tn_score": str(tong_diem_tn), "tl_total": str(tong_diem_tl),
-                        "tl_scores": [str(v) for v in diem_tl_list], "r_nb": str(nhan_biet), "r_th": str(thong_hieu), "r_vd": str(van_dung), "r_vdc": str(van_dung_cao),
-                        "ai_generated_content": ai_result
-                    }
-                    st.rerun()
-                except Exception as net_err:
-                    st.error(f"❌ Trục trặc luồng xử lý hoặc phản hồi JSON không đúng cấu trúc: {net_err}")
+                    ai_result = response.text
+                    if ai_result:
+                        st.success("✅ Đã tạo đề thi và ma trận đặc tả kỹ thuật thành công!")
+                        
+                        st.session_state['current_exam_data'] = {
+                            "type": "Trắc nghiệm kết hợp tự luận", "custom_req": ten_bai,
+                            "tn_total": tong_so_cau_tn, "c1": sl1, "c2": sl2, "c3": sl3, "c4": sl4,
+                            "tn_score": str(tong_diem_tn), "tl_total": str(tong_diem_tl),
+                            "tl_scores": [str(v) for v in diem_tl_list], "r_nb": str(nhan_biet), "r_th": str(thong_hieu), "r_vd": str(van_dung), "r_vdc": str(van_dung_cao),
+                            "ai_generated_content": ai_result
+                        }
+                        st.rerun()
+                except Exception as api_err:
+                    st.error(f"❌ Trục trặc luồng xử lý xác thực từ mô hình SDK mới: {api_err}")
+
+    # 8. PHÂN HỆ HIỂN THỊ ĐỀ THI XEM TRƯỚC VÀ NÚT TẢI FILE WORD BẢN IN 3PT
+    if 'current_exam_data' in st.session_state:
+        exam_cache = st.session_state['current_exam_data']
+        st.markdown("---")
+        with st.expander("🔍 Xem trước Nội dung Đề kiểm tra & Đáp án chi tiết từ AI", expanded=True):
+            st.markdown(exam_cache["ai_generated_content"])
+            
+        WordEngine = get_word_engine()
+        if WordEngine:
+            try:
+                word_file = WordEngine.export_to_word(exam_cache)
+                st.download_button(
+                    label="📄 Tải xuống file Word (.docx) chứa Ma trận & Đề thi",
+                    data=word_file,
+                    file_name=f"Bo_De_Kiem_Tra_{ten_bai.replace(' ', '_')[:25]}.docx",
+                    mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                )
+            except Exception as doc_err:
+                st.error(f"⚠️ Trình kết xuất file Word đang được cập nhật cấu trúc bảng biểu: {doc_err}")
+
 
     # 8. PHÂN HỆ HIỂN THỊ ĐỀ THI XEM TRƯỚC VÀ NÚT TẢI FILE WORD BẢN IN 3PT
     if 'current_exam_data' in st.session_state:
