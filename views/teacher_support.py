@@ -24,7 +24,6 @@ def render_module():
         st.subheader("🧪 Thiết kế bài dạy STEM")
         st.info("⏳ Thầy đang chuẩn bị file stem_builder.py để tích hợp vào đây...")
         render_stem_module()
-        
     with tabs[3]:
         st.subheader("📊 Xây dựng Rubric đánh giá")
         st.info("⏳ Giao diện đang được cập nhật...")
@@ -32,7 +31,7 @@ def render_module():
     with tabs[4]:
         st.subheader("📋 Công tác Chủ nhiệm")
         st.info("⏳ Giao diện đang được cập nhật...")
-        
+        render_homeroom_module()
     with tabs[5]:
         st.subheader("📈 Quản lý điểm số")
         st.info("⏳ Giao diện đang được cập nhật...")
