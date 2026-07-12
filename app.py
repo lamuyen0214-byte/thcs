@@ -7,7 +7,6 @@ sys.path.append(os.getcwd())
 # Cấu hình trang
 st.set_page_config(layout="wide", page_title="Hệ Sinh Thái Số -L.H.Dưỡng Education")
 from views import teacher_support, teaching_support, department_mgmt
-
 # --- SIDEBAR: Giao diện cố định xuyên suốt ---
 with st.sidebar:
     st.markdown("""
