@@ -47,7 +47,7 @@ else:
     if final_api_key:
         st.sidebar.info("💡 Đang sử dụng API Key dự phòng của hệ thống.")
 
-# --- 3. KHỞI TẠO BIẾN CLIENT VÀO SESSION STATE ---
+# --- 3. KHỞI TẠO BIẾN CLIENT VÀ INTO SESSION STATE ---
 if final_api_key:
     try:
         gemini_client = genai.Client(api_key=str(final_api_key))
@@ -57,29 +57,19 @@ if final_api_key:
 else:
     st.sidebar.warning("⚠️ Vui lòng cấu hình API Key để kích hoạt Trợ lý AI.")
 
-# --- 4. GỌI PHÂN HỆ ROUTER THÔNG SUỐT ---
-# ĐÃ HIỆU CHỈNH: Tích hợp cơ chế tìm kiếm đa cấp bẻ gãy hoàn toàn bẫy lỗi KeyError
-# SỬA LẠI ĐOẠN NÀY TRONG FILE app.py (Dòng 63 - 68):
-# =====================================================================
-# ĐOẠN MÃ SỬA ĐỔI HOÀN CHỈNH CHO FILE: app.py (Thay thế dòng 63 - 69)
-# =====================================================================
-try:
-    # 1. Gọi chính xác tên hàm định tuyến từ lõi hệ thống core/router.py
-    from core.router import route_teacher
-    
-    # 2. Thực thi kích hoạt giao diện phân hệ Giáo viên
-    route_teacher()
-    
-except (ModuleNotFoundError, ImportError, KeyError) as router_err:
-    # Luồng dự phòng tối cao hiển thị cảnh báo trực quan nếu trục trặc cấu trúc tệp tin
-    st.error(f"🛑 Trục trặc khởi chạy phân hệ: Không thể nạp cấu trúc định tuyến hệ thống.")
-    st.info(f"💡 Chi tiết kỹ thuật: {router_err}. Vui lòng kiểm tra lại sự tồn tại của file 'core/router.py' trên GitHub.")
-# =====================================================================
-
-        st.error("🛑 Không tìm thấy module cấu hình hệ thống 'core.router'. Vui lòng kiểm tra lại cấu trúc thư mục trên GitHub!")
-
+# --- 4. GỌI PHÂN HỆ ROUTER THÔNG SUỐT VÀ THỰC THI CHƯƠNG TRÌNH ---
 def main():
-    route_teacher()
+    try:
+        # 1. Gọi chính xác tên hàm định tuyến từ lõi hệ thống core/router.py
+        from core.router import route_teacher
+        
+        # 2. Thực thi kích hoạt giao diện phân hệ Giáo viên
+        route_teacher()
+        
+    except (ModuleNotFoundError, ImportError, KeyError) as router_err:
+        # Luồng dự phòng hiển thị cảnh báo trực quan nếu trục trặc cấu trúc tệp tin
+        st.error(f"🛑 Trục trặc khởi chạy phân hệ: Không thể nạp cấu trúc định tuyến hệ thống.")
+        st.info(f"💡 Chi tiết kỹ thuật: {router_err}. Vui lòng kiểm tra lại sự tồn tại của file 'core/router.py' trên GitHub.")
 
 if __name__ == "__main__":
     main()
