@@ -7,7 +7,6 @@ import requests
 
 def get_word_engine():
     try:
-        # Sửa dòng 10 trong cả 2 file thành:
         from export.export_word import WordExportEngine
         return WordExportEngine
     except Exception as e:
