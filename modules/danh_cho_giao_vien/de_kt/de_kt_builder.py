@@ -15,7 +15,6 @@ def get_word_engine():
         from export.export_word import WordExportEngine
         return WordExportEngine
     except Exception as e:
-        # ĐỔI PRINT THÀNH ST.ERROR ĐỂ LỖI HIỂN THỊ RÕ LÊN MÀN HÌNH THAY VÌ ẨN ĐI
         st.error(f"⚠️ Không thể tải Module Xuất Word: {e}")
         return None
 
@@ -85,7 +84,7 @@ def render_de_kt_module():
     if (nhan_biet + thong_hieu + van_dung + van_dung_cao) != 100:
         st.error("⚠️ Tổng tỷ lệ phần trăm mức độ nhận thức phải bằng 100%!")
 
-    # 4. HÀNG 3: TÊN BÀI VÀ TẢI FILE DỮ LIỆU CỐ ĐỊNH (TỶ LỆ CỦA THẦY)
+    # 4. HÀNG 3: TÊN BÀI VÀ TẢI FILE DỮ LIỆU CỐ ĐỊNH
     col_ten, col_file1, col_file2 = st.columns([2, 1, 1])
     with col_ten:
         st.markdown('<p class="header-red-title">Tên bài kiểm tra / Đề số:</p>', unsafe_allow_html=True)
@@ -99,9 +98,8 @@ def render_de_kt_module():
 
     st.write("")
 
-    # 5. HÀNG 4: CẤU TRÚC MA TRẬN ĐỘNG CHIA ĐÔI HAI CỘT TRÁI/PHẢI GIỮ NGUYÊN TỶ LỆ CỦA THẦY
+    # 5. HÀNG 4: CẤU TRÚC MA TRẬN ĐỘNG CHIA ĐÔI HAI CỘT TRÁI/PHẢI
     col_tn, spacer, col_tl = st.columns([12, 1, 12])
-    # --- CỘT TRÁI: TRẮC NGHIỆM ĐỘNG GIAO DIỆN CỐ ĐỊNH ---
     with col_tn:
         tn_header = st.empty()
         st.write("")
@@ -134,7 +132,6 @@ def render_de_kt_module():
         tong_so_cau_tn = sl1 + sl2 + sl3 + sl4
         tn_header.markdown(f'<div class="box-trac-nghiem">TRẮC NGHIỆM &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; {tong_diem_tn:.2f} &nbsp;&nbsp;&nbsp; Điểm</div>', unsafe_allow_html=True)
 
-    # --- CỘT PHẢI: TỰ LUẬN ĐỘNG GIAO DIỆN CỐ ĐỊNH ---
     with col_tl:
         c_tl1, c_tl2 = st.columns([2, 1])
         with c_tl1: st.write("**Nhập số lượng câu Tự luận:**")
@@ -162,8 +159,7 @@ def render_de_kt_module():
         bam_sat = st.checkbox("Bám sát nội dung đề cương/ma trận tải lên", value=True)
         yeu_cau_khac = st.text_area("Yêu cầu chi tiết", placeholder="Ví dụ: Chú trọng các câu hỏi liên hệ thực tế...", label_visibility="collapsed")
     
-    # 7. SỰ KIỆN CLICK NÚT BẤM (ĐÃ NÂNG CẤP LÕI AM HIỂU CHƯƠNG TRÌNH GDPT 2018 VÀ BỘ SÁCH KẾT NỐI TRI THỨC)
-    # Tích hợp menu thả xuống chọn mô hình AI để chủ động phòng tránh lỗi 404
+    # 7. SỰ KIỆN CLICK NÚT BẤM (CẬP NHẬT MÔ HÌNH CHUẨN ĐỂ VƯỢT LỖI 404)
     col_btn_run, col_model_sel = st.columns([3, 1])
     with col_model_sel:
         model_display_name = st.selectbox(
@@ -191,7 +187,6 @@ def render_de_kt_module():
                 chu_de_ai = f"{ten_bai} ({hinh_thuc}, {thoi_gian}). Tỷ lệ: NB {nhan_biet}%, TH {thong_hieu}%, VD {van_dung}%, VDC {van_dung_cao}%."
                 if yeu_cau_khac: chu_de_ai += f" Yêu cầu bổ sung: {yeu_cau_khac}"
 
-                # Khởi tạo luồng trích xuất văn bản thô từ tài liệu đính kèm
                 file_context = ""
                 if de_cuong_file is not None:
                     try:
@@ -208,17 +203,19 @@ def render_de_kt_module():
                             file_context += "\n".join([p.text for p in docx.Document(de_cuong_file).paragraphs])
                     except Exception as e: print(e)
 
-                # Cập nhật danh sách định danh mô hình chuẩn xác nhất của Google hiện tại
+                # =========================================================================
+                # BẢN VÁ LỖI API: Cập nhật các định danh mô hình chuẩn phiên bản 002
+                # =========================================================================
                 model_mapping = {
                     "3.1 Flash-Lite": "gemini-1.5-flash-8b",
-                    "3.5 Flash": "gemini-1.5-flash",
-                    "3.1 Pro": "gemini-2.0-flash",
-                    "Tư duy mở rộng": "gemini-1.5-pro-latest"
+                    "3.5 Flash": "gemini-1.5-flash-002",
+                    "3.1 Pro": "gemini-2.0-flash-exp",
+                    "Tư duy mở rộng": "gemini-1.5-pro-002"
                 }
-                primary_model = model_mapping.get(model_display_name, "gemini-1.5-flash")
+                primary_model = model_mapping.get(model_display_name, "gemini-1.5-flash-002")
                 
-                # Danh sách dự phòng toàn các mô hình cực nhẹ, tốc độ cao, độ tương thích API 100%
-                fallback_queue = list(dict.fromkeys([primary_model, "gemini-1.5-flash", "gemini-1.5-flash-8b", "gemini-2.0-flash"]))
+                # Danh sách Fallback sử dụng các phiên bản cực nhẹ và tương thích nhất
+                fallback_queue = list(dict.fromkeys([primary_model, "gemini-1.5-flash-002", "gemini-1.5-flash-8b", "gemini-2.0-flash-exp"]))
                 
                 score_item_1 = d1 / sl1 if sl1 > 0 else 0
                 score_item_2 = d2 / sl2 if sl2 > 0 else 0
@@ -226,7 +223,6 @@ def render_de_kt_module():
                 score_item_4 = d4 / sl4 if sl4 > 0 else 0
                 tl_scores_str = ", ".join([f"Câu {idx+1} ({val}đ)" for idx, val in enumerate(diem_tl_list)])
 
-                # SIÊU CÂU LỆNH PROMPT SƯ PHẠM
                 system_instruction = f"""
                 Bạn là Viện trưởng Viện Khoa học Giáo dục kiêm Chuyên gia khảo thí cao cấp của Bộ GD&ĐT Việt Nam.
                 [YÊU CẦU NỀN TẢNG TUÂN THỦ]: Bạn phải sở hữu tri thức sâu rộng, am hiểu tường tận 100% mục tiêu cốt lõi của Chương trình GDPT 2018 đối với toàn bộ các môn học và cấu trúc nội dung phân phối chương trình của Bộ sách "Kết nối tri thức với cuộc sống".
@@ -242,7 +238,7 @@ def render_de_kt_module():
                 
                 response_text = None
                 activated_model_name = ""
-                error_log = [] # Két sắt lưu trữ toàn bộ lịch sử lỗi
+                error_log = [] 
                 
                 from google import genai
                 try:
@@ -258,7 +254,6 @@ def render_de_kt_module():
                                 activated_model_name = current_model
                                 break
                         except Exception as e:
-                            # Bắt trọn mọi lỗi của từng mô hình đưa vào danh sách
                             error_log.append(f"[{current_model}] thất bại: {str(e)}")
                             continue 
                 except Exception as api_err:
@@ -275,11 +270,10 @@ def render_de_kt_module():
                     }
                     st.success(f"✅ Đã khởi tạo thành công bằng mô hình {activated_model_name}!")
                 else:
-                    # In rõ ràng lịch sử "chiến đấu" của vòng lặp để giáo viên không bị rối
                     error_details = "\n\n".join(error_log)
-                    st.error(f"❌ Không thể kết nối AI sau khi đã quét toàn bộ các mô hình dự phòng. Chi tiết lỗi hệ thống:\n{error_details}")
+                    st.error(f"❌ Không thể kết nối AI do cấu hình API Key chưa hỗ trợ. Chi tiết hệ thống:\n{error_details}")
 
-    # 8. CẶP NÚT BẤM CHỨC NĂNG KẾT XUẤT CỐ ĐỊNH 100% RA MÀN HÌNH THEO ĐÚNG YÊU CẦU
+    # 8. CẶP NÚT BẤM CHỨC NĂNG KẾT XUẤT
     st.markdown("---")
     st.markdown("##### 📥 Kết Xuất Hồ Sơ Đề Kiểm Tra Chuyên Nghiệp")
     
@@ -323,19 +317,16 @@ def render_de_kt_module():
                         
             except Exception as doc_err:
                 st.error(f"⚠️ Trình kết xuất file Word đang báo lỗi: {doc_err}")
-                # KHÓA BỐ CỤC: Bổ sung 3 nút vô hiệu hóa khi quá trình xuất Word nội bộ gặp lỗi để bảo toàn giao diện
                 col_save, col_dl, col_del = st.columns(3)
                 with col_save: st.button("💾 Lưu file tạm thời", type="secondary", use_container_width=True, disabled=True)
                 with col_dl: st.button("📄 Tải file về máy", type="secondary", use_container_width=True, disabled=True)
                 with col_del: st.button("❌ Xóa file", type="secondary", use_container_width=True, disabled=True)
         else:
-            # KHÓA BỐ CỤC: Nếu file Word hoàn toàn không thể nạp (bị mất), vẫn duy trì 3 nút ở dạng chờ trên màn hình
             col_save, col_dl, col_del = st.columns(3)
             with col_save: st.button("💾 Lưu file tạm thời", type="secondary", use_container_width=True, disabled=True)
             with col_dl: st.button("📄 Tải file về máy", type="secondary", use_container_width=True, disabled=True)
             with col_del: st.button("❌ Xóa file", type="secondary", use_container_width=True, disabled=True)
     else:
-        # Trạng thái chờ mặc định khi chưa có đề thi
         col_save, col_dl, col_del = st.columns(3)
         with col_save: st.button("💾 Lưu file tạm thời", type="secondary", use_container_width=True, disabled=True)
         with col_dl: st.button("📄 Tải file về máy", type="secondary", use_container_width=True, disabled=True)
