@@ -1,53 +1,40 @@
 import streamlit as st
 from modules.teaching.rag_engine import process_rag_engine
-# Tạm thời khóa dòng import này lại để chờ Streamlit Cloud cài thư viện LangChain
-# from modules.rag_engine import process_rag_engine
 
 def render_module():
     st.markdown("## 🌱 Hỗ trợ Giảng dạy")
     
-    # Khôi phục đúng 10 thẻ chức năng theo thiết kế của thầy
     tabs = st.tabs([
-        "Hỏi-Đáp (RAG)", 
-        "Trò chơi", 
-        "Chấm bài", 
-        "Học liệu", 
-        "Mô phỏng", 
-        "Phân tích", 
-        "Ngân hàng đề", 
-        "Sinh Video", 
-        "Tương tác", 
-        "Cá nhân hóa"
+        "Hỏi-Đáp (RAG)", "Trò chơi", "Chấm bài", "Học liệu", "Mô phỏng", 
+        "Phân tích", "Ngân hàng đề", "Sinh Video", "Tương tác", "Cá nhân hóa"
     ])
     
     # --- THẺ 1: HỎI ĐÁP (RAG) ---
     with tabs[0]:
         st.markdown("### 🤖 AI Hỏi - Đáp Theo Tài Liệu (RAG)")
-        st.markdown("Hệ thống tự động phân tách tài liệu, nhúng vector và truy xuất dữ liệu có kèm trích dẫn nguồn.")
+        st.markdown("Hệ thống tự động phân tách tài liệu và truy xuất dữ liệu.")
         
-        st.write("")
         st.markdown("#### 📥 Bước 1: Chọn nguồn tài liệu giảng dạy")
         
-        # Radio button chọn hình thức
         hinh_thuc = st.radio(
             "Hình thức cung cấp học liệu:",
             ["Tài liệu tải lên (PDF, DOCX, Ảnh)", "Đường dẫn Website"],
             horizontal=True
         )
-       # Đảm bảo các dòng này thẳng hàng với nhau
-    uploaded_file = None
-    hinh_thuc_url = None
-    
-    if hinh_thuc_url_radio == "Tài liệu tải lên (PDF, DOCX, Ảnh)":
-        st.write("Tải lên tài liệu của thầy/cô (PDF, DOCX, PNG, JPG):")
-        uploaded_file = st.file_uploader("", type=['pdf', 'docx', 'png', 'jpg'], label_visibility="collapsed")
-    else:
-        hinh_thuc_url = st.text_input("Nhập đường dẫn Website (URL):")
+        
+        uploaded_file = None
+        hinh_thuc_url = None
+        
+        if hinh_thuc == "Tài liệu tải lên (PDF, DOCX, Ảnh)":
+            st.write("Tải lên tài liệu của thầy/cô:")
+            uploaded_file = st.file_uploader("Upload", type=['pdf', 'docx', 'png', 'jpg'], label_visibility="collapsed")
+        else:
+            hinh_thuc_url = st.text_input("Nhập đường dẫn Website (URL):")
+            
+        # Gọi module RAG (đã nằm đúng trong khối tabs[0])
+        process_rag_engine(uploaded_file, hinh_thuc_url)
 
-     # Gọi module RAG để xử lý Bước 2
-     process_rag_engine(uploaded_file, hinh_thuc_url)
-
-    # --- CÁC THẺ CÒN LẠI (Chờ tích hợp) ---
+    # --- CÁC THẺ CÒN LẠI ---
     with tabs[1]:
         st.subheader("🎮 Trò chơi")
         st.info("⏳ Đang chờ kết nối module trò chơi...")
@@ -56,30 +43,6 @@ def render_module():
         st.subheader("📝 Chấm bài")
         st.info("⏳ Đang chờ kết nối module chấm bài tự động...")
         
-    with tabs[3]:
-        st.subheader("📚 Học liệu")
-        st.info("⏳ Giao diện đang được cập nhật...")
-        
-    with tabs[4]:
-        st.subheader("🔬 Mô phỏng")
-        st.info("⏳ Giao diện đang được cập nhật...")
-        
-    with tabs[5]:
-        st.subheader("📊 Phân tích")
-        st.info("⏳ Giao diện đang được cập nhật...")
-        
-    with tabs[6]:
-        st.subheader("📑 Ngân hàng đề")
-        st.info("⏳ Giao diện đang được cập nhật...")
-        
-    with tabs[7]:
-        st.subheader("🎬 Sinh Video")
-        st.info("⏳ Giao diện đang được cập nhật...")
-        
-    with tabs[8]:
-        st.subheader("🤝 Tương tác")
-        st.info("⏳ Giao diện đang được cập nhật...")
-        
-    with tabs[9]:
-        st.subheader("👤 Cá nhân hóa")
-        st.info("⏳ Giao diện đang được cập nhật...")
+    for i in range(3, 10):
+        with tabs[i]:
+            st.info("⏳ Giao diện đang được cập nhật...")
