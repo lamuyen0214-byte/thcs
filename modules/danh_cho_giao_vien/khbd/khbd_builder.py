@@ -75,44 +75,7 @@ def render_khbd_module(api_key=""):
     bam_sat = st.checkbox(" Bám sát 100% tài liệu tải lên", value=True, key="chk_bam_sat_khbd_unique")
     st.write("")
     # 3. LOGIC AI (SỬA ĐỔI DUY NHẤT: TRUYỀN THAM SỐ API_KEY VÀO HÀM ĐỂ TRANH LỖI CHẶN MÁY CHỦ)
-    if st.button(" KHỞI TẠO TIẾN TRÌNH KẾ HOẠCH BÀI DẠY", type="primary", use_container_width=True, key="btn_run_khbd_unique"):
-        if not ten_bai.strip():
-            st.warning(" Vui lòng điền 'Tên bài học / Chủ đề bài dạy' trước khi kích hoạt.")
-        else:
-            # Truyền tham số api_key nhận từ tầng router xuống để khởi tạo phiên độc lập an toàn
-            client, error = get_ai_client(api_key)
-            
-            if error:
-                st.error(f" Lỗi xác thực: {error}")
-                return
-                
-            with st.spinner(" Trợ lý AI đang nghiên cứu tài liệu..."):
-                # --- (MỌI LOGIC ĐỌC FILE VÀ BIẾN file_context CỦA THẦY GIỮ NGUYÊN VẸN 100%) ---
-                file_context = ""
-                # ... [Code trích xuất, xử lý nội dung tệp tin tải lên của thầy vận hành tại đây] ...
-                
-                try:
-                    # Tiến hành gọi mô hình thông qua thực thể client đã gán mã khóa môi trường mới
-                    response = client.models.generate_content(
-                        model="gemini-2.5-flash",
-                        contents=f"Soạn KHBD môn {mon_hoc} {lop}..."
-                    )
-                    
-                    if response and response.text:
-                        st.session_state['current_khbd_data'] = {
-                            "is_khbd": True, 
-                            "title": ten_bai, 
-                            "ten_bai_save": str(ten_bai), 
-                            "subject": mon_hoc, 
-                            "grade": lop, 
-                            "duration": str(thoi_luong), 
-                            "style": mau_thiet_ke,
-                            "ai_generated_content": response.text
-                        }
-                        st.success(" Đã khởi tạo giáo án điện tử thành công!")
-                        st.rerun()
-                except Exception as e:
-                    st.error(f" Lỗi hệ thống AI: {e}")
+    if st.button(
 
     # 4. KẾT XUẤT (GIỮ NGUYÊN HOÀN TOÀN CẤU TRÚC GIAO DIỆN, NÚT LƯU, IN WORD CỦA THẦY)
     # ... [Toàn bộ logic hiển thị văn bản kết quả, tương tác Tải/Xóa/Xuất file Word giữ nguyên ở cuối file] ...
