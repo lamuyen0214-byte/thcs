@@ -1,109 +1,70 @@
 import streamlit as st
-import os
 import sys
+import os
 
-# =====================================================================
-# CẤU HÌNH ĐỊNH TUYẾN TỰ ĐỘNG (KỸ THUẬT CHỐNG LỖI IMPORT)
-# =====================================================================
-current_dir = os.path.dirname(os.path.abspath(__file__))
-root_dir = current_dir
-while not os.path.exists(os.path.join(root_dir, 'ai_config.py')) and root_dir != os.path.dirname(root_dir):
-    root_dir = os.path.dirname(root_dir)
-
-if root_dir not in sys.path:
-    sys.path.append(root_dir)
-
-# Import 'Trái tim' hệ thống và Engine Word
-from ai_config import get_ai_client
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
-from export.export_word import WordExportEngine
-
-def get_word_engine():
-    try:
-        return WordExportEngine
-    except Exception as e:
-        print(f"Lỗi nạp module Word: {e}")
-        return None
+# 1. ĐỊNH TUYẾN TUYỆT ĐỐI (GỐC DỰ ÁN)
+root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../'))
+if root_dir not in sys.path: sys.path.append(root_dir)
+from ai_config import run_ai_with_fallback, render_api_config_sidebar
 
 def render_khbd_module():
-    # 1. CSS CỦA THẦY - GIỮ NGUYÊN
+    # CSS GỐC CỦA THẦY
     st.markdown("""
         <style>
-        div[data-testid="stAppViewBlockContainer"], 
-        .main .block-container, 
-        .stAppViewBlockContainer {
-            max-width: 98% !important;
-            width: 98% !important;
-            padding-left: 1.5rem !important;
-            padding-right: 1.5rem !important;
-            padding-top: 1rem !important;
-            padding-bottom: 1rem !important;
+        div[data-testid="stAppViewBlockContainer"], .main .block-container {
+            max-width: 98% !important; width: 98% !important;
+            padding-left: 1.5rem !important; padding-right: 1.5rem !important;
         }
         .header-blue {color: #0000FF; font-weight: bold; font-size: 15px; text-align: left; margin-bottom: 2px;}
-        .text-red-italic {color: #FF0000; font-style: italic; font-weight: bold; font-size: 14px;}
         .header-red-title {color: #FF0000; font-weight: bold; font-size: 15px; margin-bottom: 5px;}
         </style>
     """, unsafe_allow_html=True)
 
-    # 2. GIAO DIỆN NHẬP LIỆU - GIỮ NGUYÊN CẤU TRÚC
+    # GIAO DIỆN NHẬP LIỆU GỐC
     st.markdown('<p class="header-red-title">Tên bài học / Chủ đề bài dạy:</p>', unsafe_allow_html=True)
-    ten_bai = st.text_input("Tên bài", placeholder="Ví dụ: Bài 4: Tốc độ chuyển động", label_visibility="collapsed", key="txt_ten_bai_khbd_5512")
+    ten_bai = st.text_input("Tên bài", placeholder="Ví dụ: Bài 4: Tốc độ chuyển động", label_visibility="collapsed")
 
     col_lop, col_mau, col_tiet, col_file = st.columns([1.5, 2, 1.5, 2])
     with col_lop:
         st.markdown('<p class="header-blue">Lớp:</p>', unsafe_allow_html=True)
-        lop = st.selectbox("Lớp KHBD", ["Lớp 6", "Lớp 7", "Lớp 8", "Lớp 9", "Lớp 10", "Lớp 11", "Lớp 12"], label_visibility="collapsed", index=2, key="sb_lop_khbd_unique")
+        lop = st.selectbox("Lớp", ["Lớp 6", "Lớp 7", "Lớp 8", "Lớp 9", "Lớp 10", "Lớp 11", "Lớp 12"], index=2)
     with col_mau:
         st.markdown('<p class="header-blue">Mẫu thiết kế:</p>', unsafe_allow_html=True)
-        mau_thiet_ke = st.selectbox("Mẫu", ["Chuẩn 5512", "Rút gọn", "STEM"], label_visibility="collapsed", index=0, key="sb_mau_khbd_unique")
+        mau_thiet_ke = st.selectbox("Mẫu", ["Chuẩn 5512", "Rút gọn", "STEM"])
     with col_tiet:
         st.markdown('<p class="header-blue">Thời lượng (Tiết):</p>', unsafe_allow_html=True)
-        thoi_luong = st.number_input("Thời lượng", min_value=1, max_value=10, value=2, label_visibility="collapsed", key="num_tiet_khbd_unique")
+        thoi_luong = st.number_input("Tiết", min_value=1, value=2)
     with col_file:
-        st.markdown('<p class="header-blue">Tài liệu (docx, pdf, txt):</p>', unsafe_allow_html=True)
-        tai_lieu_file = st.file_uploader("Tài liệu đính kèm", type=['docx', 'pdf', 'txt'], label_visibility="collapsed", key="file_tai_lieu_khbd_unique")
+        st.markdown('<p class="header-blue">Tài liệu đính kèm:</p>', unsafe_allow_html=True)
+        tai_lieu_file = st.file_uploader("Upload", type=['docx', 'pdf', 'txt'], label_visibility="collapsed")
 
     col_mon, col_model_core = st.columns(2)
     with col_mon:
-        st.markdown('<p class="header-blue">Chọn môn học giảng dạy:</p>', unsafe_allow_html=True)
-        mon_hoc = st.selectbox("Môn KHBD", ["Toán", "Ngữ văn", "Ngoại ngữ", "Khoa học tự nhiên", "Vật lý", "Hóa học", "Sinh học", "Lịch sử và Địa lý", "Giáo dục công dân", "Tin học", "Công nghệ", "Nghệ thuật", "Giáo dục thể chất", "Hoạt động trải nghiệm, hướng nghiệp", "Giáo dục địa phương"], label_visibility="collapsed", index=0, key="sb_mon_khbd_unique")
+        st.markdown('<p class="header-blue">Môn học:</p>', unsafe_allow_html=True)
+        mon_hoc = st.selectbox("Môn", ["Toán", "Ngữ văn", "Khoa học tự nhiên", "Vật lý", "Hóa học", "Sinh học", "Tin học", "Công nghệ"], index=0)
     with col_model_core:
-        st.markdown('<p class="header-blue">Chọn lõi xử lý Trợ lý AI:</p>', unsafe_allow_html=True)
-        model_display_name = st.selectbox("Mô hình KHBD", ["3.1 Flash-Lite", "3.5 Flash", "3.1 Pro", "Tư duy mở rộng"], label_visibility="collapsed", index=0, key="sb_model_khbd_unique")
+        st.markdown('<p class="header-blue">Mô hình AI:</p>', unsafe_allow_html=True)
+        model_display_name = st.selectbox("Mô hình", ["3.1 Flash-Lite", "3.5 Flash", "3.1 Pro", "Tư duy mở rộng"])
 
-    st.write("")
-    bam_sat = st.checkbox("🚩 Bám sát 100% tài liệu tải lên", value=True, key="chk_bam_sat_khbd_unique")
-    st.write("")
-
-    # 3. LOGIC AI (ĐÃ CẤY KẾT NỐI MỚI)
-    if st.button("🚀 KHỞI TẠO TIẾN TRÌNH KẾ HOẠCH BÀI DẠY", type="primary", use_container_width=True, key="btn_run_khbd_unique"):
+    # LOGIC XỬ LÝ AI CHUẨN MỚI
+    if st.button("🚀 KHỞI TẠO TIẾN TRÌNH KẾ HOẠCH BÀI DẠY", type="primary", use_container_width=True):
         if not ten_bai.strip():
-            st.warning("⚠️ Vui lòng điền 'Tên bài học / Chủ đề bài dạy' trước khi kích hoạt.")
+            st.warning("⚠️ Vui lòng điền tên bài học.")
         else:
-            client = get_ai_client()
-            if not client:
-                st.error("⚠️ Lỗi xác thực: Vui lòng kiểm tra hoặc nhập lại API Key ở thanh bên (Sidebar)!")
-                return
-
-            with st.spinner("🤖 Trợ lý AI đang nghiên cứu tài liệu..."):
-                # (Logic đọc file của thầy giữ nguyên)
-                file_context = ""
-                # ... [Code đọc file của thầy nằm ở đây] ...
+            # Thu thập prompt theo cấu trúc của thầy
+            prompt = f"Soạn KHBD môn {mon_hoc}, lớp {lop}, thời lượng {thoi_luong} tiết. Tên bài: {ten_bai}. Mẫu: {mau_thiet_ke}."
+            
+            with st.spinner("🤖 Trợ lý AI đang soạn thảo..."):
+                result, success = run_ai_with_fallback(prompt, model_display_name)
                 
-                try:
-                    response = client.models.generate_content(
-                        model="gemini-2.5-flash",
-                        contents=f"Soạn KHBD môn {mon_hoc} {lop}..."
-                    )
-                    if response and response.text:
-                        st.session_state['current_khbd_data'] = {
-                            "is_khbd": True, "title": ten_bai, "ten_bai_save": str(ten_bai), "subject": mon_hoc, "grade": lop, "duration": str(thoi_luong), "style": mau_thiet_ke,
-                            "ai_generated_content": response.text
-                        }
-                        st.success("✅ Đã khởi tạo giáo án điện tử thành công!")
-                        st.rerun()
-                except Exception as e:
-                    st.error(f"❌ Lỗi hệ thống AI: {e}")
+                if success:
+                    st.session_state['current_khbd_data'] = result
+                    st.success("✅ Thành công!")
+                    st.rerun()
+                else:
+                    st.error(result)
 
-    # 4. KẾT XUẤT (GIỮ NGUYÊN CẤU TRÚC NÚT CỦA THẦY)
-    # ... [Code hiển thị, Nút Lưu, Tải, Xóa của thầy nằm ở đây] ...
+    # HIỂN THỊ KẾT QUẢ GỐC
+    if 'current_khbd_data' in st.session_state:
+        with st.expander("🔍 Xem trước kết quả", expanded=True):
+            st.markdown(st.session_state['current_khbd_data'])
