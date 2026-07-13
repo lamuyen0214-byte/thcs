@@ -52,11 +52,11 @@ with st.sidebar:
         unsafe_allow_html=True
     )
 
-# --- 5. ĐIỀU PHỐI (ROUTER) CẢI TIẾN ---
-def run_router():
-    # LẤY API KEY TỪ SESSION_STATE
-    current_key = st.session_state.get("gemini_api_key", "")
+# ... (Phần import và sidebar giữ nguyên) ...
 
+# --- 5. ĐIỀU PHỐI (ROUTER) ---
+def run_router():
+    current_key = st.session_state.get("gemini_api_key", "")
     mapping = {
         "Hỗ trợ Giáo viên": teacher_support.render_module if teacher_support else None,
         "Hỗ trợ Giảng dạy": teaching_support.render_module if teaching_support else None,
@@ -66,12 +66,8 @@ def run_router():
     
     action = mapping.get(phan_he)
     if action:
-        # TRUYỀN API KEY VÀO CÁC MODULE CON
-        try:
-            action(api_key=current_key)
-        except TypeError:
-            # Fallback nếu module con chưa kịp sửa (không nhận tham số api_key)
-            action()
+        # Truyền api_key xuống phân hệ con
+        action(api_key=current_key) 
     else:
         st.warning("Phân hệ này đang bị lỗi nạp hoặc đang được phát triển.")
 
