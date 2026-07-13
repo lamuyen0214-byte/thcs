@@ -1,96 +1,85 @@
-import streamlit as st
-from google import genai
-import time
 import logging
+import json
+import time
+import os
+from functools import lru_cache
+from google import genai
 
-# Cấu hình logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
+# 1. Cấu hình Logger an toàn (Tránh lặp handler)
+logger = logging.getLogger("AI_Engine")
+if not logger.handlers:
+    logger.setLevel(logging.INFO)
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+    logger.addHandler(handler)
 
-@st.cache_resource
-def create_client(api_key):
-    """Khởi tạo Client an toàn, không chứa UI call."""
+# 2. Cache Client an toàn với lru_cache
+@lru_cache(maxsize=5)
+def get_ai_client(api_key):
+    if not api_key: return None
     try:
         return genai.Client(api_key=api_key)
-    except Exception:
+    except Exception as e:
+        logger.error(f"Khởi tạo Client thất bại: {e}")
         return None
 
-def get_ai_client():
-    secret_key = st.secrets.get("GEMINI_API_KEY", None)
-    key = st.session_state.get("gemini_api_key") or secret_key
-    if not key:
-        return None
-    return create_client(key)
+def load_models():
+    """Tải model với encoding chuẩn."""
+    path = os.path.join(os.path.dirname(__file__), 'ai_models.json')
+    try:
+        with open(path, "r", encoding="utf-8") as f:
+            return json.load(f)
+    except Exception as e:
+        logger.warning(f"Không tải được ai_models.json, dùng fallback mặc định: {e}")
+        return {"flash": "gemini-2.5-flash", "pro": "gemini-2.5-pro"}
 
-def get_fallback_queue(model_display_name):
-    fallback_map = {
-        "3.1 Flash-Lite": ["gemini-2.5-flash"],
-        "3.5 Flash": ["gemini-2.5-flash"],
-        "3.1 Pro": ["gemini-2.5-pro", "gemini-2.5-flash"],
-        "Tư duy mở rộng": ["gemini-2.5-pro"]
-    }
-    return fallback_map.get(model_display_name, ["gemini-2.5-flash"])
-
-def run_ai_with_fallback(prompt, model_choice):
-    """Engine xử lý AI tinh gọn, trả dữ liệu, không làm phiền UI."""
-    # 1. Kiểm tra độ dài prompt (Giới hạn khoảng 800k ký tự ~ 200k tokens cho Flash)
-    if len(prompt) > 800000:
-        return None, False, "Prompt quá dài, vui lòng rút gọn tài liệu."
-
-    client = get_ai_client()
+def run_ai_with_fallback(prompt, api_key, model_mode="flash"):
+    if not prompt or not prompt.strip():
+        return {"success": False, "error": "Prompt rỗng"}
+    
+    client = get_ai_client(api_key)
     if not client:
-        return None, False, "Chưa cấu hình API Key."
-    
-    models = get_fallback_queue(model_choice)
-    error_codes = ["429", "503", "500", "RESOURCE_EXHAUSTED", "UNAVAILABLE"]
-    
-    # Placeholder cho status update trong sidebar
-    status_bar = st.sidebar.empty()
+        return {"success": False, "error": "API Key không hợp lệ"}
 
-    for m in models:
-        status_bar.info(f"🔄 Đang gọi: {m}...")
-        
-        # Thử lại 3 lần với exponential backoff
+    models_cfg = load_models()
+    # 3. Lọc danh sách model an toàn (Loại bỏ giá trị None)
+    raw_sequence = [models_cfg.get("flash"), models_cfg.get("pro")] if model_mode == "pro" else [models_cfg.get("flash")]
+    fallback_sequence = [m for m in raw_sequence if m]
+    
+    if not fallback_sequence:
+        return {"success": False, "error": "Cấu hình model không hợp lệ"}
+    
+    # 4. Danh sách lỗi mở rộng
+    error_codes = ["429", "503", "500", "RESOURCE_EXHAUSTED", "UNAVAILABLE", "Quota"]
+
+    for m in fallback_sequence:
         for retry in range(3):
             try:
                 start_time = time.time()
+                # Gọi API chuẩn (config để trống đảm bảo tương thích SDK cao nhất)
+                response = client.models.generate_content(model=m, contents=prompt)
                 
-                # Gọi API không dùng timeout trong config
-                response = client.models.generate_content(
-                    model=m, 
-                    contents=prompt,
-                    config={"temperature": 0.4, "top_p": 0.95}
-                )
-                
-                duration = time.time() - start_time
                 text = getattr(response, "text", None)
-                
                 if text and text.strip():
-                    logging.info(f"Success: {m} | Time: {duration:.2f}s")
-                    status_bar.empty()
-                    return text, True, m
-                else:
-                    raise Exception("API returned empty content")
-                    
+                    duration = time.time() - start_time
+                    logger.info(f"Success: {m} | Time: {duration:.2f}s")
+                    return {
+                        "success": True,
+                        "model": m,
+                        "time": duration,
+                        "text": text
+                    }
+                raise Exception("API returned empty")
+
             except Exception as e:
                 msg = str(e)
                 if any(err in msg for err in error_codes):
                     wait_time = 2 ** retry
-                    logging.warning(f"Retry {retry+1} for {m} after {wait_time}s due to: {msg[:50]}")
+                    logger.warning(f"Retry {retry+1}/{m} sau {wait_time}s vì lỗi: {msg[:50]}")
                     time.sleep(wait_time)
                     continue
                 else:
-                    logging.error(f"Fatal error {m}: {msg}")
-                    break # Lỗi không hồi phục
-    
-    status_bar.empty()
-    return None, False, "Hệ thống AI không phản hồi sau nhiều lần thử."
-
-def render_api_config_sidebar():
-    st.sidebar.markdown("---")
-    st.sidebar.subheader("🔑 Cấu hình API Key")
-    key_input = st.sidebar.text_input("Gemini API Key:", value=st.session_state.get("gemini_api_key", ""), type="password")
-    
-    if key_input.strip():
-        st.session_state["gemini_api_key"] = key_input.strip()
-    else:
-        st.session_state.pop("gemini_api_key", None)
+                    logger.error(f"Fatal error on {m}: {msg}")
+                    break 
+                    
+    return {"success": False, "error": "Hệ thống AI không phản hồi sau mọi nỗ lực."}
