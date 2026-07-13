@@ -2,10 +2,13 @@ import logging
 import json
 import time
 import os
+import streamlit as st
 from functools import lru_cache
 from google import genai
 
-# 1. Cấu hình Logger an toàn (Tránh lặp handler)
+# =====================================================================
+# 1. CẤU HÌNH LOGGER AN TOÀN (TRÁNH LẶP HANDLER)
+# =====================================================================
 logger = logging.getLogger("AI_Engine")
 if not logger.handlers:
     logger.setLevel(logging.INFO)
@@ -13,7 +16,9 @@ if not logger.handlers:
     handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
     logger.addHandler(handler)
 
-# 2. Cache Client an toàn với lru_cache
+# =====================================================================
+# 2. KHỞI TẠO VÀ QUẢN LÝ CLIENT TỐI ƯU
+# =====================================================================
 @lru_cache(maxsize=5)
 def get_ai_client(api_key):
     if not api_key: return None
@@ -24,7 +29,7 @@ def get_ai_client(api_key):
         return None
 
 def load_models():
-    """Tải model với encoding chuẩn."""
+    """Tải model với encoding chuẩn UTF-8."""
     path = os.path.join(os.path.dirname(__file__), 'ai_models.json')
     try:
         with open(path, "r", encoding="utf-8") as f:
@@ -33,6 +38,9 @@ def load_models():
         logger.warning(f"Không tải được ai_models.json, dùng fallback mặc định: {e}")
         return {"flash": "gemini-2.5-flash", "pro": "gemini-2.5-pro"}
 
+# =====================================================================
+# 3. ENGINE XỬ LÝ AI LÕI (CHỐNG LỖI 429, 503, TIMEOUT)
+# =====================================================================
 def run_ai_with_fallback(prompt, api_key, model_mode="flash"):
     if not prompt or not prompt.strip():
         return {"success": False, "error": "Prompt rỗng"}
@@ -42,14 +50,14 @@ def run_ai_with_fallback(prompt, api_key, model_mode="flash"):
         return {"success": False, "error": "API Key không hợp lệ"}
 
     models_cfg = load_models()
-    # 3. Lọc danh sách model an toàn (Loại bỏ giá trị None)
+    # Lọc danh sách model an toàn (Loại bỏ giá trị None)
     raw_sequence = [models_cfg.get("flash"), models_cfg.get("pro")] if model_mode == "pro" else [models_cfg.get("flash")]
     fallback_sequence = [m for m in raw_sequence if m]
     
     if not fallback_sequence:
         return {"success": False, "error": "Cấu hình model không hợp lệ"}
     
-    # 4. Danh sách lỗi mở rộng
+    # Danh sách lỗi mở rộng để kích hoạt tính năng chạy lại (retry)
     error_codes = ["429", "503", "500", "RESOURCE_EXHAUSTED", "UNAVAILABLE", "Quota"]
 
     for m in fallback_sequence:
@@ -83,3 +91,17 @@ def run_ai_with_fallback(prompt, api_key, model_mode="flash"):
                     break 
                     
     return {"success": False, "error": "Hệ thống AI không phản hồi sau mọi nỗ lực."}
+
+# =====================================================================
+# 4. GIAO DIỆN TÍCH HỢP CHO FILE APP LÀM VIỆC CHÍNH (UI COMPONENT)
+# =====================================================================
+def render_api_config_sidebar():
+    """Hàm hiển thị thanh cấu hình API Key bên Sidebar."""
+    st.sidebar.markdown("---")
+    st.sidebar.subheader("🔑 Cấu hình API Key")
+    key_input = st.sidebar.text_input("Gemini API Key:", value=st.session_state.get("gemini_api_key", ""), type="password")
+    
+    if key_input.strip():
+        st.session_state["gemini_api_key"] = key_input.strip()
+    else:
+        st.session_state.pop("gemini_api_key", None)
