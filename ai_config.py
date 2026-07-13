@@ -1,6 +1,12 @@
 import streamlit as st
 from google import genai # CHUẨN SDK MỚI
+import streamlit as st
+import inspect # Thêm thư viện này để kiểm tra đường dẫn gốc
+from ai_config import get_ai_client 
 
+# --- THÊM ĐOẠN KIỂM TRA NÀY VÀO ---
+st.warning(f"🔍 Đang import get_ai_client từ file: {inspect.getfile(get_ai_client)}")
+# -----------------------------------
 def render_api_config_sidebar():
     """Hàm hiển thị Sidebar để nhập Key"""
     st.sidebar.markdown("---")
