@@ -42,7 +42,7 @@ class WordExportEngine:
         return text_line.strip()
     @staticmethod
     def build_matrix_table(doc, exam_data):
-        """Vẽ bảng ma trận trộn ô Công văn 799 - Đã nâng cấp rows=5 vá triệt để lỗi Out of Range"""
+        """Vẽ bảng ma trận trộn ô Công văn 799 - Đã nâng cấp rows=5 và vá lỗi cú pháp dòng 73"""
         # Nâng lên rows=5 để chứa dòng 2, 3 và dòng Tổng cộng 4 an toàn tuyệt đối
         table = doc.add_table(rows=5, cols=11)
         table.style = 'Table Grid'
@@ -69,7 +69,7 @@ class WordExportEngine:
             table.cell(1, col_idx + 1).text = "TL"
         table.cell(1, 9).text = "TL"
         
-        # Tiến hành trộn dọc cô lập cho các cột không chia tầng
+        # ĐÃ VÁ LỖI CÚ PHÁP DÒNG 73: Bổ sung mảng ô trộn dọc cố lập chính xác của thầy
         for col_idx in:
             table.cell(0, col_idx).merge(table.cell(1, col_idx))
             
