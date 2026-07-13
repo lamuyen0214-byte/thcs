@@ -1,15 +1,8 @@
 import streamlit as st
 import os
 import sys
-# Kiểm tra kỹ dòng 4 và 5, đảm bảo không có dấu nháy thừa hoặc thiếu
-from ai_engine.ai_config import render_api_config_sidebar
-from ai_engine.ai_runner import run_ai_with_fallback
-File "/mount/src/thcs/app.py", line 5, in <module>
-from ai_engine.ai_config import render_api_config_sidebar
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from ai_engine.ai_config import render_api_config_sidebar
-# --- 1. ĐỊNH VỊ ĐƯỜNG DẪN TUYỆT ĐỐI (TRÁNH LỖI KEYERROR) ---
-# Lấy đường dẫn thư mục chứa file app.py hiện tại làm gốc
+
+# --- 1. ĐỊNH VỊ ĐƯỜNG DẪN TUYỆT ĐỐI ---
 app_dir = os.path.dirname(os.path.abspath(__file__))
 if app_dir not in sys.path:
     sys.path.append(app_dir)
@@ -17,14 +10,15 @@ if app_dir not in sys.path:
 # --- 2. CẤU HÌNH TRANG ---
 st.set_page_config(layout="wide", page_title="Hệ Sinh Thái Số - L.H.Dưỡng Education", page_icon="👨‍🏫")
 
-# --- 3. IMPORT CÁC MODULE VÀ TRÁI TIM HỆ THỐNG ---
-from ai_config import render_api_config_sidebar
+# --- 3. IMPORT MÔ ĐUN CHUẨN (SAU KHI ĐÃ CÓ PATH) ---
+# Import đúng từ thư mục ai_engine mới
+from ai_engine.ai_config import render_api_config_sidebar
 
 try:
     from modules.teaching.ai_quiz_generator import render_quiz_generator
     from views import teacher_support, teaching_support, department_mgmt
 except Exception as e:
-    st.error(f"Lỗi nạp module (kiểm tra lại cấu trúc thư mục): {e}")
+    st.error(f"Lỗi nạp module: {e}")
 
 # --- 4. SIDEBAR - ĐIỀU KHIỂN ---
 with st.sidebar:
