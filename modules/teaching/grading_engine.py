@@ -4,7 +4,8 @@ from PIL import Image
 import pandas as pd
 from io import BytesIO
 import json
-import time
+import time  # THÊM THƯ VIỆN TIME ĐỂ TẠO NHỊP NGHỈ
+
 def get_model(model_name):
     # Loại bỏ tiền tố 'models/' để API hoạt động chính xác
     clean_name = model_name.replace("models/", "")
@@ -21,7 +22,7 @@ def render_grading_module():
         except Exception as e:
             st.error("Chưa cấu hình API Key hoặc lỗi kết nối.")
 
-    # 1. Chọn Model (Dùng danh sách thầy quét được)
+    # 1. Chọn Model
     model_choice = st.selectbox(
         "Chọn Model AI:",
         ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
@@ -45,11 +46,14 @@ def render_grading_module():
                 st.warning("Vui lòng nhập đáp án và chọn ảnh.")
             else:
                 try:
-                    # Khởi tạo model tại đây
                     model = get_model(model_choice)
-                    for file in uploaded_files:
-                        time.sleep(4) # Nghỉ 4 giây giữa mỗi ảnh để tránh vượt quá quota
-                        with st.spinner(f"Đang chấm: {file.name}..."):
+                    total_files = len(uploaded_files)
+                    
+                    for idx, file in enumerate(uploaded_files):
+                        # Cập nhật lời nhắn để thầy cô biết hệ thống đang nghỉ chờ
+                        with st.spinner(f"Đang chấm ({idx+1}/{total_files}): {file.name}... (Nghỉ 5s để tránh nghẽn AI)"):
+                            time.sleep(5)  # <--- BÍ QUYẾT LÀ ĐÂY: Dừng 5 giây trước khi chấm ảnh tiếp theo
+                            
                             img = Image.open(file)
                             prompt = f"""
                             Bạn là giáo viên. Đối chiếu phiếu trắc nghiệm này với đáp án: {dap_an}.
@@ -60,6 +64,7 @@ def render_grading_module():
                             res_text = response.text.replace('```json', '').replace('```', '')
                             ket_qua = json.loads(res_text)
                             st.session_state.ket_qua_cham.append(ket_qua)
+                            
                     st.success("Đã chấm xong tất cả!")
                 except Exception as e:
                     st.error(f"Lỗi: {e}. Vui lòng kiểm tra lại Model hoặc API Key.")
