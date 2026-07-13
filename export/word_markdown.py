@@ -1,15 +1,15 @@
-@classmethod
+import re
+from typing import List, Dict, Any
+
+class MarkdownTokenizer:
+    @classmethod
     def parse(cls, markdown_text: str) -> List[Dict[str, Any]]:
         # --- BỘ LỌC RÁC MỚI ---
         # Loại bỏ các đoạn văn chào hỏi thường thấy của AI (nếu có)
         lines = [line for line in markdown_text.split('\n') 
                  if not line.startswith("Chào bạn") and not line.startswith("Với vai trò")]
         markdown_text = "\n".join(lines)
-        # --- TIẾP TỤC CÁC XỬ LÝ CŨ ---
-import re
-from typing import List, Dict, Any
-
-class MarkdownTokenizer:
+        # --- TIẾP TỤC CÁC XỬ LÝ CŨ ---   
     @staticmethod
     def _parse_inline_content(text: str) -> List[Dict[str, str]]:
         tokens = []
