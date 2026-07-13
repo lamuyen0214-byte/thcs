@@ -1,7 +1,8 @@
 import streamlit as st
 import sys
 import os
-
+from ai_engine.ai_runner import run_ai_with_fallback
+from ai_engine.ai_config import get_api_key # Import thêm hàm này để lấy key
 # 1. ĐỊNH TUYẾN TUYỆT ĐỐI (GỐC DỰ ÁN)
 root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../'))
 if root_dir not in sys.path: sys.path.append(root_dir)
