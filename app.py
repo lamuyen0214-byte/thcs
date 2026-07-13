@@ -4,7 +4,7 @@
 import streamlit as st
 import os
 import sys
-
+from modules.teaching.ai_quiz_generator import render_quiz_generator
 # --- BƯỚC 0: THUẬT TOÁN ĐỊNH VỊ TỐI CAO - BẮT BUỘC PHẢI ĐẶT TRÊN CÙNG TRƯỚC LUỒNG IMPORT ---
 # Ép Python nạp thư mục hiện tại và folder con 'main' vào luồng tìm kiếm hệ thống
 current_working_dir = os.getcwd()
@@ -94,6 +94,8 @@ def run_router():
             teaching_support.render_module()
         elif phan_he == "Quản lý Tổ chuyên môn":
             department_mgmt.render_module()
+        if chon_phan_he == "Trình tạo đề kiểm tra":
+            render_quiz_generator()
     except Exception as run_err:
         st.error(f"💡 Hệ thống đang đồng bộ mã nguồn của phân hệ: {run_err}")
 
