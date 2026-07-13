@@ -50,8 +50,7 @@ class MarkdownTokenizer:
                 ast_nodes.append({
                     "type": "image", 
                     "alt": match.group(1), 
-                    "url": match.group(2),
-                    "tokens": [{"type": "text", "content": match.group(1)}]  # Thêm tokens phòng hờ hệ thống quét qua
+                    "url": match.group(2)
                 })
             elif match := cls._BULLET_RE.match(line):
                 ast_nodes.append({
@@ -72,18 +71,18 @@ class MarkdownTokenizer:
                 })
 
         flush_table()
-        
-        # BƯỚC BẢO VỆ CUỐI CÙNG: Ép cấu trúc đầu ra tuyệt đối chuẩn chỉnh, loại bỏ rủi ro chuỗi trần
-        return cls._sanitize_ast(ast_nodes)
+        return ast_nodes
 
     @staticmethod
     def _parse_table(lines: List[str]) -> Dict[str, Any]:
+        """Cấu trúc lại Table về dạng sơ khai nhất để khớp hoàn toàn với bộ render LaTeX cũ"""
         rows = []
         headers = []
         
         for line in lines:
             raw_cells = [c.strip() for c in line.split('|')]
             
+            # SỬA LỖI LOGIC: Cắt bỏ cột rỗng ở đầu/cuối do dấu gạch đứng '|' sinh ra
             if raw_cells and raw_cells[0] == '':
                 raw_cells.pop(0)
             if raw_cells and raw_cells[-1] == '':
@@ -92,19 +91,12 @@ class MarkdownTokenizer:
             if not raw_cells:
                 continue
 
+            # Bỏ qua dòng gạch ngang phân cách tiêu đề (---)
             if any(re.match(r'^:?---+:?$', c) for c in raw_cells):
                 continue
 
-            # Để an toàn nhất cho bộ render cũ lẫn mới:
-            # - content: là chuỗi thuần (str)
-            # - tokens: là list các dict nội dung
-            processed_cells = [
-                {
-                    "content": c, 
-                    "tokens": MarkdownTokenizer._parse_inline_content(c)
-                } 
-                for c in raw_cells
-            ]
+            # TRẢ VỀ CHUỖI THUẦN: Tránh lồng mảng/dict sâu khiến bộ render crash
+            processed_cells = [{"content": c} for c in raw_cells]
 
             if not headers:
                 headers = processed_cells
@@ -143,18 +135,3 @@ class MarkdownTokenizer:
                 tokens.append({"type": "text", "content": part})
                 
         return tokens
-
-    @staticmethod
-    def _sanitize_ast(nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        """Hàm kiểm tra dữ liệu đầu ra để triệt tiêu hoàn toàn lỗi 'string indices must be integers'"""
-        sanitized = []
-        for node in nodes:
-            if not isinstance(node, dict):
-                continue
-            
-            # Đảm bảo trường 'tokens' của tất cả các node thông thường luôn là một danh sách hợp lệ
-            if "tokens" in node and isinstance(node["tokens"], str):
-                node["tokens"] = [{"type": "text", "content": node["tokens"]}]
-            
-            sanitized.append(node)
-        return sanitized
