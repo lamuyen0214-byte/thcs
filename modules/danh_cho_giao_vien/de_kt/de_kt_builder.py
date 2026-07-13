@@ -7,11 +7,42 @@ from ai_engine.ai_config import get_api_key
 from ai_engine.ai_runner import run_ai_with_fallback
 
 def render_de_kt_module(api_key=""):
-    # Tinh chỉnh CSS
-    st.markdown("""<style>
-    .block-container { padding-top: 1rem !important; }
-    .stButton>button { height: 2.5em; }
-    </style>""", unsafe_allow_html=True)
+    # Tinh chỉnh CSS Giao diện: Cứu tiêu đề, ép hẹp khoảng cách & đồng bộ màu sắc
+    st.markdown("""
+    <style>
+    /* 1. KHÔI PHỤC TIÊU ĐỀ: Trả lại khoảng trống phía trên */
+    div[data-testid="stAppViewBlockContainer"], .main .block-container {
+        padding-top: 3.5rem !important;
+        padding-bottom: 3rem !important;
+    }
+
+    /* 2. THU HẸP KHOẢNG CÁCH GIỮA CÁC HÀNG (VERTICAL SPACING) */
+    div[data-testid="stVerticalBlock"] > div.element-container {
+        margin-bottom: -10px !important; /* Ép các hàng sát lại nhau */
+    }
+    div[data-testid="stVerticalBlock"] {
+        gap: 0.2rem !important;
+    }
+    
+    /* 3. LÀM ĐẸP NHÃN (LABELS) ĐỒNG BỘ VỚI PHÂN HỆ KHBD */
+    .stSelectbox label p, .stTextInput label p, .stNumberInput label p, .stFileUploader label p, .stTextArea label p {
+        color: #0000FF !important; /* Chữ màu xanh */
+        font-weight: 600 !important;
+        font-size: 14px !important;
+    }
+
+    /* 4. LÀM ĐẸP TIÊU ĐỀ MARKDOWN (Nhận biết, Thông hiểu...) */
+    .stMarkdown p strong {
+        color: #FF0000 !important; /* Chữ màu đỏ */
+        font-size: 15px !important;
+    }
+    
+    .stButton>button { 
+        font-weight: bold; 
+        border-radius: 6px;
+    }
+    </style>
+    """, unsafe_allow_html=True)
 
     # 1. CẤU HÌNH CƠ BẢN
     col1, col2, col3, col4 = st.columns(4)
