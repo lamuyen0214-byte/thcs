@@ -174,19 +174,21 @@ Yêu cầu đầu ra: Trình bày cấu trúc khoa học, ngôn từ sư phạm 
         
         with st.expander(" Xem trước Kế hoạch bài dạy chi tiết", expanded=True):
             st.markdown(khbd_cache['ai_generated_content'])
-            WordEngine = get_word_engine()
-                if WordEngine:
-                    try:
-                        # Vệ sinh dữ liệu
-                        clean_content = khbd_cache.get('ai_generated_content', '').replace('\r\n', '\n')
-                        clean_content = "".join(ch for ch in clean_content if ord(ch) >= 32 or ch == '\n')
-                        khbd_cache['ai_generated_content'] = clean_content
-                        
-                        # Gọi engine xuất file
-                        word_file = WordEngine.export_to_word(khbd_cache)
-                    except Exception as e:
-                        st.error(f"⚠️ Trình xuất Word đang gặp sự cố đồng bộ: {e}")
-                        word_file = None
+            
+# Dòng 178 và 179 phải thẳng hàng với 'with' ở dòng 175 (không thụt vào)
+WordEngine = get_word_engine()
+if WordEngine:
+    try:
+        # Vệ sinh dữ liệu
+        clean_content = khbd_cache.get('ai_generated_content', '').replace('\r\n', '\n')
+        clean_content = "".join(ch for ch in clean_content if ord(ch) >= 32 or ch == '\n')
+        khbd_cache['ai_generated_content'] = clean_content
+        
+        # Gọi engine xuất file
+        word_file = WordEngine.export_to_word(khbd_cache)
+    except Exception as e:
+        st.error(f"⚠️ Trình xuất Word đang gặp sự cố đồng bộ: {e}")
+        word_file = None
              
         # BỘ BA NÚT TƯƠNG TÁC TĂM TẮP CHỐNG LỖI KHÓA NÚT KHI RERUN
         col_save, col_download, col_delete = st.columns(3)
