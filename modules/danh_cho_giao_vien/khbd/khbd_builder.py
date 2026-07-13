@@ -176,8 +176,8 @@ Yêu cầu đầu ra: Trình bày cấu trúc khoa học, ngôn từ sư phạm 
             st.markdown(khbd_cache['ai_generated_content'])
             
 # Dòng 178 và 179 phải thẳng hàng với 'with' ở dòng 175 (không thụt vào)
-WordEngine = get_word_engine()
-if WordEngine:
+    WordEngine = get_word_engine()
+    if WordEngine:
     try:
         # Vệ sinh dữ liệu
         clean_content = khbd_cache.get('ai_generated_content', '').replace('\r\n', '\n')
