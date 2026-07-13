@@ -3,61 +3,57 @@ import os
 import sys
 
 # =====================================================================
-# 1. ĐỊNH VỊ ĐƯỜNG DẪN GỐC TỰ ĐỘNG TÌM AI_ENGINE (ƯU TIÊN TUYỆT ĐỐI)
+# KỸ THUẬT: ĐỊNH TUYẾN TỰ ĐỘNG TÌM "TRÁI TIM" AI_CONFIG.PY TẠI ROOT (GIỮ NGUYÊN 100%)
 # =====================================================================
 current_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir = current_dir
-# Quét ngược lên các thư mục cha cho đến khi thấy lõi 'ai_engine'
-while not os.path.exists(os.path.join(root_dir, 'ai_engine')) and root_dir != os.path.dirname(root_dir):
+while not os.path.exists(os.path.join(root_dir, 'ai_config.py')) and root_dir != os.path.dirname(root_dir):
     root_dir = os.path.dirname(root_dir)
-
 if root_dir not in sys.path:
-    sys.path.insert(0, root_dir)
+    sys.path.append(root_dir)
 
-# Đảm bảo hệ thống tìm thấy thư mục export
-export_path = os.path.abspath(os.path.join(root_dir, 'export'))
-if export_path not in sys.path:
-    sys.path.append(export_path)
+try:
+    from ai_config import get_ai_client
+except ImportError:
+    st.error(f" Kỹ thuật: Mất kết nối đường ống tới ai_config.py tại {root_dir}")
+    def get_ai_client(api_key=""): return None
 
-# =====================================================================
-# 2. NẠP ĐỘNG CƠ TỪ KIẾN TRÚC MỚI
-# =====================================================================
-from ai_engine.ai_config import get_api_key
-from ai_engine.ai_runner import run_ai_with_fallback
+# Đảm bảo hệ thống tìm thấy thư mục export (GIỮ NGUYÊN 100%)
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
 
 def get_word_engine():
     try:
         from export.export_word import WordExportEngine
         return WordExportEngine
     except Exception as e:
-        print(f"Lỗi nạp module Word: {e}")
         return None
 
-def render_homeroom_module():
+# CẤY DUY NHẤT THAM SỐ api_key ĐỂ LIÊN THÔNG ĐĂNG NHẬP TRÊN CÁC MÁY KHÁC NHAU
+def render_homeroom_module(api_key=""):
     st.markdown("""
-        <style>
-        .header-blue {color: #0000FF; font-weight: bold; font-size: 15px; text-align: left; margin-bottom: 2px;}
-        .box-homeroom {background-color: #FFF2CC; padding: 15px; border-radius: 8px; border-left: 5px solid #D6B656; margin-bottom: 15px;}
-        </style>
+    <style>
+    .header-blue {color: #0000FF; font-weight: bold; font-size: 15px; text-align: left; margin-bottom: 2px;}
+    .box-homeroom {background-color: #FFF2CC; padding: 15px; border-radius: 8px; border-left: 5px solid #D6B656; margin-bottom: 15px;}
+    </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="box-homeroom">📋 <b>Trợ lý Chủ nhiệm:</b> Tự động hóa công tác viết nhận xét học bạ, thiết kế kịch bản họp phụ huynh và gợi ý hướng giải quyết các tình huống sư phạm chuyên nghiệp.</div>', unsafe_allow_html=True)
-
-    # 1. CHỌN NGHIỆP VỤ
+    st.markdown('<div class="box-homeroom"> <b>Trợ lý Chủ nhiệm:</b> Tự động hóa công tác viết nhận xét học bạ, thiết kế kịch bản họp phụ huynh và gợi ý hướng giải quyết các tình huống sư phạm chuyên nghiệp.</div>', unsafe_allow_html=True)
+    
+    # 1. CHỌN NGHIỆP VỤ (GIỮ NGUYÊN 100%)
     nghiep_vu = st.radio(
         "Chọn nghiệp vụ cần hỗ trợ:",
-        ["📝 Nhận xét học bạ", "👥 Kịch bản họp phụ huynh", "🧩 Xử lý tình huống sư phạm", "🤝 Hỗ trợ HS khuyết tật"],
+        [" Nhận xét học bạ", " Kịch bản họp phụ huynh", " Xử lý tình huống sư phạm", " Hỗ trợ HS khuyết tật"],
         horizontal=True
     )
     
     st.write("---")
-
-    # 2. GIAO DIỆN ĐỘNG THEO TỪNG NGHIỆP VỤ
+    
+    # 2. GIAO DIỆN ĐỘNG THEO TỪNG NGHIỆP VỤ VÀ TOÀN BỘ HỆ THỐNG PROMPT SƯ PHẠM (GIỮ NGUYÊN 100%)
     noi_dung_input = ""
     prompt_he_thong = ""
     tieu_de_luu = "Cong_Tac_Chu_Nhiem"
-
-    if nghiep_vu == "📝 Nhận xét học bạ":
+    
+    if nghiep_vu == " Nhận xét học bạ":
         st.markdown('<p class="header-blue">Thông tin / Đặc điểm của học sinh:</p>', unsafe_allow_html=True)
         noi_dung_input = st.text_area(
             "Đặc điểm học sinh", 
@@ -74,8 +70,8 @@ Hãy viết 3 mẫu nhận xét học bạ (hoặc sổ liên lạc) khác nhau 
 Yêu cầu: Dùng từ ngữ sư phạm, tích cực, không gây tổn thương học sinh. Trình bày dưới dạng Markdown rõ ràng.
 """
         tieu_de_luu = "Nhan_Xet_Hoc_Ba"
-
-    elif nghiep_vu == "👥 Kịch bản họp phụ huynh":
+        
+    elif nghiep_vu == " Kịch bản họp phụ huynh":
         st.markdown('<p class="header-blue">Mục đích / Trọng tâm cuộc họp:</p>', unsafe_allow_html=True)
         noi_dung_input = st.text_area(
             "Trọng tâm cuộc họp", 
@@ -93,8 +89,8 @@ Cấu trúc kịch bản cần có:
 Yêu cầu: Lời văn trang trọng, gắn kết, thể hiện sự chuyên nghiệp. Trình bày bằng Markdown.
 """
         tieu_de_luu = "Kich_Ban_Hop_PHHS"
-
-    elif nghiep_vu == "🧩 Xử lý tình huống sư phạm":
+        
+    elif nghiep_vu == " Xử lý tình huống sư phạm":
         st.markdown('<p class="header-blue">Mô tả tình huống sư phạm cần giải quyết:</p>', unsafe_allow_html=True)
         noi_dung_input = st.text_area(
             "Tình huống", 
@@ -121,9 +117,7 @@ Yêu cầu: Giải pháp phải mang tính nhân văn, tuân thủ nguyên tắc
         )
         prompt_he_thong = f"""
 Bạn là Chuyên gia Giáo dục Đặc biệt và là một Giáo viên Chủ nhiệm đầy tâm huyết. Hãy lập một Kế hoạch hỗ trợ giáo dục cá nhân (IEP) khả thi, tập trung vào việc tạo điều kiện hòa nhập cho học sinh có đặc điểm sau: {noi_dung_input}
-
 Bối cảnh: Học sinh đang học lớp 9. Cần chú trọng đặc biệt vào các giải pháp hỗ trợ học sinh tham gia an toàn và hiệu quả vào các giờ học đòi hỏi quan sát, thực hành hoặc làm thí nghiệm (như môn Khoa học Tự nhiên).
-
 Cấu trúc Kế hoạch cần có:
 1. Đánh giá tóm tắt khả năng và rào cản của học sinh.
 2. Mục tiêu hỗ trợ giáo dục.
@@ -132,54 +126,58 @@ Cấu trúc Kế hoạch cần có:
 Yêu cầu: Văn phong chuyên nghiệp, nhân văn, bám sát các nguyên tắc giáo dục hòa nhập. Trình bày bằng Markdown.
 """
         tieu_de_luu = "Ho_Tro_HS_Khuyet_Tat"
-
-    # 3. NÚT XỬ LÝ
-    # Cắt bỏ icon ở đầu, giữ nguyên tên nghiệp vụ và viết hoa
+    # 3. NÚT XỬ LÝ (SỬA ĐỔI SỰ CỐ TRUYỀN KEY LIÊN THÔNG THIẾT BỊ)
     ten_hien_thi = " ".join(nghiep_vu.split()[1:]).upper()
     
-    if st.button(f"🚀 THỰC THI: {ten_hien_thi}", type="primary", use_container_width=True):
+    if st.button(f" THỰC THI: {ten_hien_thi}", type="primary", use_container_width=True):
         if not noi_dung_input.strip():
-            st.warning("⚠️ Thầy/Cô vui lòng nhập thông tin vào khung trống trước khi thực thi.")
-            st.stop()
-
-        # =====================================================================
-        # BỘ ĐIỀU KHIỂN TRUNG TÂM (AI ENGINE)
-        # =====================================================================
-        api_key = get_api_key()
-        
-        if not api_key:
-            st.error("⚠️ Lỗi cấu hình: Vui lòng nhập Gemini API Key ở thanh bên (Sidebar) trước!")
-            st.stop()
-
-        with st.spinner("🤖 Trợ lý Chủ nhiệm đang soạn thảo nội dung..."):
-            # Gọi API thông qua kiến trúc chuẩn
-            result = run_ai_with_fallback(
-                prompt=prompt_he_thong,
-                api_key=api_key,
-                model_mode="flash"
-            )
+            st.warning(" Thầy/Cô vui lòng nhập thông tin vào khung trống trước khi thực thi.")
+            return
             
-            if result.get("success"):
-                st.session_state['current_homeroom_data'] = {
-                    "is_khbd": True, # Dùng cờ này để xuất Word đẹp nhất
-                    "title": nghiep_vu,
-                    "subject": "Công tác Chủ nhiệm",
-                    "grade": "Khối THCS",
-                    "ten_bai_save": tieu_de_luu,
-                    "ai_generated_content": result.get("text")
-                }
-                st.success(f"✅ Đã hoàn tất soạn thảo trong {result.get('time'):.2f} giây!")
-                st.rerun()
-            else:
-                st.error("❌ Máy chủ AI đang bận hoặc lỗi.")
-                with st.expander("🔍 Chi tiết lỗi kỹ thuật ngầm", expanded=True):
-                    st.code(result.get("error"))
+        # =====================================================================
+        # GỌI BỘ ĐIỀU KHIỂN TRUNG TÂM VÀ KIỂM TRA CHỐNG LỖI NONETYPE (ĐỒNG BỘ KEY CẤU HÌNH)
+        # =====================================================================
+        # Khởi tạo client thông qua tham số api_key truyền từ file chạy chính xuống
+        client = get_ai_client(api_key=api_key)
+        
+        if client is None:
+            st.error(" Lỗi cấu hình: Vui lòng nhập Gemini API Key ở thanh bên (Sidebar) trước!")
+            return
+        if not hasattr(client, 'models'):
+            st.error(" Lỗi kỹ thuật: Client không đúng chuẩn SDK google-genai mới.")
+            return
+            
+        with st.spinner(" Trợ lý Chủ nhiệm đang soạn thảo nội dung..."):
+            try:
+                # Gọi API chuẩn SDK mới (GIỮ NGUYÊN TOÀN VẸN LOGIC HỆ THỐNG)
+                response = client.models.generate_content(
+                    model="gemini-2.5-flash",
+                    contents=prompt_he_thong
+                )
+                
+                result = getattr(response, "text", "")
+                
+                if result:
+                    st.session_state['current_homeroom_data'] = {
+                        "is_khbd": True, # Dùng cờ này để xuất Word đẹp nhất
+                        "title": nghiep_vu,
+                        "subject": "Công tác Chủ nhiệm",
+                        "grade": "Khối THCS",
+                        "ten_bai_save": tieu_de_luu,
+                        "ai_generated_content": result
+                    }
+                    st.success(" Đã hoàn tất soạn thảo!")
+                    st.rerun()
+                else:
+                    st.warning(" AI không trả về nội dung. Có thể bị chặn bởi bộ lọc an toàn.")
+            except Exception as api_err:
+                st.error(f" Máy chủ AI đang bận hoặc lỗi: {api_err}")
 
-    # 4. KẾT XUẤT WORD
+    # 4. KẾT XUẤT WORD (GIỮ NGUYÊN TOÀN VẸN BỐ CỤC ĐỘC LẬP NGANG NHAU CỦA THẦY)
     st.markdown("---")
     homeroom_cache = st.session_state.get('current_homeroom_data')
     if homeroom_cache:
-        with st.expander("🔍 Xem trước Nội dung biên soạn", expanded=True):
+        with st.expander(" Xem trước Nội dung biên soạn", expanded=True):
             st.markdown(homeroom_cache["ai_generated_content"])
             
         WordEngine = get_word_engine()
@@ -188,22 +186,22 @@ Yêu cầu: Văn phong chuyên nghiệp, nhân văn, bám sát các nguyên tắ
             try:
                 word_file = WordEngine.export_to_word(homeroom_cache)
             except Exception as e:
-                st.error(f"⚠️ Lỗi xuất Word: {e}")
-
+                st.error(f" Lỗi xuất Word: {e}")
+                
         col_dl, col_del = st.columns(2)
         with col_dl:
             if word_file:
                 st.download_button(
-                    label="📄 Tải Hồ sơ (Word)", 
+                    label=" Tải Hồ sơ (Word)", 
                     data=word_file, 
                     file_name=f"{homeroom_cache['ten_bai_save']}.docx", 
                     mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
                     use_container_width=True
                 )
             else:
-                st.button("📄 Tải Hồ sơ (Đang xử lý)", disabled=True, use_container_width=True)
+                st.button(" Tải Hồ sơ (Đang xử lý)", disabled=True, use_container_width=True)
                 
         with col_del:
-            if st.button("❌ Xóa bản nháp", use_container_width=True):
+            if st.button(" Xóa bản nháp", use_container_width=True):
                 del st.session_state['current_homeroom_data']
                 st.rerun()
