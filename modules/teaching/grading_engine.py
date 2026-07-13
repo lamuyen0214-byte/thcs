@@ -11,7 +11,14 @@ def get_model(loai_bai_tap):
         return genai.GenerativeModel('gemini-1.5-pro-latest')
 def render_grading_module():
     st.subheader("📝 Chấm Trắc Nghiệm Hàng Loạt Bằng AI")
-    
+    # Thêm vào trong hàm render_grading_module()
+model_choice = st.selectbox(
+    "Chọn Model AI (Tùy vào quyền truy cập của tài khoản thầy/cô):",
+    ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-lite"] 
+)
+
+# Sử dụng lựa chọn đó để khởi tạo model
+model = genai.GenerativeModel(model_choice)
     # Khởi tạo session để lưu kết quả chấm hàng loạt
     if "ket_qua_cham" not in st.session_state:
         st.session_state.ket_qua_cham = []
