@@ -47,8 +47,8 @@ with st.sidebar:
     render_api_config_sidebar()
     
     st.markdown("---")
-    # Biến phan_he được khởi tạo tại đây
-    phan_he = sst.radio(
+# Thay thế phần phan_he = st.selectbox thành st.radio
+    phan_he = st.radio(
         "CHỌN PHÂN HỆ", 
         ["Hỗ trợ Giáo viên", "Hỗ trợ Giảng dạy", "Quản lý Tổ chuyên môn", "Trình tạo đề kiểm tra"],
         key="sb_phan_he_main"
