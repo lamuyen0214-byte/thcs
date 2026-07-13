@@ -53,10 +53,6 @@ with st.sidebar:
         ["Hỗ trợ Giáo viên", "Hỗ trợ Giảng dạy", "Quản lý Tổ chuyên môn", "Trình tạo đề kiểm tra"],
         key="sb_phan_he_main"
     )
-        "CHỌN PHÂN HỆ", 
-        ["Hỗ trợ Giáo viên", "Hỗ trợ Giảng dạy", "Quản lý Tổ chuyên môn", "Trình tạo đề kiểm tra"],
-        key="sb_phan_he_main"
-    )
     
     st.markdown("---")
     st.markdown("<div style='text-align: center; color: blue; font-weight: bold;'>Tác giả: Lê Hồng Dưỡng<br>THCS Nguyễn Chí Thanh</div>", unsafe_allow_html=True)
