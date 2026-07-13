@@ -12,8 +12,6 @@ while not os.path.exists(os.path.join(root_dir, 'ai_engine')) and root_dir != os
     root_dir = os.path.dirname(root_dir)
 if root_dir not in sys.path:
     sys.path.insert(0, root_dir) # Dùng insert(0) thay vì append
-
-# Giữ nguyên khai báo đường dẫn cũ của thầy cho thư mục export
 export_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../'))
 if export_path not in sys.path:
     sys.path.append(export_path)
@@ -23,15 +21,14 @@ if export_path not in sys.path:
 # =====================================================================
 from ai_engine.ai_config import get_api_key
 from ai_engine.ai_runner import run_ai_with_fallback
-
 def get_word_engine():
     try:
+        # Import trực tiếp để tránh lỗi đường dẫn sys.path
         from export.export_word import WordExportEngine
         return WordExportEngine
     except Exception as e:
-        print(f"Lỗi nạp module Word: {e}")
+        st.error(f"Lỗi nạp module Word: {e}")
         return None
-
 # CẤY DUY NHẤT THAM SỐ api_key ĐỂ LIÊN THÔNG ĐĂNG NHẬP TRÊN CÁC MÁY KHÁC NHAU
 def render_de_kt_module(api_key=""):
     # 1. CẤU HÌNH CSS ĐỂ KHÓA BỐ CỤC CỐ ĐỊNH CHỐNG NHẢY DÒNG CHỮ (GIỮ NGUYÊN 100%)
