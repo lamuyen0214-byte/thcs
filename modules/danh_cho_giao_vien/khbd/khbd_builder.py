@@ -172,20 +172,24 @@ Yêu cầu đầu ra: Trình bày cấu trúc khoa học, ngôn từ sư phạm 
         st.markdown("---")
         st.markdown(f"### 📄 KẾT QUẢ: {khbd_cache['title']}")
         
+        # Sửa lại cấu trúc để đảm bảo khối with có nội dung
         with st.expander(" Xem trước Kế hoạch bài dạy chi tiết", expanded=True):
-        # 1. Đảm bảo WordEngine đã được khởi tạo
-        WordEngine = get_word_engine()
-        
-        # 2. Xử lý xuất file NẰM TRONG khối if khbd_cache để đảm bảo biến luôn tồn tại
-        if WordEngine and khbd_cache:
-            try:
-                # Vệ sinh dữ liệu
-                clean_content = khbd_cache.get('ai_generated_content', '').replace('\r\n', '\n')
-                clean_content = "".join(ch for ch in clean_content if ord(ch) >= 32 or ch == '\n')
-                khbd_cache['ai_generated_content'] = clean_content
-                
-                # Gọi engine xuất file
-                word_file = WordEngine.export_to_word(khbd_cache)
+            st.markdown(khbd_cache.get('ai_generated_content', ''))
+            
+            # Xuất Word được đặt ngay sau markdown để đảm bảo nằm trong flow logic
+            WordEngine = get_word_engine()
+            if WordEngine and khbd_cache:
+                try:
+                    # Vệ sinh dữ liệu
+                    clean_content = khbd_cache.get('ai_generated_content', '').replace('\r\n', '\n')
+                    clean_content = "".join(ch for ch in clean_content if ord(ch) >= 32 or ch == '\n')
+                    khbd_cache['ai_generated_content'] = clean_content
+                    
+                    # Gọi engine xuất file
+                    word_file = WordEngine.export_to_word(khbd_cache)
+                except Exception as e:
+                    st.error(f"⚠️ Trình xuất Word đang gặp sự cố đồng bộ: {e}")
+                    word_file = None
             except Exception as e:
                 st.error(f"⚠️ Trình xuất Word đang gặp sự cố đồng bộ: {e}")
                 word_file = None
