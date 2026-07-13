@@ -2,18 +2,21 @@ import streamlit as st
 import os
 import sys
 
-# --- 1. ĐỊNH VỊ ĐƯỜNG DẪN TUYỆT ĐỐI ---
-app_dir = os.path.dirname(os.path.abspath(__file__))
-if app_dir not in sys.path:
-    sys.path.append(app_dir)
+# 1. Đảm bảo đường dẫn gốc của dự án luôn nằm trong sys.path
+root_dir = os.path.dirname(os.path.abspath(__file__))
+if root_dir not in sys.path:
+    sys.path.append(root_dir)
 
-# --- 2. CẤU HÌNH TRANG ---
+# 2. Cấu hình trang trước khi import module con
 st.set_page_config(layout="wide", page_title="Hệ Sinh Thái Số - L.H.Dưỡng Education", page_icon="👨‍🏫")
 
-# --- 3. IMPORT MÔ ĐUN CHUẨN (SAU KHI ĐÃ CÓ PATH) ---
-# Import đúng từ thư mục ai_engine mới
-from ai_engine.ai_config import render_api_config_sidebar
-
+# 3. Import sau khi đã thêm path
+try:
+    from ai_engine.ai_config import render_api_config_sidebar
+    from ai_engine.ai_runner import run_ai_with_fallback
+except ImportError as e:
+    st.error(f"Lỗi Import: {e}. Vui lòng kiểm tra thư mục ai_engine và file __init__.py")
+    st.stop()
 try:
     from modules.teaching.ai_quiz_generator import render_quiz_generator
     from views import teacher_support, teaching_support, department_mgmt
