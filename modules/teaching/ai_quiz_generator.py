@@ -5,21 +5,31 @@ from io import BytesIO
 import time
 from pypdf import PdfReader
 
-def get_stable_model():
-    # Ưu tiên các model cũ hơn hoặc lite để tránh 429
-    priority = ["gemini-1.5-flash", "gemini-2.0-flash-lite", "gemini-flash-latest"]
+# Cập nhật hàm để nhận API Key vào và cấu hình nó
+def get_stable_model(api_key):
+    if not api_key:
+        st.error("API Key chưa được cấu hình!")
+        return None
+    
     try:
+        # BƯỚC QUAN TRỌNG: Cấu hình API Key trước khi sử dụng
+        genai.configure(api_key=api_key)
+        
+        priority = ["gemini-1.5-flash", "gemini-2.0-flash-lite", "gemini-flash-latest"]
         available = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+        
         for name in priority:
             if name in available: return genai.GenerativeModel(name)
-    except: return None
+            
+    except Exception as e:
+        st.error(f"Lỗi khởi tạo AI: {e}")
+        return None
     return None
 
-def render_quiz_generator():
+def render_quiz_generator(api_key): # Truyền API Key từ sidebar vào
     st.subheader("🎯 Trình Tạo Đề Kiểm Tra Tự Động")
     
     uploaded_file = st.file_uploader("Tải tài liệu tham khảo:", type=['pdf', 'docx', 'txt'])
-    # Ô nhập liệu đã kéo dài lên 300px
     text_content = st.text_area("Nội dung bài giảng/Yêu cầu bổ sung:", height=300)
     
     col1, col2 = st.columns(2)
@@ -31,18 +41,29 @@ def render_quiz_generator():
         include_digital = st.checkbox("Tích hợp Năng lực số", value=True)
     
     if st.button("🚀 Tạo đề ngay"):
+        # Kiểm tra trước khi gọi AI
+        model = get_stable_model(api_key)
+        if model is None:
+            st.error("Không thể kết nối tới AI. Vui lòng kiểm tra lại API Key trong Sidebar.")
+            st.stop() # Dừng lại nếu model lỗi, không để crash
+            
         combined = text_content
         if use_source and uploaded_file:
-            if uploaded_file.type == "application/pdf": combined += "\n" + "\n".join([p.extract_text() for p in PdfReader(uploaded_file).pages])
-            elif "word" in uploaded_file.type: combined += "\n" + "\n".join([p.text for p in Document(uploaded_file).paragraphs])
+            try:
+                if uploaded_file.type == "application/pdf": 
+                    combined += "\n" + "\n".join([p.extract_text() for p in PdfReader(uploaded_file).pages])
+                elif "word" in uploaded_file.type: 
+                    combined += "\n" + "\n".join([p.text for p in Document(uploaded_file).paragraphs])
+            except Exception as e:
+                st.error(f"Lỗi đọc file: {e}")
         
-        if not combined: st.warning("Vui lòng nhập nội dung!")
+        if not combined: 
+            st.warning("Vui lòng nhập nội dung!")
         else:
             with st.spinner("Đang kết nối AI..."):
-                model = get_stable_model()
                 prompt = f"Soạn {num} câu hỏi {q_type}. {'Lồng ghép Năng lực số.' if include_digital else ''} Dựa trên: {combined}."
                 
-                # Cơ chế tự thử lại 3 lần nếu lỗi 429
+                # Gọi model đã khởi tạo thành công
                 for i in range(3):
                     try:
                         res = model.generate_content(prompt)
@@ -51,16 +72,7 @@ def render_quiz_generator():
                         break
                     except Exception as e:
                         if "429" in str(e) and i < 2:
-                            st.warning(f"AI đang quá tải, chờ 20 giây thử lại (lần {i+1})...")
                             time.sleep(20)
                         else:
                             st.error(f"Lỗi AI: {e}")
                             break
-
-    if "current_quiz" in st.session_state:
-        st.text_area("Kết quả:", st.session_state.current_quiz, height=300)
-        doc = Document()
-        doc.add_paragraph(st.session_state.current_quiz)
-        bio = BytesIO()
-        doc.save(bio)
-        st.download_button("📥 Tải bộ đề (.docx)", data=bio.getvalue(), file_name="De_kiem_tra.docx")
