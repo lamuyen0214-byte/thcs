@@ -1,171 +1,185 @@
 """
 Module: export/word_markdown.py
-Nhiệm vụ: Chuyển đổi Markdown và Toán học (LaTeX) sang định dạng Microsoft Word nguyên bản.
-Kiến trúc: Ép kiểu Font tuyệt đối, xử lý phân số đệ quy chống gãy cấu trúc.
+Nhiệm vụ: Bộ phân tích cú pháp (Parser) chuyển đổi văn bản thô thành AST Nodes.
+Cơ chế: Không thao tác trực tiếp với Word. Chỉ bóc tách chuỗi thành các Token (Heading, Table, Math, Text).
 """
+
 import re
-from docx.shared import Pt, RGBColor
+from typing import List, Dict, Any
 
-class MarkdownParser:
+class MarkdownTokenizer:
     @staticmethod
-    def _force_font(run, is_bold=False, is_italic=False):
-        """Hàm bạo chúa: Ép buộc mọi đoạn text phải theo đúng chuẩn GDPT"""
-        run.font.name = 'Times New Roman'
-        run.font.size = Pt(13)
-        if is_bold: run.bold = True
-        if is_italic: run.italic = True
+    def _parse_inline_content(text: str) -> List[Dict[str, str]]:
+        """
+        Bóc tách các thành phần nội dòng (Inline): Text bình thường, Text in đậm/nghiêng và Công thức Toán.
+        Bảo vệ tuyệt đối các công thức Toán nội dòng ($...$ hoặc \(...\)) khỏi Regex thông thường.
+        """
+        tokens = []
+        if not text:
+            return tokens
 
-    @staticmethod
-    def clean_math(text: str) -> str:
-        """Bộ lọc chuyên sâu: Chuyển đổi Toán học & bóc tách ngoặc lồng nhau"""
-        text = text.replace("$", "").replace("\\[", "").replace("\\]", "")
-        
-        # 1. Ánh xạ trực tiếp các ký tự Toán học (Đã bổ sung \cdot, \times, \Rightarrow...)
-        exact_map = {
-            r'\neq': '≠', r'\pm': '±', r'\triangle': '△', r'\cdot': '·', r'\times': '×',
-            r'\mathbb{R}': 'ℝ', r'mathbb{R}': 'ℝ', r'\mathbb{Z}': 'ℤ', r'\mathbb{N}': 'ℕ',
-            r'\in': '∈', r'\le': '≤', r'\ge': '≥', r'\leq': '≤', r'\geq': '≥',
-            r'\pi': 'π', r'\alpha': 'α', r'\beta': 'β', r'\gamma': 'γ',
-            r'\sqrt': '√', r'\rightarrow': '→', r'\leftrightarrow': '↔',
-            r'\Rightarrow': '⇒', r'\Leftrightarrow': '⇔',
-            r'\infty': '∞', '^2': '²', '^3': '³', r'\circ': '°'
-        }
-        for tex, uni in exact_map.items():
-            text = text.replace(tex, uni)
-            
-        # 2. Ánh xạ dùng ranh giới từ (Tránh làm hỏng Tiếng Việt)
-        safe_regex = {
-            r'\bneq\b': '≠', r'\bpm\b': '±', r'\btriangle\b': '△',
-            r'\ble\b': '≤', r'\bge\b': '≥', r'\bpi\b': 'π',
-            r'\balpha\b': 'α', r'\bbeta\b': 'β', r'\binfty\b': '∞',
-            r'\bx in\b(?=\s*ℝ)': 'x ∈', r'\bx in\b(?=\s*math)': 'x ∈'
-        }
-        for pat, uni in safe_regex.items():
-            text = re.sub(pat, uni, text)
-            
-        # 3. Vòng lặp đệ quy bóc tách phân số \frac{A}{B} (Giải quyết triệt để lỗi ngoặc lồng nhau)
-        # Quét liên tục cho đến khi không còn \frac nào trong chuỗi
-        frac_pattern = r'\\?frac\{((?:[^{}]|\{[^{}]*\})*)\}\{((?:[^{}]|\{[^{}]*\})*)\}'
-        while re.search(frac_pattern, text):
-            text = re.sub(frac_pattern, r'(\1)/(\2)', text)
-            
-        return text
+        # Tách chuỗi bằng các block toán học inline: $math$ hoặc \(math\)
+        # Cấu trúc regex này giữ lại các block toán học làm phần tử trong danh sách kết quả
+        math_pattern = r'(\$.*?\$|\\\([^()]*\\\))'
+        parts = re.split(math_pattern, text)
 
-    @staticmethod
-    def _parse_inline_formatting(paragraph, text: str):
-        """Cắt chuỗi thông minh để xử lý In đậm (**), In nghiêng (*)"""
-        parts = re.split(r'(\*\*.*?\*\*|\*.*?\*)', text)
         for part in parts:
-            if not part: continue
-            
-            if part.startswith('**') and part.endswith('**'):
-                run = paragraph.add_run(part[2:-2])
-                MarkdownParser._force_font(run, is_bold=True)
-            elif part.startswith('*') and part.endswith('*'):
-                # Kiểm tra tránh bắt nhầm dấu * đơn lẻ của phép nhân
-                if len(part) > 2 and part[1] != ' ' and part[-2] != ' ':
-                    run = paragraph.add_run(part[1:-1])
-                    MarkdownParser._force_font(run, is_italic=True)
-                else:
-                    run = paragraph.add_run(part)
-                    MarkdownParser._force_font(run)
+            if not part:
+                continue
+                
+            # Nếu là block toán học
+            if (part.startswith('$') and part.endswith('$')) or \
+               (part.startswith(r'\(') and part.endswith(r'\)')):
+                clean_math = part.strip('$').removeprefix(r'\(').removesuffix(r'\)')
+                tokens.append({"type": "inline_math", "content": clean_math})
             else:
-                run = paragraph.add_run(part)
-                MarkdownParser._force_font(run)
+                # Nếu là text thường, tiếp tục bóc tách in đậm, in nghiêng
+                # (Sẽ được xử lý định dạng ở tầng StyleManager, ở đây chỉ lưu chuỗi)
+                tokens.append({"type": "text", "content": part})
+                
+        return tokens
 
     @staticmethod
-    def _build_word_table(doc, table_rows_data):
-        """Kiến tạo Bảng Word tự động - Lọc rác và cân bằng cột"""
-        if not table_rows_data: return
-
-        # Làm sạch mảng: Loại bỏ dòng kẻ ngang Markdown (vd: |---|---|)
+    def _normalize_table(rows: List[str]) -> Dict[str, Any]:
+        """
+        Tiêu chuẩn hóa bảng: Cân bằng số cột, xử lý bảng khuyết ô, bóc tách Header.
+        """
         valid_rows = []
-        for r in table_rows_data:
-            if set(r.replace("|", "").replace("-", "").replace(":", "").strip()) == set():
-                continue 
+        for r in rows:
+            # Loại bỏ dòng kẻ phân cách Markdown (vd: |---|---|)
+            clean_r = r.replace("|", "").replace("-", "").replace(":", "").strip()
+            if not clean_r:
+                continue
             valid_rows.append(r)
             
-        if not valid_rows: return
+        if not valid_rows:
+            return None
 
-        # Tính số cột lớn nhất để tránh lỗi Out Of Range khi AI tạo bảng thiếu ô
-        num_cols = max(len([c for c in row.split('|') if c.strip() or c == '']) - 2 for row in valid_rows)
-        if num_cols <= 0: return
+        # Tính số cột tối đa thực tế (trừ 2 đầu mút | trống do split)
+        max_cols = max(len([c for c in row.split('|') if c.strip() or c == '']) - 2 for row in valid_rows)
+        if max_cols <= 0:
+            return None
+        
+        normalized_data = []
+        for row in valid_rows:
+            # Lấy các ô ở giữa, bỏ rác đầu đuôi
+            cells = row.split('|')[1:-1]
+            # Điền bù ô rỗng nếu hàng đó bị thiếu cột
+            row_data = [cells[i].strip() if i < len(cells) else "" for i in range(max_cols)]
+            
+            # Đưa từng ô qua bộ phân tích inline để lấy AST của ô đó
+            ast_row = [MarkdownTokenizer._parse_inline_content(cell) for cell in row_data]
+            normalized_data.append(ast_row)
 
-        table = doc.add_table(rows=len(valid_rows), cols=num_cols)
-        table.style = 'Table Grid'
+        return {
+            "type": "table",
+            "cols": max_cols,
+            "headers": normalized_data[0] if len(normalized_data) > 0 else [],
+            "rows": normalized_data[1:] if len(normalized_data) > 1 else []
+        }
 
-        for r_idx, row_text in enumerate(valid_rows):
-            cells = row_text.split('|')[1:-1] 
-            for c_idx in range(min(num_cols, len(cells))):
-                cell_text = cells[c_idx].strip()
-                cell_p = table.cell(r_idx, c_idx).paragraphs[0]
-                MarkdownParser._parse_inline_formatting(cell_p, MarkdownParser.clean_math(cell_text))
-                
-                # In đậm hàng tiêu đề đầu tiên
-                if r_idx == 0:
-                    for run in cell_p.runs: run.bold = True
-
-    @staticmethod
-    def parse(doc, markdown_text: str):
-        """Hàm điều phối trung tâm: Đọc từng dòng và vẽ ra Word"""
+    @classmethod
+    def parse(cls, markdown_text: str) -> List[Dict[str, Any]]:
+        """
+        Quét văn bản từ trên xuống dưới, phân loại thành các Block Level Nodes (Đoạn văn, Bảng, Danh sách...).
+        """
+        ast_nodes = []
         lines = markdown_text.split('\n')
+        
         in_table = False
-        table_rows = []
+        table_buffer = []
+        
+        in_math_block = False
+        math_buffer = []
 
         for line in lines:
             raw_line = line.strip()
-            
-            # Xóa sạch các đường kẻ ngang rác của AI
-            if raw_line == '---' or raw_line == '***':
+
+            # --- 1. BLOCK MATH CẢNH GIỚI (Hiển thị phương trình Toán/Lý/Hóa đa dòng) ---
+            if raw_line.startswith(r'\begin{') or raw_line == '$$':
+                in_math_block = True
+                math_buffer.append(raw_line)
+                continue
+            elif in_math_block:
+                math_buffer.append(raw_line)
+                if raw_line.startswith(r'\end{') or raw_line == '$$':
+                    in_math_block = False
+                    # Bỏ các thẻ $$ bao bọc nếu có để truyền chuỗi LaTeX sạch
+                    clean_content = "\n".join(math_buffer).strip('$')
+                    ast_nodes.append({
+                        "type": "math_block", 
+                        "content": clean_content
+                    })
+                    math_buffer = []
                 continue
 
-            # BẮT BẢNG (TABLE)
+            # --- 2. BẢNG (TABLES) ---
             if raw_line.startswith('|') and raw_line.endswith('|'):
                 in_table = True
-                table_rows.append(raw_line)
+                table_buffer.append(raw_line)
                 continue
-            else:
-                if in_table:
-                    MarkdownParser._build_word_table(doc, table_rows)
-                    in_table = False
-                    table_rows = []
-                    doc.add_paragraph() 
-            
-            if not raw_line: continue
+            elif in_table:
+                table_node = cls._normalize_table(table_buffer)
+                if table_node:
+                    ast_nodes.append(table_node)
+                in_table = False
+                table_buffer = []
 
-            # Dọn dẹp Toán học trước khi xét định dạng
-            line_clean = MarkdownParser.clean_math(raw_line)
+            # Bỏ qua các dòng trống hoàn toàn ngoài bảng và toán
+            if not raw_line:
+                continue
 
-            # XỬ LÝ TIÊU ĐỀ (HEADING)
-            heading_match = re.match(r'^(#{1,6})\s+(.*)', line_clean)
+            # --- 3. TIÊU ĐỀ (HEADINGS) ---
+            heading_match = re.match(r'^(#{1,6})\s+(.*)', raw_line)
             if heading_match:
-                # Không dùng level của Word để tránh bị đổi Font, tự mô phỏng Heading
-                h = doc.add_paragraph()
-                MarkdownParser._parse_inline_formatting(h, heading_match.group(2))
-                for run in h.runs: 
-                    run.font.color.rgb = RGBColor(0, 0, 0)
-                    run.font.size = Pt(14) # Heading to hơn 1 chút
-                    run.bold = True
+                level = len(heading_match.group(1))
+                content = heading_match.group(2)
+                ast_nodes.append({
+                    "type": "heading",
+                    "level": level,
+                    "tokens": cls._parse_inline_content(content)
+                })
                 continue
 
-            # XỬ LÝ DANH SÁCH BULLET (Dấu chấm tròn)
-            list_match = re.match(r'^[\*\-]\s+(.*)', line_clean)
-            if list_match:
-                p = doc.add_paragraph(style='List Bullet')
-                MarkdownParser._parse_inline_formatting(p, list_match.group(1))
+            # --- 4. HÌNH ẢNH (IMAGES) ---
+            img_match = re.match(r'^!\[(.*?)\]\((.*?)\)', raw_line)
+            if img_match:
+                ast_nodes.append({
+                    "type": "image",
+                    "alt": img_match.group(1),
+                    "url": img_match.group(2)
+                })
+                continue
+
+            # --- 5. DANH SÁCH (LISTS) ---
+            bullet_match = re.match(r'^([\*\-])\s+(.*)', raw_line)
+            if bullet_match:
+                ast_nodes.append({
+                    "type": "list_item",
+                    "style": "bullet",
+                    "tokens": cls._parse_inline_content(bullet_match.group(2))
+                })
                 continue
                 
-            # XỬ LÝ DANH SÁCH NUMBER (Đánh số 1. 2. 3.)
-            num_match = re.match(r'^(\d+\.)\s+(.*)', line_clean)
-            if num_match:
-                p = doc.add_paragraph(style='List Number')
-                MarkdownParser._parse_inline_formatting(p, num_match.group(2))
+            number_match = re.match(r'^(\d+\.)\s+(.*)', raw_line)
+            if number_match:
+                ast_nodes.append({
+                    "type": "list_item",
+                    "style": "number",
+                    "tokens": cls._parse_inline_content(number_match.group(2))
+                })
                 continue
 
-            # VĂN BẢN THƯỜNG
-            p = doc.add_paragraph()
-            MarkdownParser._parse_inline_formatting(p, line_clean)
+            # --- 6. ĐOẠN VĂN (PARAGRAPHS) ---
+            ast_nodes.append({
+                "type": "paragraph",
+                "tokens": cls._parse_inline_content(raw_line)
+            })
 
-        # Chốt hạ bảng nếu nó nằm ở cuối cùng
+        # Chốt bảng nếu dữ liệu kết thúc mà bảng vẫn chưa đóng
         if in_table:
-            MarkdownParser._build_word_table(doc, table_rows)
+            table_node = cls._normalize_table(table_buffer)
+            if table_node:
+                ast_nodes.append(table_node)
+
+        return ast_nodes
