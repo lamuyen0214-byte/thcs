@@ -4,24 +4,27 @@ from PIL import Image
 import pandas as pd
 from io import BytesIO
 import json
-# Đoạn code kiểm tra model khả dụng
-import google.generativeai as genai
-# Sau khi thầy đã cấu hình API Key ở nơi khác
-for m in genai.list_models():
-    if 'generateContent' in m.supported_generation_methods:
-        print(m.name)
+
 def get_model(model_name):
-    """Hàm khởi tạo model theo tên được chọn"""
     return genai.GenerativeModel(model_name)
 
 def render_grading_module():
     st.subheader("📝 Chấm Trắc Nghiệm Hàng Loạt Bằng AI")
     
-    # Cập nhật danh sách model chuẩn xác cho API
+    # 0. Nút kiểm tra model (chỉ chạy khi nhấn)
+    if st.checkbox("Kiểm tra danh sách model khả dụng"):
+        try:
+            models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+            st.write("Các model khả dụng:", models)
+        except Exception as e:
+            st.error("Chưa cấu hình API Key hoặc lỗi kết nối.")
+
+    # 1. Chọn Model
     model_choice = st.selectbox(
         "Chọn Model AI:",
         ["gemini-1.5-flash", "gemini-1.5-pro"]
     )
+    
     # 2. Khởi tạo session lưu kết quả
     if "ket_qua_cham" not in st.session_state:
         st.session_state.ket_qua_cham = []
@@ -39,10 +42,10 @@ def render_grading_module():
             if not dap_an or not uploaded_files:
                 st.warning("Vui lòng nhập đáp án và chọn ảnh.")
             else:
-                model = get_model(model_choice)
-                for file in uploaded_files:
-                    with st.spinner(f"Đang chấm: {file.name}..."):
-                        try:
+                try:
+                    model = get_model(model_choice)
+                    for file in uploaded_files:
+                        with st.spinner(f"Đang chấm: {file.name}..."):
                             img = Image.open(file)
                             prompt = f"""
                             Bạn là giáo viên. Đối chiếu phiếu trắc nghiệm này với đáp án: {dap_an}.
@@ -53,9 +56,9 @@ def render_grading_module():
                             res_text = response.text.replace('```json', '').replace('```', '')
                             ket_qua = json.loads(res_text)
                             st.session_state.ket_qua_cham.append(ket_qua)
-                        except Exception as e:
-                            st.error(f"Lỗi chấm file {file.name}: {e}")
-                st.success("Đã chấm xong tất cả!")
+                    st.success("Đã chấm xong tất cả!")
+                except Exception as e:
+                    st.error(f"Lỗi: {e}. Có thể model '{model_choice}' không được hỗ trợ bởi Key hiện tại.")
 
     with col2:
         if st.button("🗑️ Xóa danh sách"):
