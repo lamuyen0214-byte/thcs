@@ -40,19 +40,17 @@ except Exception as e:
 with st.sidebar:
     st.markdown("<h2 style='text-align: center; color: red;'>HỆ SINH THÁI SỐ<br>HỖ TRỢ GIÁO VIÊN</h2>", unsafe_allow_html=True)
     
-    # 1. Chuyển các phân hệ lên ngay phía sau tên dự án
-    st.markdown("---")
+    # Danh sách phân hệ - Đã bỏ đường kẻ ngăn cách phía dưới
     phan_he = st.radio(
         "CHỌN PHÂN HỆ", 
         ["Hỗ trợ Giáo viên", "Hỗ trợ Giảng dạy", "Quản lý Tổ chuyên môn", "Trình tạo đề kiểm tra"],
         key="sb_phan_he_main"
     )
-    st.markdown("---")
     
-    # 2. Render Sidebar cấu hình API
+    # Render Sidebar cấu hình API - Để sát ngay dưới radio
     render_api_config_sidebar()
     
-    # 3. Tinh chỉnh chân trang: In nghiêng, kích thước nhỏ hơn
+    # Chân trang
     st.markdown("---")
     st.markdown(
         """
