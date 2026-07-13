@@ -18,27 +18,29 @@ def render_module():
     
     with tabs[0]:
         render_khbd_module()
+        st.info("⏳ Chào mừng quý thầy cố đến với nền tảng số AI tích hợp chuyên sâu, trường THCS Nguyễn Chí Thanh.")
         
     with tabs[1]:
         render_de_kt_module()
+        st.info("⏳ Chào mừng quý thầy cố đến với nền tảng số AI tích hợp chuyên sâu, trường THCS Nguyễn Chí Thanh.")
 
     with tabs[2]:
         st.subheader("🧪 Thiết kế bài dạy STEM")
-        st.info("⏳ Thầy đang chuẩn bị file stem_builder.py để tích hợp vào đây...")
+        st.info("⏳ Chào mừng quý thầy cố đến với nền tảng số AI tích hợp chuyên sâu, trường THCS Nguyễn Chí Thanh.")
         render_stem_module()
     with tabs[3]:
         st.subheader("📊 Xây dựng Rubric đánh giá")
-        st.info("⏳ Giao diện đang được cập nhật...")
+        st.info("⏳ Chào mừng quý thầy cố đến với nền tảng số AI tích hợp chuyên sâu, trường THCS Nguyễn Chí Thanh")
         render_rubric_module()
     with tabs[4]:
         st.subheader("📋 Công tác Chủ nhiệm")
-        st.info("⏳ Giao diện đang được cập nhật...")
+        st.info("⏳ Chào mừng quý thầy cố đến với nền tảng số AI tích hợp chuyên sâu, trường THCS Nguyễn Chí Thanh")
         render_homeroom_module()
     with tabs[5]:
         st.subheader("📈 Quản lý điểm số")
-        st.info("⏳ Giao diện đang được cập nhật...")
+        st.info("⏳ Chào mừng quý thầy cố đến với nền tảng số AI tích hợp chuyên sâu, trường THCS Nguyễn Chí Thanh")
         render_quan_ly_diem_module()
     with tabs[6]:
         st.subheader("💡 Công cụ Tạo prompt")
-        st.info("⏳ Giao diện đang được cập nhật...")
+        st.info("⏳ Chào mừng quý thầy cố đến với nền tảng số AI tích hợp chuyên sâu, trường THCS Nguyễn Chí Thanh")
         render_prompt_module()
