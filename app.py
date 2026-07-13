@@ -37,26 +37,34 @@ try:
 except Exception as e:
     st.error(f"Lỗi nạp Trình tạo đề kiểm tra: {e}")
     render_quiz_generator = None
-
-# --- 4. SIDEBAR - ĐIỀU KHIỂN ---
 with st.sidebar:
     st.markdown("<h2 style='text-align: center; color: red;'>HỆ SINH THÁI SỐ<br>HỖ TRỢ GIÁO VIÊN</h2>", unsafe_allow_html=True)
-    st.markdown("---")
     
-    # Render Sidebar cấu hình API
-    render_api_config_sidebar()
-    
+    # 1. Chuyển các phân hệ lên ngay phía sau tên dự án
     st.markdown("---")
-# Thay thế phần phan_he = st.selectbox thành st.radio
     phan_he = st.radio(
         "CHỌN PHÂN HỆ", 
         ["Hỗ trợ Giáo viên", "Hỗ trợ Giảng dạy", "Quản lý Tổ chuyên môn", "Trình tạo đề kiểm tra"],
         key="sb_phan_he_main"
     )
-    
     st.markdown("---")
-    st.markdown("<div style='text-align: center; color: blue; font-weight: bold;'>Tác giả: Lê Hồng Dưỡng<br>THCS Nguyễn Chí Thanh</div>", unsafe_allow_html=True)
-
+    
+    # 2. Render Sidebar cấu hình API
+    render_api_config_sidebar()
+    
+    # 3. Tinh chỉnh chân trang: In nghiêng, kích thước nhỏ hơn
+    st.markdown("---")
+    st.markdown(
+        """
+        <div style='text-align: center;'>
+            <p style='font-style: italic; font-size: 13px; color: #555;'>
+                Tác giả: Lê Hồng Dưỡng<br>
+                THCS Nguyễn Chí Thanh
+            </p>
+        </div>
+        """, 
+        unsafe_allow_html=True
+    )
 # --- 5. ĐIỀU PHỐI (ROUTER) ---
 def run_router():
     mapping = {
