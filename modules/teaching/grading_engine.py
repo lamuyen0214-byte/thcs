@@ -4,7 +4,11 @@ from PIL import Image
 import pandas as pd
 from io import BytesIO
 import json
-
+def get_model(loai_bai_tap):
+    if loai_bai_tap == "trac_nghiem":
+        return genai.GenerativeModel('gemini-1.5-flash-latest')
+    else:
+        return genai.GenerativeModel('gemini-1.5-pro-latest')
 def render_grading_module():
     st.subheader("📝 Chấm Trắc Nghiệm Hàng Loạt Bằng AI")
     
@@ -28,7 +32,7 @@ def render_grading_module():
                 for file in uploaded_files:
                     with st.spinner(f"Đang chấm: {file.name}..."):
                         try:
-                            model = genai.GenerativeModel('gemini-1.5-flash')
+                            model = get_model("trac_nghiem")
                             img = Image.open(file)
                             
                             prompt = f"""
