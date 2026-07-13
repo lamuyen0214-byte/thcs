@@ -10,9 +10,6 @@ class MarkdownTokenizer:
 
     @classmethod
     def parse(cls, markdown_text: str) -> List[Dict[str, Any]]:
-        if not isinstance(markdown_text, str):
-            return []
-
         forbidden_prefixes = ("Chào bạn", "Với vai trò", "Tôi là", "Lưu ý về")
         lines = [
             line for line in markdown_text.splitlines() 
@@ -75,14 +72,13 @@ class MarkdownTokenizer:
 
     @staticmethod
     def _parse_table(lines: List[str]) -> Dict[str, Any]:
-        """Cấu trúc lại Table về dạng sơ khai nhất để khớp hoàn toàn với bộ render LaTeX cũ"""
+        """Chuyển đổi danh sách dòng thành cấu trúc bảng chuẩn, tương thích hoàn toàn với bộ render cũ"""
         rows = []
         headers = []
         
         for line in lines:
             raw_cells = [c.strip() for c in line.split('|')]
             
-            # SỬA LỖI LOGIC: Cắt bỏ cột rỗng ở đầu/cuối do dấu gạch đứng '|' sinh ra
             if raw_cells and raw_cells[0] == '':
                 raw_cells.pop(0)
             if raw_cells and raw_cells[-1] == '':
@@ -91,12 +87,18 @@ class MarkdownTokenizer:
             if not raw_cells:
                 continue
 
-            # Bỏ qua dòng gạch ngang phân cách tiêu đề (---)
             if any(re.match(r'^:?---+:?$', c) for c in raw_cells):
                 continue
 
-            # TRẢ VỀ CHUỖI THUẦN: Tránh lồng mảng/dict sâu khiến bộ render crash
-            processed_cells = [{"content": c} for c in raw_cells]
+            # GIẢI PHÁP: Giữ nguyên 'content' kiểu str để không làm hỏng bộ render cũ, 
+            # đồng thời cung cấp thêm 'tokens' để xử lý toán nếu cần.
+            processed_cells = [
+                {
+                    "content": c, 
+                    "tokens": MarkdownTokenizer._parse_inline_content(c)
+                } 
+                for c in raw_cells
+            ]
 
             if not headers:
                 headers = processed_cells
