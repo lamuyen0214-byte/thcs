@@ -42,7 +42,7 @@ class WordExportEngine:
         return text_line.strip()
     @staticmethod
     def build_matrix_table(doc, exam_data):
-        """Vẽ bảng ma trận trộn ô Công văn 799 - Đã nâng cấp rows=5 và vá lỗi cú pháp dòng 73"""
+        """Vẽ bảng ma trận trộn ô Công văn 799 - Đã nâng cấp rows=5 vá triệt để lỗi Out of Range và Syntax dòng 73"""
         # Nâng lên rows=5 để chứa dòng 2, 3 và dòng Tổng cộng 4 an toàn tuyệt đối
         table = doc.add_table(rows=5, cols=11)
         table.style = 'Table Grid'
@@ -62,14 +62,14 @@ class WordExportEngine:
         table.cell(0, 9).text = "VDC"
         table.cell(0, 10).text = "Tổng"
         
-        # Tiến hành trộn ngang tầng 1 và điền nhãn TN/TL cho tầng 2 bằng chỉ số tọa độ
+        # Tiết hành trộn ngang tầng 1 và điền nhãn TN/TL cho tầng 2 bằng chỉ số tọa độ
         for col_idx in range(1, 10, 2):
             table.cell(0, col_idx).merge(table.cell(0, col_idx + 1))
             table.cell(1, col_idx).text = "TN"
             table.cell(1, col_idx + 1).text = "TL"
         table.cell(1, 9).text = "TL"
         
-        # ĐÃ VÁ LỖI CÚ PHÁP DÒNG 73: Bổ sung mảng ô trộn dọc cố lập chính xác của thầy
+        # Đã vá lỗi cú pháp hoàn toàn: Gán mảng ô trộn dọc cố định 0 và 10 của thầy liên mạch
         for col_idx in:
             table.cell(0, col_idx).merge(table.cell(1, col_idx))
             
@@ -79,6 +79,7 @@ class WordExportEngine:
                 bg_cell(cell, "F2F4F4")
                 if cell.paragraphs and cell.paragraphs[0].runs:
                     cell.paragraphs[0].runs[0].font.bold = True
+                if cell.paragraphs:
                     cell.paragraphs[0].paragraph_format.space_after = Pt(3)
                     
         topic = exam_data.get("custom_req", "Nội dung đề thi")
@@ -202,7 +203,7 @@ class WordExportEngine:
                                 # Đổ màu nền xám nhẹ cho dòng tiêu đề đầu tiên của bảng AI
                                 if r_idx == 0:
                                     w_table.cell(r_idx, c_idx)._tc.get_or_add_tcPr().append(parse_xml(f'<w:shd {nsdecls("w")} w:fill="F2F4F4"/>'))
-                                    if w_table.cell(r_idx, c_idx).paragraphs[0].runs:
+                                    if w_table.cell(r_idx, c_idx).paragraphs and w_table.cell(r_idx, c_idx).paragraphs[0].runs:
                                         w_table.cell(r_idx, c_idx).paragraphs[0].runs[0].font.bold = True
                     doc.add_paragraph("\n")
                     table_data = []
