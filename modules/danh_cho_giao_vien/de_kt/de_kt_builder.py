@@ -1,28 +1,29 @@
 import streamlit as st
 import os
-import requests
 import sys
 
 # =====================================================================
-# KỸ THUẬT: ĐỊNH TUYẾN TỰ ĐỘNG TÌM "TRÁI TIM" AI_CONFIG.PY TẠI ROOT
+# 1. ĐỊNH VỊ ĐƯỜNG DẪN GỐC TỰ ĐỘNG TÌM AI_ENGINE (ƯU TIÊN TUYỆT ĐỐI)
 # =====================================================================
 current_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir = current_dir
-while not os.path.exists(os.path.join(root_dir, 'ai_config.py')) and root_dir != os.path.dirname(root_dir):
+# Quét ngược lên các thư mục cha cho đến khi thấy lõi 'ai_engine'
+while not os.path.exists(os.path.join(root_dir, 'ai_engine')) and root_dir != os.path.dirname(root_dir):
     root_dir = os.path.dirname(root_dir)
 
 if root_dir not in sys.path:
-    sys.path.append(root_dir)
-
-try:
-    from ai_config import get_ai_client
-except ImportError:
-    st.error(f"❌ Kỹ thuật: Mất kết nối đường ống tới ai_config.py tại {root_dir}")
-    def get_ai_client(): return None
+    sys.path.insert(0, root_dir) # Dùng insert(0) thay vì append
 
 # Giữ nguyên khai báo đường dẫn cũ của thầy cho thư mục export
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
+export_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../'))
+if export_path not in sys.path:
+    sys.path.append(export_path)
+
 # =====================================================================
+# 2. NẠP ĐỘNG CƠ TỪ KIẾN TRÚC MỚI
+# =====================================================================
+from ai_engine.ai_config import get_api_key
+from ai_engine.ai_runner import run_ai_with_fallback
 
 def get_word_engine():
     try:
@@ -181,16 +182,12 @@ def render_de_kt_module():
             st.warning("⚠️ Vui lòng nhập 'Tên bài kiểm tra / Đề số' trước khi khởi tạo.")
         else:
             # -------------------------------------------------------------
-            # GỌI BỘ ĐIỀU KHIỂN TRUNG TÂM & KIỂM TRA CHỐNG LỖI NONETYPE
+            # BỘ ĐIỀU KHIỂN TRUNG TÂM MỚI (AI ENGINE)
             # -------------------------------------------------------------
-            client = get_ai_client()
-            
-            if client is None:
+            api_key = get_api_key()
+            if not api_key:
                 st.error("⚠️ Lỗi hệ thống: Chưa nhận diện được API Key cá nhân hợp lệ tại Sidebar.")
-                return
-            if not hasattr(client, 'models'):
-                st.error("⚠️ Lỗi kỹ thuật: Client không đúng chuẩn SDK google-genai mới.")
-                return
+                st.stop() # Chặn ngay luồng thực thi nếu không có key
 
             with st.spinner("AI đang soạn đề thi bám sát chương trình sách Kết nối tri thức..."):
                 file_context = ""
@@ -210,52 +207,35 @@ def render_de_kt_module():
                     except Exception: pass
 
                 if not file_context.strip(): file_context = f"Phạm vi chủ đề bài kiểm tra: {ten_bai}."
-
-                fallback_models = ["gemini-2.5-flash", "gemini-1.5-pro"]
-                try:
-                    from config.models import get_fallback_queue
-                    fallback_models = get_fallback_queue(model_display_name, phan_he_mode="de_kt")
-                except Exception:
-                    try:
-                        from main.config.models import get_fallback_queue
-                        fallback_models = get_fallback_queue(model_display_name, phan_he_mode="de_kt")
-                    except Exception: pass
-
-                response_text = None
-                activated_model_name = ""
-                error_logs = []
                 
+                # Hệ thống prompt tinh gọn và sắc bén
                 system_instruction = f"Bạn là Chuyên gia khảo thí cao cấp Bộ GD&ĐT Việt Nam. Bộ sách độc tôn áp dụng từ năm 2026: 'Kết nối tri thức với cuộc sống'. Soạn đề thi môn {mon_hoc} {lop}. Tỷ lệ nhận thức: NB {nhan_biet}%, TH {thong_hieu}%, VD {van_dung}%, VDC {van_dung_cao}%. Trắc nghiệm: {sl1} câu MCQ Nhiều lựa chọn ({d1/sl1 if sl1>0 else 0:.2f}đ), {sl2} câu Đúng/Sai, {sl3} câu Điền khuyết, {sl4} câu ngắn. Phần Tự luận: {int(so_cau_tl)} câu. Cấu trúc bài kiểm tra bám sát chủ đề: {ten_bai}. {yeu_cau_khac}"
+                prompt_de_kt = f"{system_instruction}\n\n[TÀI LIỆU GỐC ĐỂ BÁM SÁT]:\n{file_context[:6000]}"
                 
-                # Gọi API chuẩn SDK
-                for current_model in fallback_models:
-                    try:
-                        response = client.models.generate_content(
-                            model=current_model, 
-                            contents=[f"{system_instruction}\n\n[TÀI LIỆU GỐC ĐỂ BÁM SÁT]:\n{file_context[:6000]}"]
-                        )
-                        if response and response.text:
-                            response_text = response.text
-                            activated_model_name = current_model
-                            break
-                    except Exception as single_err:
-                        error_logs.append(f"{current_model}: {str(single_err)}")
-                        continue
+                # Xác định mô hình tự động qua tên Selectbox
+                mode = "pro" if "Pro" in model_display_name or "mở rộng" in model_display_name.lower() else "flash"
+                
+                # GỌI ENGINE CỐT LÕI MÀ KHÔNG CẦN VIẾT LẠI LOGIC XỬ LÝ LỖI
+                result = run_ai_with_fallback(
+                    prompt=prompt_de_kt, 
+                    api_key=api_key, 
+                    model_mode=mode
+                )
 
-                if response_text:
+                if result.get("success"):
                     st.session_state['current_exam_data'] = {
                         "type": hinh_thuc, "custom_req": ten_bai if ten_bai else "De_Kiem_Tra", "ten_bai_save": str(ten_bai),
                         "tn_total": tong_so_cau_tn, "c1": sl1, "c2": sl2, "c3": sl3, "c4": sl4,
                         "tn_score": str(tong_diem_tn), "tl_total": str(tong_diem_tl),
                         "tl_scores": [str(v) for v in diem_tl_list], "r_nb": str(nhan_biet), "r_th": str(thong_hieu), "r_vd": str(van_dung), "r_vdc": str(van_dung_cao),
-                        "ai_generated_content": response_text
+                        "ai_generated_content": result.get("text")
                     }
-                    st.success("✅ Hệ thống bóc tách ma trận và soạn đề thi hoàn tất!")
+                    st.success(f"✅ Hệ thống bóc tách ma trận và soạn đề thi hoàn tất trong {result.get('time'):.2f} giây! (Model: {result.get('model')})")
                     st.rerun()
                 else:
                     st.error("❌ QUÁ TRÌNH KHỞI TẠO BỊ CHẶN: Máy chủ Google AI Studio từ chối phản hồi.")
-                    with st.expander("🔍 Chi tiết lỗi kỹ thuật ngầm từ hệ thống Google Server", expanded=True):
-                        for log in error_logs: st.code(log)
+                    with st.expander("🔍 Chi tiết lỗi kỹ thuật ngầm từ hệ thống", expanded=True):
+                        st.code(result.get("error"))
 
     st.markdown("---")
     st.markdown("##### 📥 Kết Xuất Hồ Sơ Đề Kiểm Tra Chuyên Nghiệp")
