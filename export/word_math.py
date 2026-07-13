@@ -12,7 +12,17 @@ class ScienceNormalizer:
         text = re.sub(r'([A-Za-z]+\d*)\^(\d*[+\-])', lambda m: m.group(1).translate(cls.SUB) + m.group(2).translate(cls.SUP), text)
         text = re.sub(r'([A-Z][a-z]?|\))(\d+)', lambda m: m.group(1) + m.group(2).translate(cls.SUB), text)
         return text
-
+# Bổ sung vào class ScienceNormalizer
+    TRANSLATION_MAP = {
+        r'\perp': '⊥',
+        r'\circ': '°',
+        r'\widehat{A}': 'Â', # Tạm thời xử lý ký tự đơn giản
+        r'\text{cm}': 'cm'
+    }
+    
+    # Cập nhật trong hàm normalize:
+    for latex, unicode_char in cls.TRANSLATION_MAP.items():
+        text = text.replace(latex, unicode_char)
 class MathRenderer:
     @classmethod
     def render_inline_math(cls, paragraph, latex_str: str):
