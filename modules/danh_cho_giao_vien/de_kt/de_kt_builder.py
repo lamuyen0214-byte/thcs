@@ -63,7 +63,7 @@ def render_de_kt_module(api_key=""):
         st.markdown("**2. Thông số Trắc nghiệm**")
         ct1, ct2, ct3, ct4 = st.columns(4)
         sl1 = ct1.number_input("Số câu hỏi nhiều lựa chọn", value=12)
-        d1 = ct2.number_input("Điểm cho câu hỏi nhiều lựa chọn", value=0.25 &"điểm", step=0.05)
+        d1 = ct2.number_input("Điểm cho câu hỏi nhiều lựa chọn", value=0.25", step=0.05)
         sl2 = ct3.number_input("Số câu hỏi Đúng/Sai", value=4)
         d2 = ct4.number_input("Điểm cho câu Đ/S", value=0.25, step=0.05)
         
