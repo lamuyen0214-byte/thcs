@@ -1,15 +1,29 @@
-# =====================================================================
-# FILE HOÀN CHỈNH: modules/danh_cho_giao_vien/de_kt/de_kt_builder.py - ĐOẠN 1
-# =====================================================================
 import streamlit as st
 import os
 import requests
 import sys
-import os
-# Thêm đường dẫn thư mục gốc vào hệ thống để thấy được folder 'export'
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
 
-from export.export_word import WordExportEngine
+# =====================================================================
+# KỸ THUẬT: ĐỊNH TUYẾN TỰ ĐỘNG TÌM "TRÁI TIM" AI_CONFIG.PY TẠI ROOT
+# =====================================================================
+current_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = current_dir
+while not os.path.exists(os.path.join(root_dir, 'ai_config.py')) and root_dir != os.path.dirname(root_dir):
+    root_dir = os.path.dirname(root_dir)
+
+if root_dir not in sys.path:
+    sys.path.append(root_dir)
+
+try:
+    from ai_config import get_ai_client
+except ImportError:
+    st.error(f"❌ Kỹ thuật: Mất kết nối đường ống tới ai_config.py tại {root_dir}")
+    def get_ai_client(): return None
+
+# Giữ nguyên khai báo đường dẫn cũ của thầy cho thư mục export
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
+# =====================================================================
+
 def get_word_engine():
     try:
         from export.export_word import WordExportEngine
@@ -66,9 +80,7 @@ def render_de_kt_module():
         thoi_gian = st.selectbox("Thời gian", ["45 phút", "60 phút", "90 phút", "120 phút"], label_visibility="collapsed", index=0, key="sb_thoi_gian_de_kt_unique")
 
     st.write("")
-# =====================================================================
-# FILE HOÀN CHỈNH: modules/danh_cho_giao_vien/de_kt/de_kt_builder.py - ĐOẠN 2
-# =====================================================================
+
     # 3. HÀNG 2: TỶ LỆ MỨC ĐỘ NHẬN THỨC CỐ ĐỊNH CỦA THẦY
     st.markdown('<p class="header-red-title">Tỷ lệ mức độ nhận thức (%):</p>', unsafe_allow_html=True)
     col_tl1, col_tl2, col_tl3, col_tl4 = st.columns(4)
@@ -95,12 +107,7 @@ def render_de_kt_module():
     st.write("")
     # Chia đôi không gian màn hình thênh thang wide cho Trắc nghiệm và Tự luận
     col_tn, spacer, col_tl = st.columns([12, 1, 12])
-# =====================================================================
-# FILE HOÀN CHỈNH: modules/danh_cho_giao_vien/de_kt/de_kt_builder.py - ĐOẠN 3
-# =====================================================================
-    # =====================================================================
-# FILE HOÀN CHỈNH: modules/danh_cho_giao_vien/de_kt/de_kt_builder.py - ĐOẠN 3 (ĐÃ VÁ TỶ LỆ MẢNG ÉP THẲNG HÀNG 100%)
-# =====================================================================
+
     # --- CỘT TRÁI: THÔNG SỐ BIỂU ĐIỂM TRẮC NGHIỆM ĐỘNG ---
     with col_tn:
         tn_header = st.empty()
@@ -163,9 +170,6 @@ def render_de_kt_module():
         bam_sat = st.checkbox("Bám sát nội dung đề cương/ma trận tải lên", value=True, key="chk_bam_sat_de_kt")
         yeu_cau_khac = st.text_area("Yêu cầu chi tiết", placeholder="Ví dụ: Chú trọng các câu hỏi liên hệ thực tế...", label_visibility="collapsed", key="ta_req_de_kt")
 
-# =====================================================================
-# FILE HOÀN CHỈNH: modules/danh_cho_giao_vien/de_kt/de_kt_builder.py - ĐOẠN 4
-# =====================================================================
     col_btn_run, col_model_sel = st.columns(2)
     with col_model_sel:
         model_display_name = st.selectbox("Mô hình", ["3.1 Flash-Lite", "3.5 Flash", "3.1 Pro", "Tư duy mở rộng"], label_visibility="collapsed", index=0, key="sb_model_ai_de_kt_run")
@@ -176,9 +180,16 @@ def render_de_kt_module():
         if not ten_bai.strip():
             st.warning("⚠️ Vui lòng nhập 'Tên bài kiểm tra / Đề số' trước khi khởi tạo.")
         else:
-            client = st.session_state.get("gemini_client")
-            if not client:
+            # -------------------------------------------------------------
+            # GỌI BỘ ĐIỀU KHIỂN TRUNG TÂM & KIỂM TRA CHỐNG LỖI NONETYPE
+            # -------------------------------------------------------------
+            client = get_ai_client()
+            
+            if client is None:
                 st.error("⚠️ Lỗi hệ thống: Chưa nhận diện được API Key cá nhân hợp lệ tại Sidebar.")
+                return
+            if not hasattr(client, 'models'):
+                st.error("⚠️ Lỗi kỹ thuật: Client không đúng chuẩn SDK google-genai mới.")
                 return
 
             with st.spinner("AI đang soạn đề thi bám sát chương trình sách Kết nối tri thức..."):
@@ -200,22 +211,29 @@ def render_de_kt_module():
 
                 if not file_context.strip(): file_context = f"Phạm vi chủ đề bài kiểm tra: {ten_bai}."
 
+                fallback_models = ["gemini-2.5-flash", "gemini-1.5-pro"]
                 try:
                     from config.models import get_fallback_queue
                     fallback_models = get_fallback_queue(model_display_name, phan_he_mode="de_kt")
                 except Exception:
-                    from main.config.models import get_fallback_queue
-                    fallback_models = get_fallback_queue(model_display_name, phan_he_mode="de_kt")
+                    try:
+                        from main.config.models import get_fallback_queue
+                        fallback_models = get_fallback_queue(model_display_name, phan_he_mode="de_kt")
+                    except Exception: pass
 
                 response_text = None
                 activated_model_name = ""
                 error_logs = []
                 
-                system_instruction = f"Bạn là Chuyên gia khảo thí cao cấp Bộ GD&ĐT Việt Nam. Bộ sách độc tôn áp dụng từ năm 2026: 'Kết nối tri thức với cuộc sống'. Soạn đề thi môn {mon_hoc} {lop}. Tỷ lệ nhận thức: NB {nhan_biet}%, TH {thong_hieu}%, VD {van_dung}%, VDC {van_dung_cao}%. Trắc nghiệm: {sl1} câu MCQ Nhiều lựa chọn ({d1/sl1 if sl1>0 else 0:.2f}đ), {sl2} câu Đúng/Sai, {sl3} câu Điền khuyết, {sl4} câu ngắn. Phần Tự luận: {int(so_cau_tl)} câu. Cấu trúc bài kiểm tra bám sát chủ đề: {ten_bai}."
+                system_instruction = f"Bạn là Chuyên gia khảo thí cao cấp Bộ GD&ĐT Việt Nam. Bộ sách độc tôn áp dụng từ năm 2026: 'Kết nối tri thức với cuộc sống'. Soạn đề thi môn {mon_hoc} {lop}. Tỷ lệ nhận thức: NB {nhan_biet}%, TH {thong_hieu}%, VD {van_dung}%, VDC {van_dung_cao}%. Trắc nghiệm: {sl1} câu MCQ Nhiều lựa chọn ({d1/sl1 if sl1>0 else 0:.2f}đ), {sl2} câu Đúng/Sai, {sl3} câu Điền khuyết, {sl4} câu ngắn. Phần Tự luận: {int(so_cau_tl)} câu. Cấu trúc bài kiểm tra bám sát chủ đề: {ten_bai}. {yeu_cau_khac}"
                 
+                # Gọi API chuẩn SDK
                 for current_model in fallback_models:
                     try:
-                        response = client.models.generate_content(model=current_model, contents=[f"{system_instruction}\n\n[TÀI LIỆU GỐC ĐỂ BÁM SÁT]:\n{file_context[:6000]}"])
+                        response = client.models.generate_content(
+                            model=current_model, 
+                            contents=[f"{system_instruction}\n\n[TÀI LIỆU GỐC ĐỂ BÁM SÁT]:\n{file_context[:6000]}"]
+                        )
                         if response and response.text:
                             response_text = response.text
                             activated_model_name = current_model
