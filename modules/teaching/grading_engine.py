@@ -43,7 +43,8 @@ def render_grading_module():
                 st.warning("Vui lòng nhập đáp án và chọn ảnh.")
             else:
                 try:
-                    model = get_model(model_choice)
+                    clean_name = model_name.replace("models/", "")
+                    return genai.GenerativeModel(clean_name)
                     for file in uploaded_files:
                         with st.spinner(f"Đang chấm: {file.name}..."):
                             img = Image.open(file)
