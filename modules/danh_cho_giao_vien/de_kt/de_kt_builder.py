@@ -1,108 +1,85 @@
 import streamlit as st
 import os
 import sys
+from export.export_word import WordExportEngine
+from ai_engine.ai_config import get_api_key
+from ai_engine.ai_runner import run_ai_with_fallback
 
-# =====================================================================
 # 1. ĐỊNH VỊ ĐƯỜNG DẪN GỐC
-# =====================================================================
 current_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir = current_dir
 while not os.path.exists(os.path.join(root_dir, 'ai_engine')) and root_dir != os.path.dirname(root_dir):
     root_dir = os.path.dirname(root_dir)
 if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
-export_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../'))
-if export_path not in sys.path:
-    sys.path.append(export_path)
 
-from ai_engine.ai_config import get_api_key
-from ai_engine.ai_runner import run_ai_with_fallback
-
-def get_word_engine():
-    try:
-        from export.export_word import WordExportEngine
-        return WordExportEngine
-    except Exception as e:
-        st.error(f"Lỗi nạp module Word: {e}")
-        return None
-
-# =====================================================================
-# 2. HÀM RENDER CHÍNH (ĐÃ BỌC CƠ CHẾ XỬ LÝ LỖI)
-# =====================================================================
 def render_de_kt_module(api_key=""):
-    # Bao bọc container để cách ly giao diện
-    with st.container():
-        st.markdown("""
-        <style>
-        .header-blue {color: #0000FF; font-weight: bold; font-size: 16px; text-align: center;}
-        .text-red-italic {color: #FF0000; font-style: italic; font-weight: bold; font-size: 14px;}
-        .box-trac-nghiem {background-color: #FFF2CC; padding: 10px; border-radius: 5px; color: #0000FF; font-weight: bold; text-align: center; font-size: 18px;}
-        .box-tu-luan {background-color: #D5E8D4; padding: 10px; border-radius: 5px; color: #0000FF; font-weight: bold; text-align: center; font-size: 18px;}
-        .header-red-title {color: #FF0000; font-weight: bold; font-size: 16px; margin-bottom: 5px;}
-        .chu-diem-co-nho {font-size: 12px !important; font-style: italic; white-space: nowrap !important; display: inline-block; margin-top: 10px;}
-        </style>
-        """, unsafe_allow_html=True)
+    # CẤU HÌNH CSS
+    st.markdown("""
+    <style>
+    div[data-testid="stAppViewBlockContainer"] { max-width: 98% !important; }
+    .header-blue {color: #0000FF; font-weight: bold; font-size: 16px; text-align: center;}
+    .box-trac-nghiem {background-color: #FFF2CC; padding: 10px; border-radius: 5px; color: #0000FF; font-weight: bold; text-align: center; font-size: 18px;}
+    .box-tu-luan {background-color: #D5E8D4; padding: 10px; border-radius: 5px; color: #0000FF; font-weight: bold; text-align: center; font-size: 18px;}
+    </style>
+    """, unsafe_allow_html=True)
 
-        # -- UI INPUT --
-        col1, col2, col3, col4 = st.columns(4)
-        with col1: mon_hoc = st.selectbox("Môn", ["Ngữ văn", "Toán", "Ngoại ngữ", "Giáo dục công dân", "Lịch sử và Địa lý", "Khoa học tự nhiên", "Vật Lý", "Hóa Học", "Sinh Học", "Công nghệ", "Tin học", "GDĐP", "HĐTN-HN"], index=1, key="sb_mon_de_kt")
-        with col2: lop = st.selectbox("Lớp", ["Lớp 6", "Lớp 7", "Lớp 8", "Lớp 9", "Lớp 10", "Lớp 11", "Lớp 12"], index=2, key="sb_lop_de_kt")
-        with col3: hinh_thuc = st.selectbox("Hình thức", ["Trắc nghiệm & Tự luận", "Trắc nghiệm", "Tự Luận"], key="sb_ht_de_kt")
-        with col4: thoi_gian = st.selectbox("Thời gian", ["45 phút", "60 phút", "90 phút", "120 phút"], key="sb_tg_de_kt")
+    # NHẬP LIỆU
+    col1, col2, col3, col4 = st.columns(4)
+    with col1: mon_hoc = st.selectbox("Môn", ["Ngữ văn", "Toán", "Ngoại ngữ", "Giáo dục công dân", "Lịch sử và Địa lý", "Khoa học tự nhiên", "Vật Lý", "Hóa Học", "Sinh Học", "Công nghệ", "Tin học", "GDĐP", "HĐTN-HN"], key="sb_mon_de_kt")
+    with col2: lop = st.selectbox("Lớp", ["Lớp 6", "Lớp 7", "Lớp 8", "Lớp 9", "Lớp 10", "Lớp 11", "Lớp 12"], key="sb_lop_de_kt")
+    with col3: hinh_thuc = st.selectbox("Hình thức", ["Trắc nghiệm & Tự luận", "Trắc nghiệm", "Tự Luận"], key="sb_ht_de_kt")
+    with col4: thoi_gian = st.selectbox("Thời gian", ["45 phút", "60 phút", "90 phút", "120 phút"], key="sb_tg_de_kt")
 
-        c_tl1, c_tl2, c_tl3, c_tl4 = st.columns(4)
-        nhan_biet = c_tl1.number_input("Nhận biết (%)", value=40, key="nb_kt")
-        thong_hieu = c_tl2.number_input("Thông hiểu (%)", value=30, key="th_kt")
-        van_dung = c_tl3.number_input("Vận dụng (%)", value=20, key="vd_kt")
-        van_dung_cao = c_tl4.number_input("Vận dụng cao (%)", value=10, key="vdc_kt")
+    # TỶ LỆ NHẬN THỨC
+    c_tl1, c_tl2, c_tl3, c_tl4 = st.columns(4)
+    with c_tl1: nb = st.number_input("Nhận biết", value=40, key="nb_kt")
+    with c_tl2: th = st.number_input("Thông hiểu", value=30, key="th_kt")
+    with c_tl3: vd = st.number_input("Vận dụng", value=20, key="vd_kt")
+    with c_tl4: vdc = st.number_input("Vận dụng cao", value=10, key="vdc_kt")
 
-        ten_bai = st.text_input("Tên bài kiểm tra / Đề số", key="txt_ten_bai")
+    # THÔNG SỐ ĐỀ
+    col_tn, spacer, col_tl = st.columns([12, 1, 12])
+    with col_tn:
+        sl1 = st.number_input("SL MCQ", value=12, key="sl1"); d1 = st.number_input("Điểm MCQ", value=3.0, key="d1")
+        sl2 = st.number_input("SL Đúng/Sai", value=1, key="sl2"); d2 = st.number_input("Điểm Đ/S", value=0.25, key="d2")
+        sl3 = st.number_input("SL Điền khuyết", value=1, key="sl3"); d3 = st.number_input("Điểm ĐK", value=0.25, key="d3")
+        sl4 = st.number_input("SL Ngắn", value=2, key="sl4"); d4 = st.number_input("Điểm Ngắn", value=0.5, key="d4")
+    
+    with col_tl:
+        so_cau_tl = st.number_input("Số câu Tự luận", value=4, key="so_tl")
+        diem_tl_list = [1.0 for _ in range(int(so_cau_tl))]
+
+    ten_bai = st.text_input("Tên bài kiểm tra", key="txt_ten_bai")
+    
+    # NÚT KHỞI TẠO
+    if st.button("TỰ ĐỘNG KHỞI TẠO MA TRẬN VÀ ĐỀ THI", type="primary", use_container_width=True):
+        final_key = api_key if api_key else get_api_key()
+        if not final_key: st.error("Lỗi: Thiếu API Key"); st.stop()
         
-        # -- NÚT KHỞI TẠO --
-        if st.button(" TỰ ĐỘNG KHỞI TẠO MA TRẬN VÀ ĐỀ THI ", type="primary", use_container_width=True):
-            if not ten_bai.strip():
-                st.warning("Vui lòng nhập Tên bài kiểm tra!")
-            else:
-                final_key = api_key if api_key and api_key.strip() else get_api_key()
-                if not final_key:
-                    st.error("Lỗi: Không tìm thấy API Key. Vui lòng kiểm tra Sidebar.")
-                else:
-                    # Bắt đầu gọi AI với Spinner an toàn
-                    try:
-                        with st.spinner("Đang kết nối AI và khởi tạo cấu trúc đề..."):
-                            prompt = f"Soạn đề {mon_hoc} {lop}, Tỷ lệ: {nhan_biet}/{thong_hieu}/{van_dung}/{van_dung_cao}. Chủ đề: {ten_bai}"
-                            result = run_ai_with_fallback(prompt=prompt, api_key=final_key, model_mode="flash")
-                        
-                        if result.get("success"):
-                            st.session_state['current_exam_data'] = {
-                                "is_khbd": False,
-                                "type": hinh_thuc,
-                                "ten_bai_save": ten_bai,
-                                "ai_generated_content": result.get("text")
-                            }
-                            st.success("Khởi tạo hoàn tất!")
-                            st.rerun()
-                        else:
-                            st.error(f"AI từ chối phản hồi: {result.get('error', 'Lỗi không xác định')}")
-                    except Exception as e:
-                        st.error(f"Lỗi hệ thống nghiêm trọng: {str(e)}")
+        prompt = f"Soạn đề {mon_hoc} {lop} chủ đề {ten_bai}..."
+        result = run_ai_with_fallback(prompt=prompt, api_key=final_key, model_mode="flash")
+        
+        if result.get("success"):
+            # CHỐT: is_khbd = False để không bị chồng lấn sang KHBD
+            st.session_state['current_exam_data'] = {
+                "is_khbd": False, 
+                "title": ten_bai,
+                "ai_generated_content": result.get("text"),
+                "subject": mon_hoc,
+                "grade": lop
+            }
+            st.rerun()
 
-        # -- XỬ LÝ KẾT QUẢ --
-        if 'current_exam_data' in st.session_state:
-            exam_cache = st.session_state['current_exam_data']
-            st.markdown("---")
-            with st.expander("Xem nội dung đề thi", expanded=True):
-                st.markdown(exam_cache["ai_generated_content"])
-            
-            WordEngine = get_word_engine()
-            if WordEngine:
-                if st.button("Tải file Đề thi (Word)", type="primary"):
-                    try:
-                        word_file = WordEngine.export_to_word(exam_cache)
-                        st.download_button("Tải về máy", data=word_file, file_name=f"{exam_cache['ten_bai_save']}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
-                    except Exception as e:
-                        st.error(f"Lỗi kết xuất Word: {e}")
+    # NÚT XUẤT WORD
+    exam_cache = st.session_state.get('current_exam_data')
+    if exam_cache:
+        st.markdown("---")
+        try:
+            word_file = WordExportEngine.export_to_word(exam_cache)
+            st.download_button("Tải file Đề thi về máy", data=word_file, file_name="De_Thi.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True)
+        except Exception as e:
+            st.error(f"Lỗi xuất Word: {e}")
 
-            if st.button("Xóa đề hiện tại"):
-                del st.session_state['current_exam_data']
-                st.rerun()
+# Gọi hàm render
+render_de_kt_module()
