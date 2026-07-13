@@ -29,7 +29,7 @@ def render_de_kt_module(api_key=""):
     yeu_cau_khac = st.text_area("Yêu cầu chi tiết", placeholder="Thầy/cô thêm yêu cầu. Ví dụ: Phân bố điểm câu tự luận theo mức độ nhận thức có phân hóa HS...", height=70)
 
     # 2. KHU VỰC CẤU HÌNH MA TRẬN (ĐÃ KHÔI PHỤC)
-    with st.expander("⚙️ Tỷ lệ nhận thức & Số lượng câu", expanded=True):
+    with st.expander("Nút thu gọn ⚙️ Tỷ lệ nhận thức & Số lượng câu", expanded=True):
         st.markdown("**1. Tỷ lệ nhận thức (%)**")
         c1, c2, c3, c4 = st.columns(4)
         nb = c1.number_input("Mức độ Nhận biết", value=40)
