@@ -73,7 +73,7 @@ def render_de_kt_module(api_key=""):
         sl4 = ct7.number_input("Số câu trả lời ngắn", value=2)
         d4 = ct8.number_input("Điểm câu trả lời ngắn", value=0.5, step=0.05)
 
-        st.markdown("**3. Thông số Tự luận**")
+        st.markdown("**3. Thông số Trắc nghiệm và Tự luận**")
         ctl1, ctl2 = st.columns(2)
         so_tl = ctl1.number_input("Tổng số câu Tự luận", value=4)
         diem_tl = ctl2.number_input("Tổng điểm Tự luận", value=4.0, step=0.25)
