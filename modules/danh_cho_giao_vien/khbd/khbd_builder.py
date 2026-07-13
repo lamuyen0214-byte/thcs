@@ -37,9 +37,9 @@ def render_khbd_module(api_key=""):
     .stAppViewBlockContainer {
         max-width: 98% !important;
         width: 98% !important;
-        padding-left: 1.5rem !important;
+        padding-left: 3.5rem !important;
         padding-right: 1.5rem !important;
-        padding-top: 1rem !important;
+        padding-top: 3rem !important;
         padding-bottom: 1rem !important;
     }
     .header-blue {color: #0000FF; font-weight: bold; font-size: 15px; text-align: left; margin-bottom: 2px;}
