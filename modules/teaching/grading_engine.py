@@ -4,7 +4,12 @@ from PIL import Image
 import pandas as pd
 from io import BytesIO
 import json
-
+# Đoạn code kiểm tra model khả dụng
+import google.generativeai as genai
+# Sau khi thầy đã cấu hình API Key ở nơi khác
+for m in genai.list_models():
+    if 'generateContent' in m.supported_generation_methods:
+        print(m.name)
 def get_model(model_name):
     """Hàm khởi tạo model theo tên được chọn"""
     return genai.GenerativeModel(model_name)
