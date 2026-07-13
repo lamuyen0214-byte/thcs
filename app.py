@@ -90,7 +90,6 @@ def run_router():
         "Hỗ trợ Giáo viên": teacher_support.render_module if teacher_support else None,
         "Hỗ trợ Giảng dạy": teaching_support.render_module if teaching_support else None,
         "Quản lý Tổ chuyên môn": department_mgmt.render_module if department_mgmt else None,
-        "Trình tạo đề kiểm tra": render_quiz_generator if render_quiz_generator else None
     }
     
     action = mapping.get(phan_he)
