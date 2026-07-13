@@ -175,11 +175,9 @@ Yêu cầu đầu ra: Trình bày cấu trúc khoa học, ngôn từ sư phạm 
         # Sửa lại cấu trúc để đảm bảo khối with có nội dung
         with st.expander(" Xem trước Kế hoạch bài dạy chi tiết", expanded=True):
             st.markdown(khbd_cache.get('ai_generated_content', ''))
+            # ... đoạn code trên ...
+            WordEngine = get_word_engine()
             
-            # Xuất Word được đặt ngay sau markdown để đảm bảo nằm trong flow logic
-            WordEngine = get_word_engine()
-            # ... nội dung phía trên ...
-            WordEngine = get_word_engine()
             if WordEngine and khbd_cache:
                 try:
                     # 1. Vệ sinh dữ liệu
@@ -189,9 +187,13 @@ Yêu cầu đầu ra: Trình bày cấu trúc khoa học, ngôn từ sư phạm 
                     
                     # 2. Gọi engine xuất file
                     word_file = WordEngine.export_to_word(khbd_cache)
+                    
                 except Exception as e:
-                    st.error(f"⚠️ Trình xuất Word đang gặp sự cố đồng bộ: {e}")
+                    # Ghi log lỗi để thầy tiện theo dõi trong terminal
+                    st.error(f"⚠️ Trình xuất Word đang gặp sự cố: {e}")
                     word_file = None
+            
+            # --- Kết thúc khối xử lý, ra ngoài scope của 'if' ---
             
         # BỘ BA NÚT TƯƠNG TÁC TĂM TẮP
         col_save, col_download, col_delete = st.columns(3)
