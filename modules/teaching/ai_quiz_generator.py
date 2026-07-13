@@ -4,7 +4,7 @@ from docx import Document
 from io import BytesIO
 import random
 from pypdf import PdfReader
-
+import time
 def get_stable_model():
     """Hàm xoay vòng model để tránh lỗi 429 Quota Exceeded"""
     priority_list = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash", "gemini-flash-latest"]
