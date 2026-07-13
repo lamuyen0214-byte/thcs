@@ -21,7 +21,7 @@ model_choice = st.selectbox(
 model = genai.GenerativeModel(model_choice)
     # Khởi tạo session để lưu kết quả chấm hàng loạt
         if "ket_qua_cham" not in st.session_state:
-        st.session_state.ket_qua_cham = []
+            st.session_state.ket_qua_cham = []
 
     # 1. Thiết lập đáp án
     dap_an = st.text_input("Nhập đáp án chuẩn (VD: 1A, 2B, 3C, 4D...):")
