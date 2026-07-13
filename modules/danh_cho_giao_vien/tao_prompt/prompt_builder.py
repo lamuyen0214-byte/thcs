@@ -3,31 +3,34 @@ import os
 import sys
 
 # =====================================================================
-# KỸ THUẬT: ĐỊNH TUYẾN TỰ ĐỘNG TÌM "TRÁI TIM" AI_CONFIG.PY TẠI ROOT
+# 1. ĐỊNH VỊ ĐƯỜNG DẪN GỐC TỰ ĐỘNG TÌM AI_ENGINE (ƯU TIÊN TUYỆT ĐỐI)
 # =====================================================================
 current_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir = current_dir
-while not os.path.exists(os.path.join(root_dir, 'ai_config.py')) and root_dir != os.path.dirname(root_dir):
+# Quét ngược lên các thư mục cha cho đến khi thấy lõi 'ai_engine'
+while not os.path.exists(os.path.join(root_dir, 'ai_engine')) and root_dir != os.path.dirname(root_dir):
     root_dir = os.path.dirname(root_dir)
 
 if root_dir not in sys.path:
-    sys.path.append(root_dir)
-
-try:
-    from ai_config import get_ai_client
-except ImportError:
-    st.error(f"❌ Kỹ thuật: Mất kết nối đường ống tới ai_config.py tại {root_dir}")
-    def get_ai_client(): return None
-# =====================================================================
+    sys.path.insert(0, root_dir)
 
 # Đảm bảo hệ thống tìm thấy thư mục export
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
+export_path = os.path.abspath(os.path.join(root_dir, 'export'))
+if export_path not in sys.path:
+    sys.path.append(export_path)
+
+# =====================================================================
+# 2. NẠP ĐỘNG CƠ TỪ KIẾN TRÚC MỚI
+# =====================================================================
+from ai_engine.ai_config import get_api_key
+from ai_engine.ai_runner import run_ai_with_fallback
 
 def get_word_engine():
     try:
         from export.export_word import WordExportEngine
         return WordExportEngine
     except Exception as e:
+        print(f"Lỗi nạp module Word: {e}")
         return None
 
 def render_prompt_module():
@@ -60,23 +63,19 @@ def render_prompt_module():
     if st.button("🚀 TỐI ƯU HÓA SIÊU CÂU LỆNH (PROMPT)", type="primary", use_container_width=True):
         if not y_tuong_tho.strip():
             st.warning("⚠️ Thầy/Cô vui lòng nhập ý tưởng thô trước khi tối ưu hóa.")
-            return
+            st.stop()
 
-        # -------------------------------------------------------------
-        # GỌI BỘ ĐIỀU KHIỂN TRUNG TÂM & KIỂM TRA CHỐNG LỖI NONETYPE
-        # -------------------------------------------------------------
-        client = get_ai_client()
+        # =====================================================================
+        # BỘ ĐIỀU KHIỂN TRUNG TÂM (AI ENGINE)
+        # =====================================================================
+        api_key = get_api_key()
         
-        if client is None:
+        if not api_key:
             st.error("⚠️ Lỗi cấu hình: Vui lòng nhập Gemini API Key ở thanh bên (Sidebar) trước!")
-            return
-        if not hasattr(client, 'models'):
-            st.error("⚠️ Lỗi kỹ thuật: Client không đúng chuẩn SDK google-genai mới.")
-            return
+            st.stop()
 
         with st.spinner("🤖 Hệ thống đang phân tích và tái cấu trúc câu lệnh..."):
-            try:
-                prompt_he_thong = f"""
+            prompt_he_thong = f"""
 Bạn là một Chuyên gia Kỹ sư Prompt (Prompt Engineer) hàng đầu. Nhiệm vụ của bạn là nâng cấp ý tưởng thô của người dùng thành một "Siêu câu lệnh" (Meta-prompt) cực kỳ chi tiết, chuyên nghiệp và hiệu quả để họ có thể copy và dùng cho các AI khác (như ChatGPT, Gemini, Claude).
 
 Thông tin đầu vào từ người dùng:
@@ -93,32 +92,30 @@ Hãy xuất ra cấu trúc như sau (Sử dụng Markdown rõ ràng):
    - [Giọng văn/Phong cách]
    - [Cấu trúc đầu ra mong muốn].
 3. **Mẹo sử dụng:** Đưa ra 1-2 mẹo nhỏ để người dùng điền thêm biến số nếu cần.
-                """
-                
-                # Gọi API chuẩn SDK mới
-                response = client.models.generate_content(
-                    model="gemini-2.5-flash",
-                    contents=prompt_he_thong
-                )
-                
-                result = getattr(response, "text", "")
-                
-                if result:
-                    st.session_state['current_prompt_data'] = {
-                        "is_khbd": True, # Giữ cờ này để xuất Word ổn định
-                        "title": "Công cụ Tối ưu Prompt",
-                        "subject": "Kỹ năng AI",
-                        "grade": "Giáo viên",
-                        "ten_bai_save": "Sieu_Cau_Lenh_AI",
-                        "ai_generated_content": result
-                    }
-                    st.success("✅ Đã chế tạo thành công Siêu câu lệnh!")
-                    st.rerun()
-                else:
-                    st.warning("⚠️ AI không trả về nội dung. Có thể bị chặn bởi bộ lọc an toàn.")
-                    
-            except Exception as api_err:
-                st.error(f"❌ Lỗi máy chủ AI: {api_err}")
+"""
+            
+            # Gọi API thông qua kiến trúc chuẩn
+            result = run_ai_with_fallback(
+                prompt=prompt_he_thong,
+                api_key=api_key,
+                model_mode="flash"
+            )
+            
+            if result.get("success"):
+                st.session_state['current_prompt_data'] = {
+                    "is_khbd": True, # Giữ cờ này để xuất Word ổn định
+                    "title": "Công cụ Tối ưu Prompt",
+                    "subject": "Kỹ năng AI",
+                    "grade": "Giáo viên",
+                    "ten_bai_save": "Sieu_Cau_Lenh_AI",
+                    "ai_generated_content": result.get("text")
+                }
+                st.success(f"✅ Đã chế tạo thành công Siêu câu lệnh trong {result.get('time'):.2f} giây!")
+                st.rerun()
+            else:
+                st.error("❌ Lỗi máy chủ AI: Máy chủ từ chối phản hồi.")
+                with st.expander("🔍 Chi tiết lỗi kỹ thuật ngầm", expanded=True):
+                    st.code(result.get("error"))
 
     # 3. KẾT XUẤT WORD
     st.markdown("---")
