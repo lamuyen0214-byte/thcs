@@ -48,7 +48,6 @@ def render_grading_module():
                     # Khởi tạo model tại đây
                     model = get_model(model_choice)
                     for file in uploaded_files:
-                        with st.spinner(f"Đang chấm: {file.name}..."):
                         time.sleep(4) # Nghỉ 4 giây giữa mỗi ảnh để tránh vượt quá quota
                         with st.spinner(f"Đang chấm: {file.name}..."):
                             img = Image.open(file)
