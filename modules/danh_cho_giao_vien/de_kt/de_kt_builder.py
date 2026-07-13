@@ -38,40 +38,40 @@ def render_de_kt_module(api_key=""):
 
     # 1. CẤU HÌNH CƠ BẢN
     col1, col2, col3, col4 = st.columns(4)
-    with col1: mon_hoc = st.selectbox("Môn", ["Ngữ văn", "Toán", "Ngoại ngữ", "Giáo dục công dân", "Lịch sử và Địa lý", "Khoa học tự nhiên", "Vật Lý", "Hóa Học", "Sinh Học", "Công nghệ", "Tin học", "GDĐP", "HĐTN-HN"], index=1)
-    with col2: lop = st.selectbox("Lớp", ["Lớp 6", "Lớp 7", "Lớp 8", "Lớp 9", "Lớp 10", "Lớp 11", "Lớp 12"], index=2)
-    with col3: hinh_thuc = st.selectbox("Hình thức", ["Trắc nghiệm & Tự luận", "Trắc nghiệm", "Tự Luận"])
+    with col1: mon_hoc = st.selectbox("Chọn Môn", ["Ngữ văn", "Toán", "Ngoại ngữ", "Giáo dục công dân", "Lịch sử và Địa lý", "Khoa học tự nhiên", "Vật Lý", "Hóa Học", "Sinh Học", "Công nghệ", "Tin học", "GDĐP", "HĐTN-HN"], index=1)
+    with col2: lop = st.selectbox("Chọn Lớp", ["Lớp 6", "Lớp 7", "Lớp 8", "Lớp 9", "Lớp 10", "Lớp 11", "Lớp 12"], index=2)
+    with col3: hinh_thuc = st.selectbox("Hình thức ra đề", ["Trắc nghiệm & Tự luận", "Trắc nghiệm", "Tự Luận"])
     with col4: thoi_gian = st.selectbox("Thời gian", ["45 phút", "60 phút", "90 phút", "120 phút"])
 
     col_ten, col_file1, col_file2 = st.columns([2, 1, 1])
     with col_ten: ten_bai = st.text_input("Tên bài kiểm tra / Đề số", placeholder="Ví dụ: Kiểm tra giữa kì I")
-    with col_file1: de_cuong_file = st.file_uploader("Đề Cương", type=['docx', 'pdf'])
-    with col_file2: ma_tran_file = st.file_uploader("Ma trận", type=['docx', 'pdf'])
+    with col_file1: de_cuong_file = st.file_uploader("Tải đề cương lên", type=['docx', 'pdf'])
+    with col_file2: ma_tran_file = st.file_uploader("Tải ma trận mẫu (nếu cần)", type=['docx', 'pdf'])
     
     bam_sat = st.checkbox("Bám sát nội dung đề cương/ma trận tải lên", value=True)
-    yeu_cau_khac = st.text_area("Yêu cầu chi tiết", placeholder="Ví dụ: 8 câu MCQ, 1 Đ/S, 1 Điền khuyết, 2 Trả lời ngắn...", height=70)
+    yeu_cau_khac = st.text_area("Yêu cầu chi tiết", placeholder="Thầy cô yêu cầu thêm. Ví dụ:Phần tự luận bám sát kiến thức phần ... ra theo tỷ lệ phân hóa HS, v.v....", height=70)
 
     # 2. KHU VỰC CẤU HÌNH MA TRẬN
     with st.expander("Cấu hình Tỷ lệ nhận thức & Số lượng câu", expanded=True):
         st.markdown("**1. Tỷ lệ nhận thức (%)**")
         c1, c2, c3, c4 = st.columns(4)
-        nb = c1.number_input("Nhận biết", value=40)
-        th = c2.number_input("Thông hiểu", value=30)
-        vd = c3.number_input("Vận dụng", value=20)
-        vdc = c4.number_input("VDC", value=10)
+        nb = c1.number_input("Mức độ Nhận biết", value=40)
+        th = c2.number_input("Mức độ Thông hiểu", value=30)
+        vd = c3.number_input("Mức độ Vận dụng", value=20)
+        vdc = c4.number_input("Mức độ Vận dụng cao", value=10)
         
         st.markdown("**2. Thông số Trắc nghiệm**")
         ct1, ct2, ct3, ct4 = st.columns(4)
-        sl1 = ct1.number_input("SL MCQ", value=12)
-        d1 = ct2.number_input("Điểm/câu MCQ", value=0.25, step=0.05)
-        sl2 = ct3.number_input("SL Đúng/Sai", value=4)
-        d2 = ct4.number_input("Điểm/câu Đ/S", value=0.25, step=0.05)
+        sl1 = ct1.number_input("Số câu hỏi nhiều lựa chọn", value=12)
+        d1 = ct2.number_input("Điểm cho câu hỏi nhiều lựa chọn", value=0.25, step=0.05)
+        sl2 = ct3.number_input("Số câu hỏi Đúng/Sai", value=4)
+        d2 = ct4.number_input("Điểm cho câu Đ/S", value=0.25, step=0.05)
         
         ct5, ct6, ct7, ct8 = st.columns(4)
-        sl3 = ct5.number_input("SL Điền khuyết", value=4)
-        d3 = ct6.number_input("Điểm/câu ĐK", value=0.25, step=0.05)
-        sl4 = ct7.number_input("SL Ngắn", value=2)
-        d4 = ct8.number_input("Điểm/câu Ngắn", value=0.5, step=0.05)
+        sl3 = ct5.number_input("Số câu Điền khuyết", value=4)
+        d3 = ct6.number_input("Điểm cho câu Điền khuyết", value=0.25, step=0.05)
+        sl4 = ct7.number_input("Số câu trả lời ngắn", value=2)
+        d4 = ct8.number_input("Điểm câu trả lời ngắn", value=0.5, step=0.05)
 
         st.markdown("**3. Thông số Tự luận**")
         ctl1, ctl2 = st.columns(2)
