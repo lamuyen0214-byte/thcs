@@ -48,7 +48,11 @@ with st.sidebar:
     
     st.markdown("---")
     # Biến phan_he được khởi tạo tại đây
-    phan_he = st.selectbox(
+    phan_he = sst.radio(
+        "CHỌN PHÂN HỆ", 
+        ["Hỗ trợ Giáo viên", "Hỗ trợ Giảng dạy", "Quản lý Tổ chuyên môn", "Trình tạo đề kiểm tra"],
+        key="sb_phan_he_main"
+    )
         "CHỌN PHÂN HỆ", 
         ["Hỗ trợ Giáo viên", "Hỗ trợ Giảng dạy", "Quản lý Tổ chuyên môn", "Trình tạo đề kiểm tra"],
         key="sb_phan_he_main"
