@@ -43,12 +43,6 @@ except Exception as e:
     st.error(f"Lỗi nạp Phân hệ Tổ chuyên môn: {e}")
     department_mgmt = None
 
-#try:
-    #from modules.teaching.ai_quiz_generator import render_quiz_generator
-#except Exception as e:
-   #st.error(f"Lỗi nạp Trình tạo đề kiểm tra: {e}")
-   #render_quiz_generator = None
-
 # =====================================================================
 # 4. THANH SIDEBAR ĐIỀU HƯỚNG VÀ CẤU HÌNH (GIỮ NGUYÊN 100%)
 # =====================================================================
