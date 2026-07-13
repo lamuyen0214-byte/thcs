@@ -76,6 +76,3 @@ def render_khbd_module(api_key=""):
     st.write("")
     # 3. LOGIC AI (SỬA ĐỔI DUY NHẤT: TRUYỀN THAM SỐ API_KEY VÀO HÀM ĐỂ TRANH LỖI CHẶN MÁY CHỦ)
     if st.button(
-
-    # 4. KẾT XUẤT (GIỮ NGUYÊN HOÀN TOÀN CẤU TRÚC GIAO DIỆN, NÚT LƯU, IN WORD CỦA THẦY)
-    # ... [Toàn bộ logic hiển thị văn bản kết quả, tương tác Tải/Xóa/Xuất file Word giữ nguyên ở cuối file] ...
