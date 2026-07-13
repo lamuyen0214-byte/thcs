@@ -6,8 +6,9 @@ from io import BytesIO
 from pypdf import PdfReader
 
 # =====================================================================
-# THUẬT TOÁN TỰ ĐỘNG DÒ TÌM "TRÁI TIM" HỆ THỐNG (ai_config.py)
+# CẤU HÌNH ĐƯỜNG DẪN & KẾT NỐI
 # =====================================================================
+# Đảm bảo có thể import ai_config từ bất kỳ đâu
 current_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir = current_dir
 while not os.path.exists(os.path.join(root_dir, 'ai_config.py')) and root_dir != os.path.dirname(root_dir):
@@ -19,10 +20,30 @@ if root_dir not in sys.path:
 try:
     from ai_config import get_ai_client
 except ImportError:
-    st.error(f"❌ Kỹ thuật: Mất kết nối đường ống tới ai_config.py tại {root_dir}")
+    st.error("❌ Lỗi cấu trúc: Không tìm thấy 'ai_config.py'.")
     def get_ai_client(): return None
-# =====================================================================
 
+# =====================================================================
+# HÀM XỬ LÝ DỮ LIỆU
+# =====================================================================
+def extract_text_from_file(uploaded_file):
+    """Trích xuất văn bản từ file PDF, DOCX hoặc TXT"""
+    try:
+        if uploaded_file.name.endswith(".pdf"):
+            reader = PdfReader(uploaded_file)
+            return "\n".join(page.extract_text() or "" for page in reader.pages)
+        elif uploaded_file.name.endswith(".docx"):
+            doc = Document(uploaded_file)
+            return "\n".join(p.text for p in doc.paragraphs)
+        elif uploaded_file.name.endswith(".txt"):
+            return uploaded_file.getvalue().decode("utf-8", errors="ignore")
+    except Exception as e:
+        st.error(f"Lỗi đọc file: {e}")
+    return ""
+
+# =====================================================================
+# GIAO DIỆN CHÍNH
+# =====================================================================
 def render_quiz_generator():
     st.subheader("🎯 Trình Tạo Đề Kiểm Tra Tự Động")
     
@@ -38,73 +59,56 @@ def render_quiz_generator():
         include_digital = st.checkbox("Tích hợp Năng lực số", value=True)
     
     if st.button("🚀 Tạo đề ngay", type="primary", use_container_width=True):
-        
-        combined = ""
-        if uploaded_file:
-            if uploaded_file.name.endswith(".pdf"):
-                reader = PdfReader(uploaded_file)
-                combined += "\n".join(page.extract_text() or "" for page in reader.pages)
-            elif uploaded_file.name.endswith(".docx"):
-                doc = Document(uploaded_file)
-                combined += "\n".join(p.text for p in doc.paragraphs)
-            elif uploaded_file.name.endswith(".txt"):
-                combined += uploaded_file.getvalue().decode("utf-8", errors="ignore")
-                
+        # 1. Tổng hợp dữ liệu
+        combined = extract_text_from_file(uploaded_file) if uploaded_file else ""
         if text_content:
             combined += "\n" + text_content
             
         if not combined.strip():
-            st.warning("⚠️ Chưa có dữ liệu để tạo đề.")
+            st.warning("⚠️ Chưa có dữ liệu đầu vào.")
             return
 
-        # Gọi Client từ Trái tim hệ thống
+        # 2. Khởi tạo Client
         client = get_ai_client()
-        
         if client is None:
-            st.error("⚠️ Gemini Client chưa được khởi tạo. Hãy kiểm tra API Key ở Sidebar!")
-            return
-            
-        if not hasattr(client, 'models'):
-            st.error("⚠️ Lỗi cấu trúc SDK. Hãy đảm bảo đã cài đặt 'google-genai'.")
+            st.error("⚠️ Không thể kết nối AI. Kiểm tra API Key.")
             return
 
-        with st.spinner("AI đang phân tích tài liệu và biên soạn đề..."):
+        # 3. Thực thi
+        with st.spinner("AI đang biên soạn..."):
             prompt = f"""
-            Bạn là chuyên gia biên soạn đề kiểm tra theo Chương trình GDPT 2018 cấp THCS.
-
-            Yêu cầu bắt buộc:
-            {"- Chỉ sử dụng nội dung trong tài liệu." if use_source else "- Căn cứ vào tài liệu, có thể mở rộng kiến thức."}
-            - Sinh {num_mcq} câu trắc nghiệm khách quan.
-            - Sinh {num_essay} câu tự luận.
-            - Trình bày rõ CÂU HỎI, ĐÁP ÁN, HƯỚNG DẪN CHẤM, MA TRẬN ĐỀ THI.
-            {"- Chú trọng lồng ghép Năng lực số, AI, Tư duy tính toán." if include_digital else ""}
-
-            Tài liệu tham khảo:
-            {combined}
+            Bạn là chuyên gia giáo dục. Hãy soạn đề kiểm tra dựa trên nội dung sau:
+            - Số câu trắc nghiệm: {num_mcq}
+            - Số câu tự luận: {num_essay}
+            - Yêu cầu: {'Bám sát tài liệu cung cấp.' if use_source else 'Tham khảo tài liệu.'}
+            - Lồng ghép năng lực số: {'Có' if include_digital else 'Không'}.
+            
+            Nội dung: {combined}
             """
             
             try:
-                # GỌI CHUẨN SDK MỚI
+                # Sử dụng mô hình ổn định gemini-1.5-flash
                 response = client.models.generate_content(
-                    model="gemini-2.5-flash",
+                    model="gemini-1.5-flash", 
                     contents=prompt
                 )
                 
                 result = getattr(response, "text", "")
-                if not result:
-                    st.warning("⚠️ AI không trả về nội dung (Có thể bị chặn bởi bộ lọc an toàn).")
-                    return
-                
-                st.session_state.current_quiz = result
-                st.rerun()
-                
+                if result:
+                    st.session_state.current_quiz = result
+                    st.rerun()
+                else:
+                    st.error("⚠️ AI không trả về nội dung.")
+                    
             except Exception as e:
-                st.error(f"❌ Lỗi hệ thống AI: {str(e)}")
+                st.error(f"❌ Lỗi hệ thống: {str(e)}")
 
+    # 4. Hiển thị kết quả
     if "current_quiz" in st.session_state:
         st.markdown("---")
         st.markdown(st.session_state.current_quiz)
         
+        # Logic tải file
         doc = Document()
         doc.add_heading("ĐỀ KIỂM TRA", level=1)
         doc.add_paragraph(st.session_state.current_quiz)
