@@ -6,12 +6,14 @@ from io import BytesIO
 import json
 
 def get_model(model_name):
-    return genai.GenerativeModel(model_name)
+    # Loại bỏ tiền tố 'models/' để API hoạt động chính xác
+    clean_name = model_name.replace("models/", "")
+    return genai.GenerativeModel(clean_name)
 
 def render_grading_module():
     st.subheader("📝 Chấm Trắc Nghiệm Hàng Loạt Bằng AI")
     
-    # 0. Nút kiểm tra model (chỉ chạy khi nhấn)
+    # 0. Nút kiểm tra model
     if st.checkbox("Kiểm tra danh sách model khả dụng"):
         try:
             models = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
@@ -19,10 +21,10 @@ def render_grading_module():
         except Exception as e:
             st.error("Chưa cấu hình API Key hoặc lỗi kết nối.")
 
-    # 1. Chọn Model
+    # 1. Chọn Model (Dùng danh sách thầy quét được)
     model_choice = st.selectbox(
         "Chọn Model AI:",
-        ["gemini-1.5-flash", "gemini-1.5-pro"]
+        ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"]
     )
     
     # 2. Khởi tạo session lưu kết quả
@@ -43,8 +45,8 @@ def render_grading_module():
                 st.warning("Vui lòng nhập đáp án và chọn ảnh.")
             else:
                 try:
-                    clean_name = model_name.replace("models/", "")
-                    return genai.GenerativeModel(clean_name)
+                    # Khởi tạo model tại đây
+                    model = get_model(model_choice)
                     for file in uploaded_files:
                         with st.spinner(f"Đang chấm: {file.name}..."):
                             img = Image.open(file)
@@ -59,7 +61,7 @@ def render_grading_module():
                             st.session_state.ket_qua_cham.append(ket_qua)
                     st.success("Đã chấm xong tất cả!")
                 except Exception as e:
-                    st.error(f"Lỗi: {e}. Có thể model '{model_choice}' không được hỗ trợ bởi Key hiện tại.")
+                    st.error(f"Lỗi: {e}. Vui lòng kiểm tra lại Model hoặc API Key.")
 
     with col2:
         if st.button("🗑️ Xóa danh sách"):
