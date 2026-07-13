@@ -16,23 +16,24 @@ class ScienceNormalizer:
 class MathRenderer:
     @classmethod
     def render_inline_math(cls, paragraph, latex_str: str):
-        # Đơn giản hóa: Chuyển đổi LaTeX cơ bản sang Unicode trước khi chèn vào Run
+        # Đơn giản hóa: Chuyển đổi LaTeX cơ bản sang Unicode
         clean_text = latex_str.replace(r'\frac{', '(').replace('}{', ')/(').replace('}', ')')
         run = paragraph.add_run(ScienceNormalizer.normalize(clean_text))
         run.font.name = 'Times New Roman'
-        @classmethod
+
+    @classmethod
     def render_display_math(cls, doc, node):
         """
-        Xử lý công thức hiển thị riêng biệt (Display Math) như $$...$$ hoặc \begin{...}
+        Xử lý công thức hiển thị riêng biệt (Display Math)
         """
-        # Thêm một đoạn paragraph mới cho khối phương trình
+        # Thêm paragraph mới cho khối phương trình
         p = doc.add_paragraph()
-        p.alignment = 1  # Căn giữa (WD_ALIGN_PARAGRAPH.CENTER)
+        p.alignment = 1  # Căn giữa
         
         # Lấy nội dung LaTeX từ node
         latex_content = node.get("content", "")
         
-        # Tạm thời hiển thị dưới dạng văn bản (sau này thầy có thể nâng cấp lên OMML nếu cần)
+        # Thêm text vào paragraph
         run = p.add_run(latex_content)
         run.font.name = 'Times New Roman'
         run.font.italic = True
