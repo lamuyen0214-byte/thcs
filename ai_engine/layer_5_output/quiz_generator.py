@@ -8,10 +8,14 @@ from pypdf import PdfReader
 def route_generate_request(prompt, system_instruction=None):
     """
     Hàm định tuyến duy nhất: Mọi chức năng chỉ gọi hàm này.
-    Không khởi tạo model thủ công ở module con.
+    Đảm bảo kiểm tra sự tồn tại của instance trước khi gọi.
     """
+    if gemini_instance is None:
+        st.error("Lỗi hệ thống: Gemini Engine chưa được khởi tạo. Hãy kiểm tra API Key!")
+        return None
+        
     if not hasattr(gemini_instance, 'generate_content'):
-        st.error("Lỗi hệ thống: Gemini Engine chưa được khởi tạo đúng cách.")
+        st.error("Lỗi hệ thống: gemini_instance không có thuộc tính 'generate_content'.")
         return None
     
     # Chuyển hướng yêu cầu tới instance duy nhất
@@ -20,8 +24,8 @@ def route_generate_request(prompt, system_instruction=None):
 def render_quiz_generator():
     st.subheader("🎯 Trình Tạo Đề Kiểm Tra Tự Động")
     
-    uploaded_file = st.file_uploader("Tải tài liệu tham khảo:", type=['pdf', 'docx', 'txt'])
-    text_content = st.text_area("Nội dung bài giảng:", height=200)
+    uploaded_file = st.file_uploader("Tải tài liệu tham khảo (PDF, DOCX, TXT):", type=['pdf', 'docx', 'txt'])
+    text_content = st.text_area("Nội dung bài giảng/Yêu cầu bổ sung:", height=200)
     
     col1, col2 = st.columns(2)
     with col1:
@@ -31,20 +35,22 @@ def render_quiz_generator():
         use_source = st.checkbox("Bám sát tài liệu", value=True)
         include_digital = st.checkbox("Tích hợp Năng lực số", value=True)
     
-    if st.button("🚀 Tạo đề"):
+    if st.button("🚀 Tạo đề ngay"):
         combined = text_content
         if use_source and uploaded_file:
-            # Xử lý nội dung tập trung
+            # Đọc nội dung file
             if uploaded_file.type == "application/pdf": 
                 combined += "\n" + "\n".join([p.extract_text() for p in PdfReader(uploaded_file).pages])
             elif "word" in uploaded_file.type: 
                 combined += "\n" + "\n".join([p.text for p in Document(uploaded_file).paragraphs])
+            else:
+                combined += "\n" + uploaded_file.getvalue().decode("utf-8", errors="ignore")
         
-        if not combined: 
-            st.warning("Vui lòng nhập nội dung!")
+        if not combined.strip(): 
+            st.warning("Vui lòng nhập nội dung hoặc tải tài liệu!")
         else:
             with st.spinner("AI đang xử lý qua bộ điều khiển..."):
-                prompt = f"Soạn {num} câu hỏi {q_type}. {'Lồng ghép Năng lực số.' if include_digital else ''} Dựa trên: {combined}."
+                prompt = f"Soạn {num} câu hỏi {q_type}. {'Lồng ghép Năng lực số (AI, tư duy tính toán).' if include_digital else ''} Dựa trên nội dung: {combined}."
                 
                 # GỌI QUA BỘ ĐỊNH TUYẾN
                 result = route_generate_request(prompt)
@@ -54,3 +60,8 @@ def render_quiz_generator():
                     st.rerun()
                 else:
                     st.error("Lỗi: Không nhận được phản hồi từ AI. Hãy kiểm tra lại API Key ở Sidebar.")
+
+    # Hiển thị kết quả
+    if "current_quiz" in st.session_state:
+        st.markdown("---")
+        st.text_area("Kết quả:", st.session_state.current_quiz, height=300)
