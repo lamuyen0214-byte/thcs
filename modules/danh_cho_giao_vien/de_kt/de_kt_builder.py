@@ -14,72 +14,68 @@ if root_dir not in sys.path:
     sys.path.insert(0, root_dir)
 
 def render_de_kt_module(api_key=""):
-    # CẤU HÌNH CSS
+    # CẤU HÌNH CSS GỌN HƠN
     st.markdown("""
     <style>
-    div[data-testid="stAppViewBlockContainer"] { max-width: 98% !important; }
-    .header-blue {color: #0000FF; font-weight: bold; font-size: 16px; text-align: center;}
-    .box-trac-nghiem {background-color: #FFF2CC; padding: 10px; border-radius: 5px; color: #0000FF; font-weight: bold; text-align: center; font-size: 18px;}
-    .box-tu-luan {background-color: #D5E8D4; padding: 10px; border-radius: 5px; color: #0000FF; font-weight: bold; text-align: center; font-size: 18px;}
+    .block-container { padding-top: 1rem !important; padding-bottom: 1rem !important; }
+    div[data-testid="column"] { gap: 0.5rem; }
+    .stButton>button { height: 2.5em; }
     </style>
     """, unsafe_allow_html=True)
 
-    # NHẬP LIỆU
-    col1, col2, col3, col4 = st.columns(4)
-    with col1: mon_hoc = st.selectbox("Môn", ["Ngữ văn", "Toán", "Ngoại ngữ", "Giáo dục công dân", "Lịch sử và Địa lý", "Khoa học tự nhiên", "Vật Lý", "Hóa Học", "Sinh Học", "Công nghệ", "Tin học", "GDĐP", "HĐTN-HN"], key="sb_mon_de_kt")
+    # 2. KHU VỰC ĐIỀU KHIỂN CHÍNH (Rất gọn)
+    col1, col2, col3 = st.columns(3)
+    with col1: mon_hoc = st.selectbox("Môn học", ["Ngữ văn", "Toán", "Ngoại ngữ", "Giáo dục công dân", "Lịch sử và Địa lý", "Khoa học tự nhiên", "Vật Lý", "Hóa Học", "Sinh Học", "Công nghệ", "Tin học", "GDĐP", "HĐTN-HN"], key="sb_mon_de_kt")
     with col2: lop = st.selectbox("Lớp", ["Lớp 6", "Lớp 7", "Lớp 8", "Lớp 9", "Lớp 10", "Lớp 11", "Lớp 12"], key="sb_lop_de_kt")
-    with col3: hinh_thuc = st.selectbox("Hình thức", ["Trắc nghiệm & Tự luận", "Trắc nghiệm", "Tự Luận"], key="sb_ht_de_kt")
-    with col4: thoi_gian = st.selectbox("Thời gian", ["45 phút", "60 phút", "90 phút", "120 phút"], key="sb_tg_de_kt")
+    with col3: thoi_gian = st.selectbox("Thời gian", ["45 phút", "60 phút", "90 phút", "120 phút"], key="sb_tg_de_kt")
 
-    # TỶ LỆ NHẬN THỨC
-    c_tl1, c_tl2, c_tl3, c_tl4 = st.columns(4)
-    with c_tl1: nb = st.number_input("Nhận biết", value=40, key="nb_kt")
-    with c_tl2: th = st.number_input("Thông hiểu", value=30, key="th_kt")
-    with c_tl3: vd = st.number_input("Vận dụng", value=20, key="vd_kt")
-    with c_tl4: vdc = st.number_input("Vận dụng cao", value=10, key="vdc_kt")
+    ten_bai = st.text_input("Tên bài kiểm tra / Đề số", placeholder="Ví dụ: Kiểm tra cuối kì I", key="txt_ten_bai")
 
-    # THÔNG SỐ ĐỀ
-    col_tn, spacer, col_tl = st.columns([12, 1, 12])
-    with col_tn:
-        sl1 = st.number_input("SL MCQ", value=12, key="sl1"); d1 = st.number_input("Điểm MCQ", value=3.0, key="d1")
-        sl2 = st.number_input("SL Đúng/Sai", value=1, key="sl2"); d2 = st.number_input("Điểm Đ/S", value=0.25, key="d2")
-        sl3 = st.number_input("SL Điền khuyết", value=1, key="sl3"); d3 = st.number_input("Điểm ĐK", value=0.25, key="d3")
-        sl4 = st.number_input("SL Ngắn", value=2, key="sl4"); d4 = st.number_input("Điểm Ngắn", value=0.5, key="d4")
-    
-    with col_tl:
-        so_cau_tl = st.number_input("Số câu Tự luận", value=4, key="so_tl")
-        diem_tl_list = [1.0 for _ in range(int(so_cau_tl))]
+    # 3. CẤU HÌNH NÂNG CAO (Gom vào Expander để tiết kiệm diện tích)
+    with st.expander("⚙️ Cấu hình chi tiết (Tỷ lệ & Điểm số)", expanded=False):
+        c1, c2 = st.columns(2)
+        with c1:
+            st.markdown("<b>Tỷ lệ nhận thức (%)</b>", unsafe_allow_html=True)
+            cc1, cc2, cc3, cc4 = st.columns(4)
+            nb = cc1.number_input("NB", value=40, key="nb_kt")
+            th = cc2.number_input("TH", value=30, key="th_kt")
+            vd = cc3.number_input("VD", value=20, key="vd_kt")
+            vdc = cc4.number_input("VDC", value=10, key="vdc_kt")
+        with c2:
+            st.markdown("<b>Thông số đề</b>", unsafe_allow_html=True)
+            ccc1, ccc2 = st.columns(2)
+            sl1 = ccc1.number_input("SL Trắc nghiệm", value=12, key="sl1")
+            d1 = ccc2.number_input("Điểm TN", value=3.0, step=0.25, key="d1")
+            sl_tl = ccc1.number_input("Số câu Tự luận", value=4, key="sl_tl")
+            d_tl = ccc2.number_input("Tổng điểm TL", value=7.0, step=0.25, key="d_tl")
 
-    ten_bai = st.text_input("Tên bài kiểm tra", key="txt_ten_bai")
-    
-    # NÚT KHỞI TẠO
-    if st.button("TỰ ĐỘNG KHỞI TẠO MA TRẬN VÀ ĐỀ THI", type="primary", use_container_width=True):
+    # 4. NÚT KHỞI TẠO (To và rõ)
+    if st.button("🚀 TỰ ĐỘNG KHỞI TẠO MA TRẬN VÀ ĐỀ THI", type="primary", use_container_width=True):
         final_key = api_key if api_key else get_api_key()
         if not final_key: st.error("Lỗi: Thiếu API Key"); st.stop()
         
-        prompt = f"Soạn đề {mon_hoc} {lop} chủ đề {ten_bai}..."
+        prompt = f"Soạn đề {mon_hoc} {lop}, chủ đề {ten_bai}."
         result = run_ai_with_fallback(prompt=prompt, api_key=final_key, model_mode="flash")
         
         if result.get("success"):
-            # CHỐT: is_khbd = False để không bị chồng lấn sang KHBD
             st.session_state['current_exam_data'] = {
-                "is_khbd": False, 
-                "title": ten_bai,
-                "ai_generated_content": result.get("text"),
-                "subject": mon_hoc,
-                "grade": lop
+                "is_khbd": False, "title": ten_bai,
+                "ai_generated_content": result.get("text")
             }
             st.rerun()
 
-    # NÚT XUẤT WORD
+    # 5. XUẤT WORD
     exam_cache = st.session_state.get('current_exam_data')
     if exam_cache:
         st.markdown("---")
-        try:
-            word_file = WordExportEngine.export_to_word(exam_cache)
-            st.download_button("Tải file Đề thi về máy", data=word_file, file_name="De_Thi.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True)
-        except Exception as e:
-            st.error(f"Lỗi xuất Word: {e}")
+        with st.expander("Kết quả đề thi", expanded=True):
+            st.markdown(exam_cache["ai_generated_content"])
+            if st.button("Tải file Đề thi (Word)", type="primary"):
+                try:
+                    word_file = WordExportEngine.export_to_word(exam_cache)
+                    st.download_button("Tải ngay", data=word_file, file_name="De_Thi.docx", use_container_width=True)
+                except Exception as e:
+                    st.error(f"Lỗi xuất Word: {e}")
 
-# Gọi hàm render
+# Gọi hàm
 render_de_kt_module()
