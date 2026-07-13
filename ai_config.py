@@ -2,7 +2,7 @@ import streamlit as st
 from google import genai
 
 def render_api_config_sidebar():
-    """Hàm dựng giao diện Sidebar - Chỉ gọi 1 lần ở app.py"""
+    """Hàm dựng giao diện Sidebar nhập Key. Gọi ở app.py"""
     st.sidebar.markdown("---")
     st.sidebar.subheader("🔑 Cấu hình API Key Cá Nhân")
     
@@ -24,13 +24,12 @@ def get_ai_client():
     """Hàm cung cấp Client duy nhất cho toàn bộ dự án"""
     api_key = st.session_state.get("gemini_api_key")
     if not api_key:
-        api_key = st.secrets.get("GEMINI_API_KEY") 
+        api_key = st.secrets.get("GEMINI_API_KEY") if "GEMINI_API_KEY" in st.secrets else None
         
     if not api_key:
         return None
         
     try:
-        # Khởi tạo Client chuẩn SDK mới
         client = genai.Client(api_key=api_key)
         return client
     except Exception as e:
