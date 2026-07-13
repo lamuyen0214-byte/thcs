@@ -173,20 +173,22 @@ Yêu cầu đầu ra: Trình bày cấu trúc khoa học, ngôn từ sư phạm 
         st.markdown(f"### 📄 KẾT QUẢ: {khbd_cache['title']}")
         
         with st.expander(" Xem trước Kế hoạch bài dạy chi tiết", expanded=True):
-            st.markdown(khbd_cache['ai_generated_content'])
+# 1. Đảm bảo WordEngine đã được khởi tạo
         WordEngine = get_word_engine()
-    if WordEngine:
-        try:
-        # Vệ sinh dữ liệu
-        clean_content = khbd_cache.get('ai_generated_content', '').replace('\r\n', '\n')
-        clean_content = "".join(ch for ch in clean_content if ord(ch) >= 32 or ch == '\n')
-        khbd_cache['ai_generated_content'] = clean_content
         
-        # Gọi engine xuất file
-        word_file = WordEngine.export_to_word(khbd_cache)
-    except Exception as e:
-        st.error(f"⚠️ Trình xuất Word đang gặp sự cố đồng bộ: {e}")
-        word_file = None
+        # 2. Xử lý xuất file NẰM TRONG khối if khbd_cache để đảm bảo biến luôn tồn tại
+        if WordEngine and khbd_cache:
+            try:
+                # Vệ sinh dữ liệu
+                clean_content = khbd_cache.get('ai_generated_content', '').replace('\r\n', '\n')
+                clean_content = "".join(ch for ch in clean_content if ord(ch) >= 32 or ch == '\n')
+                khbd_cache['ai_generated_content'] = clean_content
+                
+                # Gọi engine xuất file
+                word_file = WordEngine.export_to_word(khbd_cache)
+            except Exception as e:
+                st.error(f"⚠️ Trình xuất Word đang gặp sự cố đồng bộ: {e}")
+                word_file = None
              
         # BỘ BA NÚT TƯƠNG TÁC TĂM TẮP CHỐNG LỖI KHÓA NÚT KHI RERUN
         col_save, col_download, col_delete = st.columns(3)
