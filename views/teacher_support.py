@@ -31,34 +31,34 @@ def render_module():
     ])
     
     with tabs[0]:
-        render_khbd_module()
+        #render_khbd_module()
         st.info(WELCOME_MESSAGE)
         
     with tabs[1]:
-        render_de_kt_module()
+        #render_de_kt_module()
         st.info(WELCOME_MESSAGE)
 
     with tabs[2]:
         st.subheader("🧪 Thiết kế bài dạy STEM")
         st.info(WELCOME_MESSAGE)
-        render_stem_module()
+        #render_stem_module()
         
     with tabs[3]:
         st.subheader("📊 Xây dựng Rubric đánh giá")
         st.info(WELCOME_MESSAGE)
-        render_rubric_module()
+        #render_rubric_module()
         
     with tabs[4]:
         st.subheader("📋 Công tác Chủ nhiệm")
         st.info(WELCOME_MESSAGE)
-        render_homeroom_module()
+        #render_homeroom_module()
         
     with tabs[5]:
         st.subheader("📈 Quản lý điểm số")
         st.info(WELCOME_MESSAGE)
-        render_quan_ly_diem_module()
+        #render_quan_ly_diem_module()
         
     with tabs[6]:
         st.subheader("💡 Công cụ Tạo prompt")
         st.info(WELCOME_MESSAGE)
-        render_prompt_module()
+        #render_prompt_module()
