@@ -38,11 +38,10 @@ def render_module():
     with tabs[1]:
         st.subheader("🎮 Trò chơi")
         st.info("⏳ Đang chờ kết nối module trò chơi...")
-        
     with tabs[2]:
-        st.subheader("📝 Chấm bài")
-        st.info("⏳ Đang chờ kết nối module chấm bài tự động...")
-        
+        from modules.teaching.grading_engine import render_grading_module
+        render_grading_module()    
+       
     for i in range(3, 10):
         with tabs[i]:
             st.info("⏳ Giao diện đang được cập nhật...")
