@@ -1,15 +1,26 @@
-# =====================================================================
-# FILE HOÀN CHỈNH: modules/danh_cho_giao_vien/khbd/khbd_builder.py - ĐOẠN 1
-# =====================================================================
 import streamlit as st
 import os
 import requests
 import sys
-import os
-# Thêm đường dẫn thư mục gốc vào hệ thống để thấy được folder 'export'
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
 
-from export.export_word import WordExportEngine
+# =====================================================================
+# KỸ THUẬT: ĐỊNH TUYẾN TỰ ĐỘNG TÌM "TRÁI TIM" AI_CONFIG.PY TẠI ROOT
+# =====================================================================
+current_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = current_dir
+while not os.path.exists(os.path.join(root_dir, 'ai_config.py')) and root_dir != os.path.dirname(root_dir):
+    root_dir = os.path.dirname(root_dir)
+
+if root_dir not in sys.path:
+    sys.path.append(root_dir)
+
+try:
+    from ai_config import get_ai_client
+except ImportError:
+    st.error(f"❌ Kỹ thuật: Mất kết nối đường ống tới ai_config.py tại {root_dir}")
+    def get_ai_client(): return None
+# =====================================================================
+
 def get_word_engine():
     try:
         from export.export_word import WordExportEngine
@@ -53,9 +64,7 @@ def render_khbd_module():
     with col_file:
         st.markdown('<p class="header-blue">Tài liệu (docx, pdf, txt):</p>', unsafe_allow_html=True)
         tai_lieu_file = st.file_uploader("Tài liệu đính kèm", type=['docx', 'pdf', 'txt'], label_visibility="collapsed", key="file_tai_lieu_khbd_unique")
-# =====================================================================
-# FILE HOÀN CHỈNH: modules/danh_cho_giao_vien/khbd/khbd_builder.py - ĐOẠN 2
-# =====================================================================
+
     col_mon, col_model_core = st.columns(2)
     with col_mon:
         st.markdown('<p class="header-blue">Chọn môn học giảng dạy:</p>', unsafe_allow_html=True)
@@ -72,9 +81,16 @@ def render_khbd_module():
         if not ten_bai.strip():
             st.warning("⚠️ Vui lòng điền 'Tên bài học / Chủ đề bài dạy' trước khi kích hoạt.")
         else:
-            client = st.session_state.get("gemini_client")
-            if not client:
+            # -------------------------------------------------------------
+            # LẤY CLIENT TỪ BỘ ĐIỀU KHIỂN TRUNG TÂM (ĐÃ SỬA LỖI XÁC THỰC)
+            # -------------------------------------------------------------
+            client = get_ai_client()
+            
+            if client is None:
                 st.error("⚠️ Lỗi xác thực: Vui lòng kiểm tra hoặc nhập lại API Key ở thanh bên (Sidebar)!")
+                return
+            if not hasattr(client, 'models'):
+                st.error("⚠️ Lỗi kỹ thuật: Client không đúng chuẩn SDK google-genai mới.")
                 return
 
             if bam_sat and tai_lieu_file is None:
@@ -91,37 +107,52 @@ def render_khbd_module():
                             from pypdf import PdfReader
                             reader = PdfReader(tai_lieu_file)
                             for p_idx in range(min(len(reader.pages), 20)):
-                                p_text = reader.pages[page_idx].extract_text()
+                                # Đã sửa lỗi NameError từ page_idx thành p_idx
+                                p_text = reader.pages[p_idx].extract_text()
                                 if p_text: file_context += p_text + "\n"
                         elif ext == "docx":
                             import docx
                             file_context += "\n".join([p.text for p in docx.Document(tai_lieu_file).paragraphs])
-                    except Exception: pass
+                        elif ext == "txt":
+                            file_context += tai_lieu_file.getvalue().decode("utf-8", errors="ignore")
+                    except Exception as e:
+                        st.warning(f"Lỗi đọc file: {e}")
 
                 if not file_context.strip(): file_context = f"Chủ đề bài học: {ten_bai}."
 
                 prompt_file_content = ""
                 prompt_path = "prompts/khbd_prompt.txt"
-                if os.path.exists(prompt_path):
+                # Đảm bảo đường dẫn prompt chuẩn xác dù gọi từ đâu
+                abs_prompt_path = os.path.join(root_dir, prompt_path) 
+                if os.path.exists(abs_prompt_path):
                     try:
-                        with open(prompt_path, "r", encoding="utf-8") as f: prompt_file_content = f.read()
+                        with open(abs_prompt_path, "r", encoding="utf-8") as f: prompt_file_content = f.read()
                     except Exception: pass
                 if not prompt_file_content.strip(): prompt_file_content = "Yêu cầu bắt buộc: Tích hợp 'Năng lực số' và ứng dụng 'Trí tuệ nhân tạo (AI)'."
 
+                # Gọi Fallback Queue
+                fallback_queue = ["gemini-2.5-flash", "gemini-1.5-pro"] # Cứu tinh dự phòng
                 try:
                     from config.models import get_fallback_queue
                     fallback_queue = get_fallback_queue(model_display_name, phan_he_mode="khbd")
                 except Exception:
-                    from main.config.models import get_fallback_queue
-                    fallback_queue = get_fallback_queue(model_display_name, phan_he_mode="khbd")
+                    try:
+                        from main.config.models import get_fallback_queue
+                        fallback_queue = get_fallback_queue(model_display_name, phan_he_mode="khbd")
+                    except Exception:
+                        pass
 
                 response_text = None
                 error_logs = []
                 system_instruction = f"Bạn là Chuyên gia của Bộ GD&ĐT Việt Nam. Bộ sách duy nhất năm 2026: 'Kết nối tri thức với cuộc sống'. {prompt_file_content}. Biên soạn KHBD môn {mon_hoc} {lop} mẫu '{mau_thiet_ke}' thời lượng {thoi_luong} tiết bám sát [TÀI LIỆU GỐC]."
                 
+                # Gọi API chuẩn SDK mới
                 for current_model in fallback_queue:
                     try:
-                        response = client.models.generate_content(model=current_model, contents=[f"{system_instruction}\n\n[TÀI LIỆU]:\n{file_context[:8000]}"])
+                        response = client.models.generate_content(
+                            model=current_model, 
+                            contents=[f"{system_instruction}\n\n[TÀI LIỆU]:\n{file_context[:8000]}"]
+                        )
                         if response and response.text:
                             response_text = response.text
                             break
@@ -140,9 +171,7 @@ def render_khbd_module():
                     st.error("❌ QUÁ TRÌNH KHỞI TẠO BỊ CHẶN: Máy chủ từ chối phản hồi.")
                     with st.expander("🔍 Chi tiết log lỗi kỹ thuật ngầm từ hệ thống Google Server", expanded=True):
                         for log in error_logs: st.code(log)
-# =====================================================================
-# FILE HOÀN CHỈNH: modules/danh_cho_giao_vien/khbd/khbd_builder.py - ĐOẠN 3
-# =====================================================================
+
     st.markdown("---")
     st.markdown("##### 📥 Kết Xuất Hồ Sơ Giáo Án Sư Phạm Chuyên Nghiệp")
     if st.session_state.get('khbd_delete_trigger'):
@@ -161,7 +190,6 @@ def render_khbd_module():
             try: word_file = WordEngine.export_to_word(khbd_cache)
             except Exception as e: st.error(f"💡 Trình dịch Word đang đồng bộ cấu trúc: {e}")
 
-    # BỘ 3 NÚT CHỨC NĂNG DÀN HÀNG NGANG TĂM TẮP CHUẨN ĐỒ HỌA HÌNH 3
     col_save, col_download, col_delete = st.columns(3)
     with col_save:
         if st.button("💾 Lưu file tạm thời", use_container_width=True, disabled=(khbd_cache is None), key="btn_save_khbd_v7"):
@@ -169,7 +197,7 @@ def render_khbd_module():
     with col_download:
         if word_file is not None and khbd_cache is not None:
             saved_khbd_title = khbd_cache.get("ten_bai_save", "Moi").replace(" ", "_")
-            st.download_button(label="📄 Tải file về máy", data=word_file, file_name=f"Giao_An_Ket_Noi_Tri_Thức_{saved_khbd_title}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True, key="btn_dl_word_khbd_v7_active")
+            st.download_button(label="📄 Tải file về máy", data=word_file, file_name=f"Giao_An_Ket_Noi_Tri_Thuc_{saved_khbd_title}.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document", use_container_width=True, key="btn_dl_word_khbd_v7_active")
         else:
             st.button("📄 Tải file về máy", disabled=True, use_container_width=True, key="btn_dl_word_khbd_v7_disabled")
     with col_delete:
