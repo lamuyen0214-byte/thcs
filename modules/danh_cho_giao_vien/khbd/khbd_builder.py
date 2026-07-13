@@ -178,21 +178,23 @@ Yêu cầu đầu ra: Trình bày cấu trúc khoa học, ngôn từ sư phạm 
             
             # Xuất Word được đặt ngay sau markdown để đảm bảo nằm trong flow logic
             WordEngine = get_word_engine()
+            # ... nội dung phía trên ...
+            WordEngine = get_word_engine()
             if WordEngine and khbd_cache:
                 try:
-                    # Vệ sinh dữ liệu
+                    # 1. Vệ sinh dữ liệu
                     clean_content = khbd_cache.get('ai_generated_content', '').replace('\r\n', '\n')
                     clean_content = "".join(ch for ch in clean_content if ord(ch) >= 32 or ch == '\n')
                     khbd_cache['ai_generated_content'] = clean_content
                     
-                    # Gọi engine xuất file
+                    # 2. Gọi engine xuất file
                     word_file = WordEngine.export_to_word(khbd_cache)
                 except Exception as e:
                     st.error(f"⚠️ Trình xuất Word đang gặp sự cố đồng bộ: {e}")
                     word_file = None
-            except Exception as e:
-                st.error(f"⚠️ Trình xuất Word đang gặp sự cố đồng bộ: {e}")
-                word_file = None
+            
+        # BỘ BA NÚT TƯƠNG TÁC TĂM TẮP
+        col_save, col_download, col_delete = st.columns(3)
              
         # BỘ BA NÚT TƯƠNG TÁC TĂM TẮP CHỐNG LỖI KHÓA NÚT KHI RERUN
         col_save, col_download, col_delete = st.columns(3)
