@@ -54,7 +54,26 @@ def render_quiz_generator():
                 if model:
                     prompt = f"Soạn {num_questions} câu hỏi dạng {quiz_type}. {'Tích hợp tư duy tính toán và năng lực số.' if include_digital_literacy else ''} Dựa trên: {combined}. Trình bày rõ CÂU HỎI và ĐÁP ÁN."
                     try:
-                        response = model.generate_content(prompt)
+                        response = # ... trong hàm render_quiz_generator ...
+                if model:
+                    prompt = f"Soạn {num_questions} câu hỏi dạng {quiz_type}. {'Tích hợp tư duy tính toán và năng lực số.' if include_digital_literacy else ''} Dựa trên: {combined}."
+                    
+                    # Cơ chế tự thử lại (Retry logic)
+                    max_retries = 3
+                    for attempt in range(max_retries):
+                        try:
+                            response = model.generate_content(prompt)
+                            st.session_state.current_quiz = response.text
+                            st.rerun()
+                            break # Thành công thì thoát vòng lặp
+                        except Exception as e:
+                            if "429" in str(e) and attempt < max_retries - 1:
+                                wait_time = (attempt + 1) * 15 # Chờ 15s, 30s...
+                                st.warning(f"Quota đầy, hệ thống đang chờ {wait_time}s để thử lại lần {attempt+1}...")
+                                time.sleep(wait_time)
+                            else:
+                                st.error(f"Lỗi AI: {e}")
+                                break
                         st.session_state.current_quiz = response.text
                         st.rerun()
                     except Exception as e:
