@@ -74,9 +74,11 @@ def render_de_kt_module(api_key=""):
         d4 = ct8.number_input("Điểm câu trả lời ngắn", value=0.5, step=0.05)
 
         st.markdown("**3. Thông số Trắc nghiệm và Tự luận**")
-        ctl1, ctl2 = st.columns(2)
-        so_tl = ctl1.number_input("Tổng số câu Tự luận", value=4)
-        diem_tl = ctl2.number_input("Tổng điểm Tự luận", value=4.0, step=0.25)
+        ctl1, ctl2, ctl3, ctl4 = st.columns(4)
+        so_tn = ctl1.number_input("Tổng câu TN", value=20)
+        diem_tn = ctl2.number_input("Tổng điểm TN", value=6.0, step=0.25)
+        so_tl = ctl3.number_input("Tổng câu TL", value=4)
+        diem_tl = ctl4.number_input("Tổng điểm", value=4.0, step=0.25)
 
     # 3. KHỞI TẠO AI
     if st.button("TỰ ĐỘNG KHỞI TẠO MA TRẬN VÀ ĐỀ THI", type="primary", use_container_width=True):
@@ -94,7 +96,7 @@ def render_de_kt_module(api_key=""):
             except Exception as e: st.error(f"Lỗi đọc file: {e}")
 
         final_key = api_key if api_key else get_api_key()
-        prompt = f"Soạn đề {mon_hoc} {lop}. Chủ đề: {ten_bai}. Cấu trúc: {yeu_cau_khac}. Tỷ lệ: NB {nb}%, TH {th}%, VD {vd}%, VDC {vdc}%. TN: {sl1} MCQ ({d1}đ), {sl2} Đ/S ({d2}đ), {sl3} ĐK ({d3}đ), {sl4} Ngắn ({d4}đ). TL: {so_tl} câu ({diem_tl}đ). Bám sát tài liệu: {file_context[:3000]}"
+        prompt = f"Soạn đề {mon_hoc} {lop}. Chủ đề: {ten_bai}. Cấu trúc: {yeu_cau_khac}. Tỷ lệ: NB {nb}%, TH {th}%, VD {vd}%, VDC {vdc}%. TN: Tổng {so_tn} câu ({diem_tn}đ) gồm {sl1} MCQ ({d1}đ), {sl2} Đ/S ({d2}đ), {sl3} ĐK ({d3}đ), {sl4} Ngắn ({d4}đ). TL: {so_tl} câu ({diem_tl}đ). Bám sát tài liệu: {file_context[:3000]}"
         
         with st.spinner("AI đang soạn đề..."):
             result = run_ai_with_fallback(prompt=prompt, api_key=final_key, model_mode="flash")
