@@ -55,15 +55,15 @@ def render_de_kt_module(api_key=""):
     with st.expander("Cấu hình Tỷ lệ nhận thức & Số lượng câu", expanded=True):
         st.markdown("**1. Tỷ lệ nhận thức (%)**")
         c1, c2, c3, c4 = st.columns(4)
-        nb = c1.number_input("Mức độ Nhận biết", value=40)
-        th = c2.number_input("Mức độ Thông hiểu", value=30)
-        vd = c3.number_input("Mức độ Vận dụng", value=20)
-        vdc = c4.number_input("Mức độ Vận dụng cao", value=10)
+        nb = c1.number_input("Mức độ Nhận biết (%)", value=40)
+        th = c2.number_input("Mức độ Thông hiểu (%)", value=30)
+        vd = c3.number_input("Mức độ Vận dụng (%)", value=20)
+        vdc = c4.number_input("Mức độ Vận dụng cao (%)", value=10)
         
         st.markdown("**2. Thông số Trắc nghiệm**")
         ct1, ct2, ct3, ct4 = st.columns(4)
         sl1 = ct1.number_input("Số câu hỏi nhiều lựa chọn", value=12)
-        d1 = ct2.number_input("Điểm cho câu hỏi nhiều lựa chọn", value=0.25, step=0.05)
+        d1 = ct2.number_input("Điểm cho câu hỏi nhiều lựa chọn", value=0.25 "điểm", step=0.05)
         sl2 = ct3.number_input("Số câu hỏi Đúng/Sai", value=4)
         d2 = ct4.number_input("Điểm cho câu Đ/S", value=0.25, step=0.05)
         
