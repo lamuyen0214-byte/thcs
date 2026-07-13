@@ -1,9 +1,24 @@
-# =====================================================================
-# FILE: modules/danh_cho_giao_vien/rubric/rubric_builder.py
-# =====================================================================
 import streamlit as st
 import os
 import sys
+
+# =====================================================================
+# KỸ THUẬT: ĐỊNH TUYẾN TỰ ĐỘNG TÌM "TRÁI TIM" AI_CONFIG.PY TẠI ROOT
+# =====================================================================
+current_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = current_dir
+while not os.path.exists(os.path.join(root_dir, 'ai_config.py')) and root_dir != os.path.dirname(root_dir):
+    root_dir = os.path.dirname(root_dir)
+
+if root_dir not in sys.path:
+    sys.path.append(root_dir)
+
+try:
+    from ai_config import get_ai_client
+except ImportError:
+    st.error(f"❌ Kỹ thuật: Mất kết nối đường ống tới ai_config.py tại {root_dir}")
+    def get_ai_client(): return None
+# =====================================================================
 
 # Đảm bảo hệ thống tìm thấy thư mục export
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../../../')))
@@ -76,18 +91,20 @@ def render_rubric_module():
             st.warning("⚠️ Vui lòng nhập 'Tên nhiệm vụ' trước khi khởi tạo.")
             return
 
-        user_raw_key = st.session_state.get("user_gemini_key", "").strip()
-        if not user_raw_key:
-            if "GEMINI_API_KEY" in st.secrets: user_raw_key = st.secrets["GEMINI_API_KEY"].strip()
-        if not user_raw_key:
+        # -------------------------------------------------------------
+        # GỌI BỘ ĐIỀU KHIỂN TRUNG TÂM & KIỂM TRA CHỐNG LỖI NONETYPE
+        # -------------------------------------------------------------
+        client = get_ai_client()
+        
+        if client is None:
             st.error("⚠️ Lỗi cấu hình: Vui lòng nhập Gemini API Key ở thanh bên (Sidebar) trước!")
+            return
+        if not hasattr(client, 'models'):
+            st.error("⚠️ Lỗi kỹ thuật: Client không đúng chuẩn SDK google-genai mới.")
             return
 
         with st.spinner("🤖 AI đang phân tích tiêu chí và lập ma trận đánh giá..."):
-            from google import genai
             try:
-                client = genai.Client(api_key=str(user_raw_key))
-                
                 system_instruction = f"""
 Bạn là Chuyên gia Đo lường và Đánh giá Giáo dục, am hiểu sâu sắc Chương trình GDPT 2018. Nhiệm vụ của bạn là thiết kế một bảng Rubric đánh giá chi tiết cho môn {mon_hoc} {lop}.
 
@@ -105,21 +122,28 @@ YÊU CẦU ĐỊNH DẠNG ĐẦU RA (BẮT BUỘC):
    - Phần 3: Biểu mẫu ghi chú. TUYỆT ĐỐI KHÔNG dùng các đường kẻ ngang liên tục. Hãy tạo một Bảng Markdown gồm 3 cột: "STT", "Họ tên học sinh/Nhóm", "Ghi chú minh chứng".
                 """
                 
+                # Gọi API chuẩn SDK mới
                 response = client.models.generate_content(
-                    model="models/gemini-2.5-flash",
+                    model="gemini-2.5-flash",
                     contents=system_instruction
                 )
                 
-                if response and response.text:
+                result = getattr(response, "text", "")
+                
+                if result:
                     st.session_state['current_rubric_data'] = {
                         "is_khbd": True, # Mượn cờ True để dùng cấu trúc xuất Word ổn định nhất
                         "title": f"Rubric - {ten_nhiem_vu}",
                         "subject": mon_hoc,
                         "grade": lop,
                         "ten_bai_save": "Rubric_Danh_Gia",
-                        "ai_generated_content": response.text
+                        "ai_generated_content": result
                     }
                     st.success("✅ Đã khởi tạo bảng Rubric thành công!")
+                    st.rerun()
+                else:
+                    st.warning("⚠️ AI không trả về nội dung. Có thể bị chặn bởi bộ lọc an toàn.")
+                    
             except Exception as api_err:
                 st.error(f"❌ Lỗi máy chủ AI: {api_err}")
 
