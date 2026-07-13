@@ -1,6 +1,10 @@
 import streamlit as st
 import os
 import sys
+ImportError: This app has encountered an error. The original error message is redacted to prevent data leaks. Full error details have been recorded in the logs (if you're on Streamlit Cloud, click on 'Manage app' in the lower right of your app).
+Traceback:
+File "/mount/src/thcs/app.py", line 5, in <module>
+from ai_engine.ai_config import render_api_config_sidebar
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 from ai_engine.ai_config import render_api_config_sidebar
 # --- 1. ĐỊNH VỊ ĐƯỜNG DẪN TUYỆT ĐỐI (TRÁNH LỖI KEYERROR) ---
