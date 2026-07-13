@@ -1,13 +1,32 @@
 import streamlit as st
-from ai_config import get_ai_client # Import đúng hàm từ file gốc
+import sys
+import os
 from docx import Document
 from io import BytesIO
 from pypdf import PdfReader
 
+# =====================================================================
+# THUẬT TOÁN TỰ ĐỘNG DÒ TÌM "TRÁI TIM" HỆ THỐNG (ai_config.py)
+# =====================================================================
+current_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = current_dir
+while not os.path.exists(os.path.join(root_dir, 'ai_config.py')) and root_dir != os.path.dirname(root_dir):
+    root_dir = os.path.dirname(root_dir)
+
+if root_dir not in sys.path:
+    sys.path.append(root_dir)
+
+try:
+    from ai_config import get_ai_client
+except ImportError:
+    st.error(f"❌ Kỹ thuật: Mất kết nối đường ống tới ai_config.py tại {root_dir}")
+    def get_ai_client(): return None
+# =====================================================================
+
 def render_quiz_generator():
     st.subheader("🎯 Trình Tạo Đề Kiểm Tra Tự Động")
     
-    uploaded_file = st.file_uploader("Tải tài liệu tham khảo:", type=['pdf', 'docx', 'txt'])
+    uploaded_file = st.file_uploader("Tải tài liệu tham khảo (PDF, DOCX, TXT):", type=['pdf', 'docx', 'txt'])
     text_content = st.text_area("Nội dung bài giảng / Yêu cầu cụ thể:", height=150)
     
     col1, col2 = st.columns(2)
@@ -38,22 +57,16 @@ def render_quiz_generator():
             st.warning("⚠️ Chưa có dữ liệu để tạo đề.")
             return
 
-        # ---------------------------------------------------------
-        # BỘ TEST KĨ THUẬT (BƯỚC 3 CỦA THẦY DƯỠNG)
-        # ---------------------------------------------------------
+        # Gọi Client từ Trái tim hệ thống
         client = get_ai_client()
         
-        # Nếu thầy muốn xem Client có sống không, bật dòng này lên:
-        # st.write("Trạng thái Client:", client) 
-        
         if client is None:
-            st.error("⚠️ Không tìm thấy API Key. Hãy nhập vào Sidebar bên trái!")
+            st.error("⚠️ Gemini Client chưa được khởi tạo. Hãy kiểm tra API Key ở Sidebar!")
             return
             
         if not hasattr(client, 'models'):
-            st.error("⚠️ Phiên bản thư viện bị sai. Client không có thuộc tính 'models'.")
+            st.error("⚠️ Lỗi cấu trúc SDK. Hãy đảm bảo đã cài đặt 'google-genai'.")
             return
-        # ---------------------------------------------------------
 
         with st.spinner("AI đang phân tích tài liệu và biên soạn đề..."):
             prompt = f"""
@@ -63,15 +76,15 @@ def render_quiz_generator():
             {"- Chỉ sử dụng nội dung trong tài liệu." if use_source else "- Căn cứ vào tài liệu, có thể mở rộng kiến thức."}
             - Sinh {num_mcq} câu trắc nghiệm khách quan.
             - Sinh {num_essay} câu tự luận.
-            - Trình bày rõ CÂU HỎI, ĐÁP ÁN, HƯỚNG DẪN CHẤM, MA TRẬN.
-            {"- Lồng ghép Năng lực số." if include_digital else ""}
+            - Trình bày rõ CÂU HỎI, ĐÁP ÁN, HƯỚNG DẪN CHẤM, MA TRẬN ĐỀ THI.
+            {"- Chú trọng lồng ghép Năng lực số, AI, Tư duy tính toán." if include_digital else ""}
 
             Tài liệu tham khảo:
             {combined}
             """
             
             try:
-                # BƯỚC 5: Gọi đúng chuẩn SDK mới
+                # GỌI CHUẨN SDK MỚI
                 response = client.models.generate_content(
                     model="gemini-2.5-flash",
                     contents=prompt
@@ -79,7 +92,7 @@ def render_quiz_generator():
                 
                 result = getattr(response, "text", "")
                 if not result:
-                    st.warning("⚠️ AI không trả về nội dung (Có thể bị Safety Filter).")
+                    st.warning("⚠️ AI không trả về nội dung (Có thể bị chặn bởi bộ lọc an toàn).")
                     return
                 
                 st.session_state.current_quiz = result
