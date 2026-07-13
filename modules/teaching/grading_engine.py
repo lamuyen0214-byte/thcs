@@ -20,7 +20,7 @@ model_choice = st.selectbox(
 # Sử dụng lựa chọn đó để khởi tạo model
 model = genai.GenerativeModel(model_choice)
     # Khởi tạo session để lưu kết quả chấm hàng loạt
-    if "ket_qua_cham" not in st.session_state:
+        if "ket_qua_cham" not in st.session_state:
         st.session_state.ket_qua_cham = []
 
     # 1. Thiết lập đáp án
