@@ -1,58 +1,97 @@
 import streamlit as st
-import sys
-import os
+import google.generativeai as genai
+from docx import Document
+from io import BytesIO
+import time
+from pypdf import PdfReader
 
-# Cấu hình đường dẫn để import được từ thư mục cha/ngang hàng
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+# 1. Ham khoi tao AI an toan
+def get_stable_model(api_key):
+    if not api_key:
+        st.error("API Key chua duoc cau hinh!")
+        return None
+    try:
+        genai.configure(api_key=api_key)
+        models = genai.list_models()
+        available = [m.name for m in models if 'generateContent' in m.supported_generation_methods]
+        
+        # Uu tien cac model Flash
+        for name in ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-lite"]:
+            if name in available:
+                return genai.GenerativeModel(name)
+        
+        if available:
+            return genai.GenerativeModel(available[0])
+            
+        st.error("Khong tim thay model AI kha dung.")
+        return None
+    except Exception as e:
+        st.error(f"Loi he thong AI: {e}")
+        return None
 
-# Import logic xử lý từ tầng Engine (Service Layer)
-# Giả định thầy đã chuyển logic vào file quiz_service.py hoặc tương tự trong ai_engine
-try:
-    from ai_engine.layer_5_output.quiz_generator import generate_quiz_logic 
-except ImportError:
-    st.error("❌ Chưa tìm thấy core logic trong ai_engine. Hãy kiểm tra lại đường dẫn import.")
-
-def render_quiz_generator():
-    st.subheader("🎯 Trình Tạo Đề Kiểm Tra Tự Động")
+# 2. Giao dien chuc nang Quiz Generator
+def render_quiz_generator(api_key):
+    st.subheader("Trinh Tao De Kiem Tra Tu Dong")
     
-    # 1. UI: Giao diện người dùng
-    uploaded_file = st.file_uploader("Tải tài liệu tham khảo (PDF, DOCX, TXT):", type=['pdf', 'docx', 'txt'])
-    text_content = st.text_area("Nội dung bài giảng / Yêu cầu cụ thể:", height=150)
+    # Khu vuc nhap lieu
+    uploaded_file = st.file_uploader("Tai tai lieu tham khao (PDF, DOCX, TXT):", type=['pdf', 'docx', 'txt'])
+    text_content = st.text_area("Noi dung bai giang / Yeu cau bo sung:", height=300)
     
     col1, col2 = st.columns(2)
     with col1:
-        num_mcq = st.number_input("Số câu trắc nghiệm:", min_value=0, value=20)
-        num_essay = st.number_input("Số câu tự luận:", min_value=0, value=5)
+        num = st.number_input("So cau:", min_value=1, value=5)
+        q_type = st.selectbox("Dang bai:", ["Trac nghiem", "Tu luan", "Trac nghiem ket hop tu luan"])
     with col2:
-        use_source = st.checkbox("Tuyệt đối bám sát tài liệu", value=True)
-        include_digital = st.checkbox("Tích hợp Năng lực số", value=True)
+        use_source = st.checkbox("Bam sat tai lieu", value=True)
+        include_digital = st.checkbox("Tich hop Nang luc so", value=True)
     
-    # 2. Controller: Điều khiển luồng xử lý
-    if st.button("🚀 Tạo đề ngay", type="primary", use_container_width=True):
-        if not uploaded_file and not text_content:
-            st.warning("⚠️ Chưa có dữ liệu đầu vào.")
-            return
-
-        with st.spinner("AI đang xử lý..."):
+    if st.button("Tao de ngay"):
+        model = get_stable_model(api_key)
+        if model is None:
+            st.stop()
+            
+        combined = text_content
+        # Doc file neu co
+        if use_source and uploaded_file:
             try:
-                # Gọi hàm từ Engine (Service Layer)
-                result = generate_quiz_logic(
-                    uploaded_file=uploaded_file,
-                    text_content=text_content,
-                    num_mcq=num_mcq,
-                    num_essay=num_essay,
-                    use_source=use_source,
-                    include_digital=include_digital
-                )
-                
-                if result:
-                    st.session_state.current_quiz = result
-                    st.rerun()
+                if uploaded_file.type == "application/pdf": 
+                    reader = PdfReader(uploaded_file)
+                    combined += "\n" + "\n".join([p.extract_text() for p in reader.pages])
+                elif "word" in uploaded_file.type or uploaded_file.name.endswith('.docx'): 
+                    doc = Document(uploaded_file)
+                    combined += "\n" + "\n".join([p.text for p in doc.paragraphs])
+                elif uploaded_file.type == "text/plain":
+                    combined += "\n" + uploaded_file.getvalue().decode("utf-8", errors="ignore")
             except Exception as e:
-                st.error(f"❌ Lỗi hệ thống: {str(e)}")
+                st.error(f"Loi doc file: {e}")
+        
+        if not combined: 
+            st.warning("Vui long nhap noi dung hoac tai tai lieu!")
+        else:
+            with st.spinner("AI dang soan de..."):
+                prompt = f"Soan {num} cau hoi {q_type}. {'Long ghep Nang luc so.' if include_digital else ''} Dua tren: {combined}."
+                
+                # Logic thu lai 3 lan neu qua tai
+                for i in range(3):
+                    try:
+                        res = model.generate_content(prompt)
+                        st.session_state.current_quiz = res.text
+                        st.rerun()
+                        break
+                    except Exception as e:
+                        if "429" in str(e) and i < 2:
+                            time.sleep(20)
+                        else:
+                            st.error(f"Loi AI: {e}")
+                            break
 
-    # 3. View: Hiển thị kết quả
+    # Hien thi ket qua va tai file
     if "current_quiz" in st.session_state:
         st.markdown("---")
-        st.markdown(st.session_state.current_quiz)
-        # Nút tải file ở đây...
+        st.text_area("Ket qua:", st.session_state.current_quiz, height=300)
+        
+        doc = Document()
+        doc.add_paragraph(st.session_state.current_quiz)
+        bio = BytesIO()
+        doc.save(bio)
+        st.download_button("Tai bo de (.docx)", data=bio.getvalue(), file_name="De_kiem_tra.docx", mime="application/vnd.openxmlformats-officedocument.wordprocessingml.document")
