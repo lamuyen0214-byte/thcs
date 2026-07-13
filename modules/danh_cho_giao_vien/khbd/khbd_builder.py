@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import sys
 from export.export_word import WordExportEngine
+
 # =====================================================================
 # PART 1: CẤU HÌNH ĐỊNH TUYẾN TỰ ĐỘNG VÀ GIAO DIỆN NHẬP LIỆU
 # =====================================================================
@@ -29,19 +30,9 @@ def render_khbd_module(api_key=""):
     Phân hệ khởi tạo Giáo án điện tử / Kế hoạch bài dạy.
     Tiếp nhận tham số api_key để phân phối quyền kết nối an toàn trên mọi thiết bị.
     """
-    # 1. CẤU HÌNH CSS GIAO DIỆN - GIỮ NGUYÊN TOÀN VẸN CỦA THẦY
+    # 1. CẤU HÌNH CSS GIAO DIỆN - (ĐÃ XÓA PHẦN BLOCK-CONTAINER GÂY LỖI TIÊU ĐỀ)
     st.markdown("""
     <style>
-    div[data-testid="stAppViewBlockContainer"], 
-    .main .block-container, 
-    .stAppViewBlockContainer {
-        max-width: 90% !important;
-        width: 98% !important;
-        padding-left: 3.5rem !important;
-        padding-right: 1.5rem !important;
-        padding-top: 3rem !important;
-        padding-bottom: 3rem !important;
-    }
     .header-blue {color: #0000FF; font-weight: bold; font-size: 15px; text-align: left; margin-bottom: 2px;}
     .text-red-italic {color: #FF0000; font-style: italic; font-weight: bold; font-size: 14px;}
     .header-red-title {color: #FF0000; font-weight: bold; font-size: 15px; margin-bottom: 5px;}
@@ -76,12 +67,12 @@ def render_khbd_module(api_key=""):
         
     with col_model_core:
         st.markdown('<p class="header-blue">Chọn lõi xử lý Trợ lý AI:</p>', unsafe_allow_html=True)
-        # Đã sửa lỗi cú pháp phẳng phiu trên một dòng, khóa chặt đóng mở ngoặc đơn
         model_display_name = st.selectbox("Mô hình KHBD", ["3.1 Flash-Lite", "3.5 Flash", "3.1 Pro", "Tư duy mở rộng"], label_visibility="collapsed", index=0, key="sb_model_khbd_unique")
         
     st.write("")
     bam_sat = st.checkbox(" Bám sát 100% tài liệu tải lên", value=True, key="chk_bam_sat_khbd_unique")
     st.write("")
+
 # =====================================================================
 # PART 2: ENGINE TRÍ TUỆ NHÂN TẠO KHỞI TẠO DÒNG CHẢY DỮ LIỆU
 # =====================================================================
@@ -89,7 +80,6 @@ def render_khbd_module(api_key=""):
         if not ten_bai.strip():
             st.warning("⚠️ Vui lòng điền 'Tên bài học / Chủ đề bài dạy' trước khi kích hoạt.")
         else:
-            # Liên thông mã định danh tài khoản từ Router điều phối trung tâm xuống
             client, error = get_ai_client(api_key)
             
             if error:
@@ -97,7 +87,6 @@ def render_khbd_module(api_key=""):
                 return
                 
             with st.spinner("⏳ Trợ lý AI đang bóc tách tài liệu và thiết kế tiến trình bài dạy bám sát GDPT 2018..."):
-                # BỘ ĐỌC TRÍCH XUẤT VĂN BẢN ĐA ĐỊNH DẠNG (KHẮC PHỤC LỖI TREO/QUAY TRƠ PHÊN BẢN CŨ)
                 file_context = ""
                 if tai_lieu_file is not None:
                     try:
@@ -118,12 +107,10 @@ def render_khbd_module(api_key=""):
                     except Exception as file_err:
                         st.sidebar.error(f"Cảnh báo nạp file: {file_err}")
                 
-                # Đồng bộ chuỗi ngữ cảnh phụ trợ
                 if not file_context.strip():
                     file_context = f"Soạn thảo giáo án chuẩn kiến thức kỹ năng môn {mon_hoc}."
 
                 try:
-                    # SIÊU CÂU LỆNH TÍNH TOÁN CẤU TRÚC (TRUYỀN TOÀN BỘ BIẾN THỰC TẾ VÀO NỘI DUNG PROMPT)
                     prompt_instructions = f"""
 Bạn là Chuyên gia thiết kế bài dạy xuất sắc, am hiểu sâu sắc Chương trình GDPT 2018 tại Việt Nam. Hãy soạn một Kế hoạch bài dạy (KHBD) môn {mon_hoc} cho học sinh {lop} tuân thủ mẫu thiết kế {mau_thiet_ke}. 
 - Tên bài học / Chủ đề: {ten_bai}
@@ -132,7 +119,6 @@ Bạn là Chuyên gia thiết kế bài dạy xuất sắc, am hiểu sâu sắc
 {file_context[:6000]}
 Yêu cầu đầu ra: Trình bày cấu trúc khoa học, ngôn từ sư phạm chuẩn mực, phân tách rõ ràng các hoạt động học tập bằng định dạng Markdown.
 """
-                    # Xác định lõi xử lý tự động (Giữ nguyên luồng map của thầy)
                     response = client.models.generate_content(
                         model="gemini-2.5-flash",
                         contents=prompt_instructions
@@ -156,6 +142,7 @@ Yêu cầu đầu ra: Trình bày cấu trúc khoa học, ngôn từ sư phạm 
                         st.error("⚠️ Máy chủ AI không trả về văn bản. Có thể do file đính kèm vi phạm bộ lọc nội dung của Google.")
                 except Exception as e:
                     st.error(f"❌ Lỗi hệ thống phản hồi từ máy chủ AI: {str(e)}")
+
 # =====================================================================
 # PART 3: HIỂN THỊ VÀ KẾT XUẤT HỒ SƠ WORD TỰ ĐỘNG
 # =====================================================================
@@ -172,32 +159,22 @@ Yêu cầu đầu ra: Trình bày cấu trúc khoa học, ngôn từ sư phạm 
         st.markdown("---")
         st.markdown(f"### 📄 KẾT QUẢ: {khbd_cache['title']}")
         
-        # Sửa lại cấu trúc để đảm bảo khối with có nội dung
         with st.expander(" Xem trước Kế hoạch bài dạy chi tiết", expanded=True):
             st.markdown(khbd_cache.get('ai_generated_content', ''))
-            # ... đoạn code trên ...
             WordEngine = get_word_engine()
             
             if WordEngine and khbd_cache:
                 try:
-                    # 1. Vệ sinh dữ liệu
                     clean_content = khbd_cache.get('ai_generated_content', '').replace('\r\n', '\n')
                     clean_content = "".join(ch for ch in clean_content if ord(ch) >= 32 or ch == '\n')
                     khbd_cache['ai_generated_content'] = clean_content
                     
-                    # 2. Gọi engine xuất file
                     word_file = WordEngine.export_to_word(khbd_cache)
                     
                 except Exception as e:
-                    # Ghi log lỗi để thầy tiện theo dõi trong terminal
                     st.error(f"⚠️ Trình xuất Word đang gặp sự cố: {e}")
                     word_file = None
             
-            # --- Kết thúc khối xử lý, ra ngoài scope của 'if' ---
-            
-        # BỘ BA NÚT TƯƠNG TÁC TĂM TẮP
-        col_save, col_download, col_delete = st.columns(3)
-             
         # BỘ BA NÚT TƯƠNG TÁC TĂM TẮP CHỐNG LỖI KHÓA NÚT KHI RERUN
         col_save, col_download, col_delete = st.columns(3)
         with col_save:
@@ -208,7 +185,6 @@ Yêu cầu đầu ra: Trình bày cấu trúc khoa học, ngôn từ sư phạm 
             if khbd_cache is not None:
                 saved_title = khbd_cache.get("ten_bai_save", "Giao_An").replace(" ", "_")
                 
-                # Khởi tạo nhị phân tại chỗ phòng ngừa luồng chính bị trễ nhịp
                 if word_file is None and WordEngine:
                     try:
                         word_file = WordEngine.export_to_word(khbd_cache)
