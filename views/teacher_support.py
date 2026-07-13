@@ -18,29 +18,29 @@ def render_module():
     
     with tabs[0]:
         render_khbd_module()
-        st.info("⏳ Chào mừng quý thầy cố đến với nền tảng số AI tích hợp chuyên sâu, trường THCS Nguyễn Chí Thanh.")
+        st.info("⏳ Chào mừng quý thầy cố đến với nền tảng số AI tích hợp chuyên sâu, trường THCS Nguyễn Chí Thanh, P.Tân Lập, tỉnh Đắk Lắk.")
         
     with tabs[1]:
         render_de_kt_module()
-        st.info("⏳ Chào mừng quý thầy cố đến với nền tảng số AI tích hợp chuyên sâu, trường THCS Nguyễn Chí Thanh.")
+        st.info("⏳ Chào mừng quý thầy cố đến với nền tảng số AI tích hợp chuyên sâu, trường THCS Nguyễn Chí Thanh, P.Tân Lập, tỉnh Đắk Lắk")
 
     with tabs[2]:
         st.subheader("🧪 Thiết kế bài dạy STEM")
-        st.info("⏳ Chào mừng quý thầy cố đến với nền tảng số AI tích hợp chuyên sâu, trường THCS Nguyễn Chí Thanh.")
+        st.info("⏳ Chào mừng quý thầy cố đến với nền tảng số AI tích hợp chuyên sâu, trường THCS Nguyễn Chí Thanh, P.Tân Lập, tỉnh Đắk Lắk")
         render_stem_module()
     with tabs[3]:
         st.subheader("📊 Xây dựng Rubric đánh giá")
-        st.info("⏳ Chào mừng quý thầy cố đến với nền tảng số AI tích hợp chuyên sâu, trường THCS Nguyễn Chí Thanh")
+        st.info("⏳ Chào mừng quý thầy cố đến với nền tảng số AI tích hợp chuyên sâu, trường THCS Nguyễn Chí Thanh, P.Tân Lập, tỉnh Đắk Lắk")
         render_rubric_module()
     with tabs[4]:
         st.subheader("📋 Công tác Chủ nhiệm")
-        st.info("⏳ Chào mừng quý thầy cố đến với nền tảng số AI tích hợp chuyên sâu, trường THCS Nguyễn Chí Thanh")
+        st.info("⏳ Chào mừng quý thầy cố đến với nền tảng số AI tích hợp chuyên sâu, trường THCS Nguyễn Chí Thanh, P.Tân Lập, tỉnh Đắk Lắk")
         render_homeroom_module()
     with tabs[5]:
         st.subheader("📈 Quản lý điểm số")
-        st.info("⏳ Chào mừng quý thầy cố đến với nền tảng số AI tích hợp chuyên sâu, trường THCS Nguyễn Chí Thanh")
+        st.info("⏳ Chào mừng quý thầy cố đến với nền tảng số AI tích hợp chuyên sâu, trường THCS Nguyễn Chí Thanh, P.Tân Lập, tỉnh Đắk Lắk")
         render_quan_ly_diem_module()
     with tabs[6]:
         st.subheader("💡 Công cụ Tạo prompt")
-        st.info("⏳ Chào mừng quý thầy cố đến với nền tảng số AI tích hợp chuyên sâu, trường THCS Nguyễn Chí Thanh")
+        st.info("⏳ Chào mừng quý thầy cố đến với nền tảng số AI tích hợp chuyên sâu, trường THCS Nguyễn Chí Thanh, P.Tân Lập, tỉnh Đắk Lắk")
         render_prompt_module()
