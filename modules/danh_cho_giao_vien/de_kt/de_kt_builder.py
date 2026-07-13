@@ -1,81 +1,77 @@
 import streamlit as st
 import os
 import sys
+import docx
+from pypdf import PdfReader
 from export.export_word import WordExportEngine
 from ai_engine.ai_config import get_api_key
 from ai_engine.ai_runner import run_ai_with_fallback
 
-# 1. ĐỊNH VỊ ĐƯỜNG DẪN GỐC
-current_dir = os.path.dirname(os.path.abspath(__file__))
-root_dir = current_dir
-while not os.path.exists(os.path.join(root_dir, 'ai_engine')) and root_dir != os.path.dirname(root_dir):
-    root_dir = os.path.dirname(root_dir)
-if root_dir not in sys.path:
-    sys.path.insert(0, root_dir)
-
 def render_de_kt_module(api_key=""):
-    # CẤU HÌNH CSS GỌN HƠN
-    st.markdown("""
-    <style>
-    .block-container { padding-top: 1rem !important; padding-bottom: 1rem !important; }
-    div[data-testid="column"] { gap: 0.5rem; }
+    st.markdown("""<style>
+    .block-container { padding-top: 1rem !important; }
     .stButton>button { height: 2.5em; }
-    </style>
-    """, unsafe_allow_html=True)
+    </style>""", unsafe_allow_html=True)
 
-    # 2. KHU VỰC ĐIỀU KHIỂN CHÍNH (Rất gọn)
-    col1, col2, col3 = st.columns(3)
-    with col1: mon_hoc = st.selectbox("Môn học", ["Ngữ văn", "Toán", "Ngoại ngữ", "Giáo dục công dân", "Lịch sử và Địa lý", "Khoa học tự nhiên", "Vật Lý", "Hóa Học", "Sinh Học", "Công nghệ", "Tin học", "GDĐP", "HĐTN-HN"], key="sb_mon_de_kt")
-    with col2: lop = st.selectbox("Lớp", ["Lớp 6", "Lớp 7", "Lớp 8", "Lớp 9", "Lớp 10", "Lớp 11", "Lớp 12"], key="sb_lop_de_kt")
-    with col3: thoi_gian = st.selectbox("Thời gian", ["45 phút", "60 phút", "90 phút", "120 phút"], key="sb_tg_de_kt")
+    # 1. PHẦN CẤU HÌNH CƠ BẢN
+    col1, col2, col3, col4 = st.columns(4)
+    with col1: mon_hoc = st.selectbox("Môn", ["Ngữ văn", "Toán", "Ngoại ngữ", "Giáo dục công dân", "Lịch sử và Địa lý", "Khoa học tự nhiên", "Vật Lý", "Hóa Học", "Sinh Học", "Công nghệ", "Tin học", "GDĐP", "HĐTN-HN"], index=1)
+    with col2: lop = st.selectbox("Lớp", ["Lớp 6", "Lớp 7", "Lớp 8", "Lớp 9", "Lớp 10", "Lớp 11", "Lớp 12"], index=2)
+    with col3: hinh_thuc = st.selectbox("Hình thức", ["Trắc nghiệm & Tự luận", "Trắc nghiệm", "Tự Luận"])
+    with col4: thoi_gian = st.selectbox("Thời gian", ["45 phút", "60 phút", "90 phút", "120 phút"])
 
-    ten_bai = st.text_input("Tên bài kiểm tra / Đề số", placeholder="Ví dụ: Kiểm tra cuối kì I", key="txt_ten_bai")
+    # 2. FILE VÀ YÊU CẦU (Khôi phục)
+    col_ten, col_file1, col_file2 = st.columns([2, 1, 1])
+    with col_ten: ten_bai = st.text_input("Tên bài kiểm tra / Đề số", placeholder="Ví dụ: Kiểm tra giữa kì I")
+    with col_file1: de_cuong_file = st.file_uploader("Tải Đề Cương", type=['docx', 'pdf'])
+    with col_file2: ma_tran_file = st.file_uploader("Tải Ma trận", type=['docx', 'pdf'])
+    
+    bam_sat = st.checkbox("Bám sát nội dung đề cương/ma trận tải lên", value=True)
+    yeu_cau_khac = st.text_area("Yêu cầu chi tiết (Ví dụ: 8 câu MCQ, 1 Đ/S, 1 Điền khuyết, 2 Trả lời ngắn...)", height=100)
 
-    # 3. CẤU HÌNH NÂNG CAO (Gom vào Expander để tiết kiệm diện tích)
-    with st.expander("⚙️ Cấu hình chi tiết (Tỷ lệ & Điểm số)", expanded=False):
-        c1, c2 = st.columns(2)
-        with c1:
-            st.markdown("<b>Tỷ lệ nhận thức (%)</b>", unsafe_allow_html=True)
-            cc1, cc2, cc3, cc4 = st.columns(4)
-            nb = cc1.number_input("NB", value=40, key="nb_kt")
-            th = cc2.number_input("TH", value=30, key="th_kt")
-            vd = cc3.number_input("VD", value=20, key="vd_kt")
-            vdc = cc4.number_input("VDC", value=10, key="vdc_kt")
-        with c2:
-            st.markdown("<b>Thông số đề</b>", unsafe_allow_html=True)
-            ccc1, ccc2 = st.columns(2)
-            sl1 = ccc1.number_input("SL Trắc nghiệm", value=12, key="sl1")
-            d1 = ccc2.number_input("Điểm TN", value=3.0, step=0.25, key="d1")
-            sl_tl = ccc1.number_input("Số câu Tự luận", value=4, key="sl_tl")
-            d_tl = ccc2.number_input("Tổng điểm TL", value=7.0, step=0.25, key="d_tl")
+    # 3. EXPANDER CHO CẤU HÌNH SỐ (Gọn)
+    with st.expander("⚙️ Tỷ lệ nhận thức & Số lượng câu"):
+        c1, c2, c3, c4 = st.columns(4)
+        nb = c1.number_input("Nhận biết (%)", value=40)
+        th = c2.number_input("Thông hiểu (%)", value=30)
+        vd = c3.number_input("Vận dụng (%)", value=20)
+        vdc = c4.number_input("VDC (%)", value=10)
 
-    # 4. NÚT KHỞI TẠO (To và rõ)
+    # 4. KHỞI TẠO AI
     if st.button("🚀 TỰ ĐỘNG KHỞI TẠO MA TRẬN VÀ ĐỀ THI", type="primary", use_container_width=True):
+        if not ten_bai.strip(): st.warning("Vui lòng nhập tên bài!"); st.stop()
+        
+        # Đọc nội dung file
+        file_context = ""
+        if de_cuong_file:
+            try:
+                if de_cuong_file.name.endswith('.pdf'):
+                    reader = PdfReader(de_cuong_file)
+                    file_context = "\n".join([p.extract_text() for p in reader.pages[:10]])
+                elif de_cuong_file.name.endswith('.docx'):
+                    doc = docx.Document(de_cuong_file)
+                    file_context = "\n".join([p.text for p in doc.paragraphs])
+            except Exception as e: st.error(f"Lỗi đọc file: {e}")
+
         final_key = api_key if api_key else get_api_key()
-        if not final_key: st.error("Lỗi: Thiếu API Key"); st.stop()
+        prompt = f"Soạn đề {mon_hoc} {lop}. Tên bài: {ten_bai}. Cấu trúc: {yeu_cau_khac}. Bám sát tài liệu: {file_context[:3000]}"
         
-        prompt = f"Soạn đề {mon_hoc} {lop}, chủ đề {ten_bai}."
-        result = run_ai_with_fallback(prompt=prompt, api_key=final_key, model_mode="flash")
-        
-        if result.get("success"):
-            st.session_state['current_exam_data'] = {
-                "is_khbd": False, "title": ten_bai,
-                "ai_generated_content": result.get("text")
-            }
-            st.rerun()
+        with st.spinner("AI đang soạn đề..."):
+            result = run_ai_with_fallback(prompt=prompt, api_key=final_key, model_mode="flash")
+            if result.get("success"):
+                st.session_state['current_exam_data'] = {"title": ten_bai, "content": result.get("text")}
+                st.rerun()
+            else: st.error("AI không phản hồi.")
 
-    # 5. XUẤT WORD
-    exam_cache = st.session_state.get('current_exam_data')
-    if exam_cache:
+    # 5. KẾT QUẢ
+    if 'current_exam_data' in st.session_state:
         st.markdown("---")
-        with st.expander("Kết quả đề thi", expanded=True):
-            st.markdown(exam_cache["ai_generated_content"])
-            if st.button("Tải file Đề thi (Word)", type="primary"):
-                try:
-                    word_file = WordExportEngine.export_to_word(exam_cache)
-                    st.download_button("Tải ngay", data=word_file, file_name="De_Thi.docx", use_container_width=True)
-                except Exception as e:
-                    st.error(f"Lỗi xuất Word: {e}")
-
-# Gọi hàm
-render_de_kt_module()
+        with st.expander("Xem & Xuất đề", expanded=True):
+            st.markdown(st.session_state['current_exam_data']['content'])
+            WordEngine = get_word_engine()
+            if WordEngine:
+                if st.button("Tải file Đề thi (Word)"):
+                    try:
+                        word_file = WordEngine.export_to_word(st.session_state['current_exam_data'])
+                        st.download_button("Tải về máy", data=word_file, file_name="De_Thi.docx", use_container_width=True)
+                    except Exception as e: st.error(f"Lỗi: {e}")
