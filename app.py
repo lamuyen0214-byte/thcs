@@ -58,7 +58,7 @@ with st.sidebar:
     # Danh sách phân hệ 
     phan_he = st.radio(
         "CHỌN PHÂN HỆ", 
-        ["Hỗ trợ Giáo viên", "Hỗ trợ Giảng dạy", "Quản lý Tổ chuyên môn", "Trình tạo đề kiểm tra"], 
+        ["Hỗ trợ Giáo viên", "Hỗ trợ Giảng dạy", "Quản lý Tổ chuyên môn"], 
         key="sb_phan_he_main"
     )
     
