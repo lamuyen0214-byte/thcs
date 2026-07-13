@@ -72,15 +72,13 @@ class MarkdownTokenizer:
 
     @staticmethod
     def _parse_table(lines: List[str]) -> Dict[str, Any]:
-        """Chuyển đổi danh sách dòng thành cấu trúc bảng chuẩn, tránh lỗi ép kiểu chuỗi"""
+        """Chuyển đổi danh sách dòng thành cấu trúc bảng chuẩn, tương thích hoàn toàn với bộ render cũ"""
         rows = []
         headers = []
         
         for line in lines:
-            # Tách cột bằng '|'
             raw_cells = [c.strip() for c in line.split('|')]
             
-            # Loại bỏ ô rỗng thừa ở đầu và cuối dòng do ký tự '|' tạo ra
             if raw_cells and raw_cells[0] == '':
                 raw_cells.pop(0)
             if raw_cells and raw_cells[-1] == '':
@@ -89,12 +87,18 @@ class MarkdownTokenizer:
             if not raw_cells:
                 continue
 
-            # Bỏ qua dòng gạch ngang phân cách tiêu đề (---)
             if any(re.match(r'^:?---+:?$', c) for c in raw_cells):
                 continue
 
-            # Đảm bảo nội dung bên trong mỗi ô cũng được parse Inline (Toán, chữ) để LaTeX không bị lỗi
-            processed_cells = [{"content": MarkdownTokenizer._parse_inline_content(c)} for c in raw_cells]
+            # GIẢI PHÁP: Giữ nguyên 'content' kiểu str để không làm hỏng bộ render cũ, 
+            # đồng thời cung cấp thêm 'tokens' để xử lý toán nếu cần.
+            processed_cells = [
+                {
+                    "content": c, 
+                    "tokens": MarkdownTokenizer._parse_inline_content(c)
+                } 
+                for c in raw_cells
+            ]
 
             if not headers:
                 headers = processed_cells
