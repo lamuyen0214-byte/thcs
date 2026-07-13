@@ -10,47 +10,35 @@ if root_dir not in sys.path:
 # --- 2. CẤU HÌNH TRANG ---
 st.set_page_config(layout="wide", page_title="Hệ Sinh Thái Số - L.H.Dưỡng Education", page_icon="👨‍🏫")
 
-# --- 3. IMPORT CÁC MODULE VÀ TRÁI TIM HỆ THỐNG ---
+# --- 3. IMPORT CÁC MODULE ---
 from ai_engine.ai_config import render_api_config_sidebar
 
-# TÁCH RIÊNG TỪNG MODULE ĐỂ CÁCH LY LỖI
+# Tách riêng từng module để cách ly lỗi
 try:
-    from views import teacher_support
+    from views import teacher_support, teaching_support, department_mgmt
 except Exception as e:
-    st.error(f"Lỗi nạp Phân hệ Giáo viên: {e}")
-    teacher_support = None
-
-try:
-    from views import teaching_support
-except Exception as e:
-    st.error(f"Lỗi nạp Phân hệ Giảng dạy: {e}")
-    teaching_support = None
-
-try:
-    from views import department_mgmt
-except Exception as e:
-    st.error(f"Lỗi nạp Phân hệ Tổ chuyên môn: {e}")
-    department_mgmt = None
+    st.error(f"Lỗi nạp View: {e}")
+    teacher_support = teaching_support = department_mgmt = None
 
 try:
     from modules.teaching.ai_quiz_generator import render_quiz_generator
 except Exception as e:
     st.error(f"Lỗi nạp Trình tạo đề kiểm tra: {e}")
     render_quiz_generator = None
+
+# --- 4. SIDEBAR ---
 with st.sidebar:
     st.markdown("<h2 style='text-align: center; color: red;'>HỆ SINH THÁI SỐ<br>HỖ TRỢ GIÁO VIÊN</h2>", unsafe_allow_html=True)
     
-    # Danh sách phân hệ - Đã bỏ đường kẻ ngăn cách phía dưới
     phan_he = st.radio(
         "CHỌN PHÂN HỆ", 
         ["Hỗ trợ Giáo viên", "Hỗ trợ Giảng dạy", "Quản lý Tổ chuyên môn", "Trình tạo đề kiểm tra"],
         key="sb_phan_he_main"
     )
     
-    # Render Sidebar cấu hình API - Để sát ngay dưới radio
+    # Render API Config và nút kiểm tra hệ thống
     render_api_config_sidebar()
     
-    # Chân trang
     st.markdown("---")
     st.markdown(
         """
@@ -63,8 +51,12 @@ with st.sidebar:
         """, 
         unsafe_allow_html=True
     )
-# --- 5. ĐIỀU PHỐI (ROUTER) ---
+
+# --- 5. ĐIỀU PHỐI (ROUTER) CẢI TIẾN ---
 def run_router():
+    # LẤY API KEY TỪ SESSION_STATE
+    current_key = st.session_state.get("gemini_api_key", "")
+
     mapping = {
         "Hỗ trợ Giáo viên": teacher_support.render_module if teacher_support else None,
         "Hỗ trợ Giảng dạy": teaching_support.render_module if teaching_support else None,
@@ -74,9 +66,14 @@ def run_router():
     
     action = mapping.get(phan_he)
     if action:
-        action()
+        # TRUYỀN API KEY VÀO CÁC MODULE CON
+        try:
+            action(api_key=current_key)
+        except TypeError:
+            # Fallback nếu module con chưa kịp sửa (không nhận tham số api_key)
+            action()
     else:
-        st.warning("Phân hệ này đang bị lỗi nạp hoặc đang được phát triển. Vui lòng xem log màu đỏ ở trên.")
+        st.warning("Phân hệ này đang bị lỗi nạp hoặc đang được phát triển.")
 
 if __name__ == "__main__":
     run_router()
