@@ -2,18 +2,18 @@ import streamlit as st
 import os
 import sys
 
-# 1. Đảm bảo đường dẫn gốc của dự án luôn nằm trong sys.path
+# --- 1. ĐỊNH VỊ ĐƯỜNG DẪN GỐC ---
 root_dir = os.path.dirname(os.path.abspath(__file__))
 if root_dir not in sys.path:
     sys.path.append(root_dir)
 
-# 2. Cấu hình trang trước khi import module con
+# --- 2. CẤU HÌNH TRANG ---
 st.set_page_config(layout="wide", page_title="Hệ Sinh Thái Số - L.H.Dưỡng Education", page_icon="👨‍🏫")
 
 # --- 3. IMPORT CÁC MODULE VÀ TRÁI TIM HỆ THỐNG ---
 from ai_engine.ai_config import render_api_config_sidebar
 
-# KHÔNG GỘP CHUNG NỮA - TÁCH RIÊNG TỪNG MODULE ĐỂ CÁCH LY LỖI
+# TÁCH RIÊNG TỪNG MODULE ĐỂ CÁCH LY LỖI
 try:
     from views import teacher_support
 except Exception as e:
@@ -39,7 +39,23 @@ except Exception as e:
     render_quiz_generator = None
 
 # --- 4. SIDEBAR - ĐIỀU KHIỂN ---
-# ... (Phần Sidebar của thầy giữ nguyên) ...
+with st.sidebar:
+    st.markdown("<h2 style='text-align: center; color: red;'>HỆ SINH THÁI SỐ<br>HỖ TRỢ GIÁO VIÊN</h2>", unsafe_allow_html=True)
+    st.markdown("---")
+    
+    # Render Sidebar cấu hình API
+    render_api_config_sidebar()
+    
+    st.markdown("---")
+    # Biến phan_he được khởi tạo tại đây
+    phan_he = st.selectbox(
+        "CHỌN PHÂN HỆ", 
+        ["Hỗ trợ Giáo viên", "Hỗ trợ Giảng dạy", "Quản lý Tổ chuyên môn", "Trình tạo đề kiểm tra"],
+        key="sb_phan_he_main"
+    )
+    
+    st.markdown("---")
+    st.markdown("<div style='text-align: center; color: blue; font-weight: bold;'>Tác giả: Lê Hồng Dưỡng<br>THCS Nguyễn Chí Thanh</div>", unsafe_allow_html=True)
 
 # --- 5. ĐIỀU PHỐI (ROUTER) ---
 def run_router():
