@@ -59,3 +59,29 @@ def check_connection():
 # Hàm phụ trợ để lấy API Key từ session (nếu thầy dùng biến khác, hãy điều chỉnh ở đây)
 def get_api_key():
     return st.session_state.get("gemini_api_key", "")
+# --- BỔ SUNG VÀO CUỐI FILE ai_config.py ---
+
+def render_api_config_sidebar():
+    """Hàm hiển thị giao diện cấu hình API Key trong Sidebar."""
+    import streamlit as st
+    
+    st.sidebar.markdown("### 🔑 Cấu hình API Key")
+    
+    # Lưu API Key vào session_state để dùng toàn cục
+    if "gemini_api_key" not in st.session_state:
+        st.session_state["gemini_api_key"] = ""
+        
+    api_key = st.sidebar.text_input(
+        "Gemini API Key:", 
+        value=st.session_state["gemini_api_key"], 
+        type="password", 
+        key="input_api_key_sidebar"
+    )
+    
+    # Cập nhật session_state
+    if api_key:
+        st.session_state["gemini_api_key"] = api_key
+    
+    # Nút kiểm tra hệ thống (thêm tính năng thầy vừa yêu cầu)
+    if st.sidebar.button("🔍 Kiểm tra hệ thống AI"):
+        check_connection()
