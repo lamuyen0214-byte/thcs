@@ -9,39 +9,48 @@ from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 class MarkdownParser:
     @staticmethod
     def clean_math(text: str) -> str:
-        """Bộ lọc chuyên sâu: Chuyển đổi ký hiệu Toán học LaTeX sang Unicode nét chuẩn Word"""
+        """Bộ lọc chuyên sâu: Chuyển đổi ký hiệu Toán học sang Unicode an toàn tuyệt đối"""
         # Xóa ký hiệu khối toán học
         text = text.replace("$", "").replace("\\[", "").replace("\\]", "")
         
-        # Ánh xạ các ký hiệu toán học phổ biến (Cả có và không có dấu backslash)
-        math_map = {
-            r'\neq': '≠', r'\bneq\b': '≠',
-            r'\pm': '±', r'\bpm\b': '±',
-            r'\triangle': '△', r'\btriangle\b': '△',
-            r'\mathbb{R}': 'ℝ', r'\bmathbb\{R\}\b': 'ℝ',
-            r'\in': '∈', r'\bin\b': '∈',
-            r'\le': '≤', r'\ble\b': '≤',
-            r'\ge': '≥', r'\bge\b': '≥',
-            r'\pi': 'π', r'\bpi\b': 'π',
-            r'\alpha': 'α', r'\bbeta\b': 'β',
-            r'\sqrt': '√',
-            r'\rightarrow': '→', r'\leftrightarrow': '↔',
-            r'\infty': '∞', r'\binfty\b': '∞',
-            r'^2': '²', r'^3': '³'
+        # 1. THAY THẾ AN TOÀN (Sửa lỗi bad escape \p)
+        # Sử dụng chuỗi Replace cơ bản cho các ký tự chứa \, không dùng Regex
+        exact_map = {
+            r'\neq': '≠', r'\pm': '±', r'\triangle': '△',
+            r'\mathbb{R}': 'ℝ', r'mathbb{R}': 'ℝ',
+            r'\in': '∈', r'\le': '≤', r'\ge': '≥',
+            r'\pi': 'π', r'\alpha': 'α', r'\beta': 'β', 
+            r'\sqrt': '√', r'\rightarrow': '→', r'\leftrightarrow': '↔',
+            r'\infty': '∞', '^2': '²', '^3': '³'
         }
-        
-        # Thực hiện thay thế bằng Regex để quét chính xác từ
-        for tex, uni in math_map.items():
-            text = re.sub(tex, uni, text)
+        for tex, uni in exact_map.items():
+            text = text.replace(tex, uni)
             
-        # Xử lý phân số dạng \frac{a}{b} hoặc frac{a}{b} -> (a)/(b)
+        # 2. XỬ LÝ AI QUÊN DẤU BACKSLASH (Dùng Regex Word Boundary \b)
+        safe_regex = {
+            r'\bneq\b': '≠',
+            r'\bpm\b': '±',
+            r'\btriangle\b': '△',
+            r'\ble\b': '≤',
+            r'\bge\b': '≥',
+            r'\bpi\b': 'π',
+            r'\balpha\b': 'α',
+            r'\bbeta\b': 'β',
+            r'\binfty\b': '∞',
+            # Bảo vệ Tiếng Việt: Chỉ đổi "x in" thành "x ∈" khi đứng trước ℝ hoặc khoảng trắng
+            r'\bx in\b(?=\s*ℝ)': 'x ∈',
+            r'\bx in\b(?=\s*math)': 'x ∈'
+        }
+        for pat, uni in safe_regex.items():
+            text = re.sub(pat, uni, text)
+            
+        # 3. Xử lý phân số dạng \frac{a}{b} hoặc frac{a}{b} -> (a)/(b)
         text = re.sub(r'\\?frac\{([^}]+)\}\{([^}]+)\}', r'(\1)/(\2)', text)
         return text
 
     @staticmethod
     def _parse_inline_formatting(paragraph, text: str):
         """Xử lý in đậm (**), in nghiêng (*) trên cùng một dòng"""
-        # Chia tách chuỗi dựa trên các cặp dấu sao
         parts = re.split(r'(\*\*.*?\*\*|\*.*?\*)', text)
         
         for part in parts:
@@ -71,10 +80,8 @@ class MarkdownParser:
         table.autofit = True
 
         for r_idx, row_text in enumerate(table_rows_data):
-            # Lọc bỏ dấu | ở đầu và cuối dòng
             cells = [cell.strip() for cell in row_text.split('|')][1:-1] 
             
-            # Đảm bảo không bị lỗi IndexError nếu hàng thiếu cột
             for c_idx in range(min(num_cols, len(cells))):
                 cell_text = cells[c_idx]
                 
@@ -100,7 +107,7 @@ class MarkdownParser:
         for line in lines:
             line = line.strip()
             
-            # 1. XỬ LÝ BẢNG (TABLE) - Khắc phục ma trận bị cụt
+            # XỬ LÝ BẢNG (TABLE)
             if line.startswith('|') and line.endswith('|'):
                 in_table = True
                 table_rows.append(line)
@@ -110,25 +117,23 @@ class MarkdownParser:
                     MarkdownParser._build_word_table(doc, table_rows)
                     in_table = False
                     table_rows = []
-                    doc.add_paragraph() # Dòng trống sau bảng
+                    doc.add_paragraph() 
             
             if not line:
                 continue
 
-            # Dọn dẹp Toán học trước khi xét định dạng
             line = MarkdownParser.clean_math(line)
 
-            # 2. XỬ LÝ TIÊU ĐỀ (HEADING) - Khắc phục thừa dấu ####
+            # XỬ LÝ TIÊU ĐỀ (HEADING)
             heading_match = re.match(r'^(#{1,6})\s+(.*)', line)
             if heading_match:
                 level = len(heading_match.group(1))
                 text_content = heading_match.group(2)
                 h = doc.add_heading(text_content, level=level)
-                # Đổi màu tiêu đề về đen chuẩn thay vì xanh dương của Word
                 for run in h.runs: run.font.color.rgb = RGBColor(0, 0, 0)
                 continue
 
-            # 3. XỬ LÝ DANH SÁCH (BULLETS/NUMBERS) - Khắc phục dấu * đầu dòng
+            # XỬ LÝ DANH SÁCH
             list_match = re.match(r'^[\*\-]\s+(.*)', line)
             if list_match:
                 p = doc.add_paragraph(style='List Bullet')
@@ -141,10 +146,9 @@ class MarkdownParser:
                 MarkdownParser._parse_inline_formatting(p, num_match.group(2))
                 continue
 
-            # 4. ĐOẠN VĂN BẢN BÌNH THƯỜNG (PARAGRAPH)
+            # VĂN BẢN THƯỜNG
             p = doc.add_paragraph()
             MarkdownParser._parse_inline_formatting(p, line)
 
-        # Chốt hạ nếu bảng nằm ở tận cùng văn bản
         if in_table:
             MarkdownParser._build_word_table(doc, table_rows)
