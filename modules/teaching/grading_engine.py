@@ -12,12 +12,11 @@ def get_model(model_name):
 def render_grading_module():
     st.subheader("📝 Chấm Trắc Nghiệm Hàng Loạt Bằng AI")
     
-    # 1. Chọn Model (Dành cho mọi giáo viên)
+    # Cập nhật danh sách model chuẩn xác cho API
     model_choice = st.selectbox(
         "Chọn Model AI:",
-        ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-lite"] 
+        ["gemini-1.5-flash-002", "gemini-1.5-pro-002", "gemini-1.5-flash-8b"] 
     )
-
     # 2. Khởi tạo session lưu kết quả
     if "ket_qua_cham" not in st.session_state:
         st.session_state.ket_qua_cham = []
