@@ -173,7 +173,7 @@ Yêu cầu đầu ra: Trình bày cấu trúc khoa học, ngôn từ sư phạm 
         st.markdown(f"### 📄 KẾT QUẢ: {khbd_cache['title']}")
         
         with st.expander(" Xem trước Kế hoạch bài dạy chi tiết", expanded=True):
-# 1. Đảm bảo WordEngine đã được khởi tạo
+        # 1. Đảm bảo WordEngine đã được khởi tạo
         WordEngine = get_word_engine()
         
         # 2. Xử lý xuất file NẰM TRONG khối if khbd_cache để đảm bảo biến luôn tồn tại
