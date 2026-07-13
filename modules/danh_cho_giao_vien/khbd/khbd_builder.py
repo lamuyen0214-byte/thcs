@@ -35,12 +35,12 @@ def render_khbd_module(api_key=""):
     div[data-testid="stAppViewBlockContainer"], 
     .main .block-container, 
     .stAppViewBlockContainer {
-        max-width: 98% !important;
+        max-width: 90% !important;
         width: 98% !important;
         padding-left: 3.5rem !important;
         padding-right: 1.5rem !important;
         padding-top: 3rem !important;
-        padding-bottom: 1rem !important;
+        padding-bottom: 3rem !important;
     }
     .header-blue {color: #0000FF; font-weight: bold; font-size: 15px; text-align: left; margin-bottom: 2px;}
     .text-red-italic {color: #FF0000; font-style: italic; font-weight: bold; font-size: 14px;}
