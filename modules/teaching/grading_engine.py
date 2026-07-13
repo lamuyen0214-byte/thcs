@@ -15,7 +15,7 @@ def render_grading_module():
     # Cập nhật danh sách model chuẩn xác cho API
     model_choice = st.selectbox(
         "Chọn Model AI:",
-        ["gemini-1.5-flash-002", "gemini-1.5-pro-002", "gemini-1.5-flash-8b"] 
+        ["gemini-1.5-flash", "gemini-1.5-pro"]
     )
     # 2. Khởi tạo session lưu kết quả
     if "ket_qua_cham" not in st.session_state:
