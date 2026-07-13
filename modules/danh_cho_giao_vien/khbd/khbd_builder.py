@@ -178,8 +178,12 @@ Yêu cầu đầu ra: Trình bày cấu trúc khoa học, ngôn từ sư phạm 
         WordEngine = get_word_engine()
         if WordEngine:
             try:
-                word_file = WordEngine.export_to_word(khbd_cache)
-            except Exception as e:
+        # --- CHÈN ĐOẠN VỆ SINH DỮ LIỆU VÀO ĐÂY ---
+        clean_content = khbd_cache.get('ai_generated_content', '').replace('\r\n', '\n')
+        clean_content = "".join(ch for ch in clean_content if ord(ch) >= 32 or ch == '\n')
+        khbd_cache['ai_generated_content'] = clean_content
+        # ------------------------------------------
+        word_file = WordEngine.export_to_word(khbd_cache)
                 st.error(f"⚠️ Trình xuất Word đang gặp sự cố đồng bộ: {e}")
                 
         # BỘ BA NÚT TƯƠNG TÁC TĂM TẮP CHỐNG LỖI KHÓA NÚT KHI RERUN
