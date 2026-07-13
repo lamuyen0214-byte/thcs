@@ -10,6 +10,9 @@ class MarkdownTokenizer:
 
     @classmethod
     def parse(cls, markdown_text: str) -> List[Dict[str, Any]]:
+        if not isinstance(markdown_text, str):
+            return []
+
         forbidden_prefixes = ("Chào bạn", "Với vai trò", "Tôi là", "Lưu ý về")
         lines = [
             line for line in markdown_text.splitlines() 
@@ -47,7 +50,8 @@ class MarkdownTokenizer:
                 ast_nodes.append({
                     "type": "image", 
                     "alt": match.group(1), 
-                    "url": match.group(2)
+                    "url": match.group(2),
+                    "tokens": [{"type": "text", "content": match.group(1)}]  # Thêm tokens phòng hờ hệ thống quét qua
                 })
             elif match := cls._BULLET_RE.match(line):
                 ast_nodes.append({
@@ -68,11 +72,12 @@ class MarkdownTokenizer:
                 })
 
         flush_table()
-        return ast_nodes
+        
+        # BƯỚC BẢO VỆ CUỐI CÙNG: Ép cấu trúc đầu ra tuyệt đối chuẩn chỉnh, loại bỏ rủi ro chuỗi trần
+        return cls._sanitize_ast(ast_nodes)
 
     @staticmethod
     def _parse_table(lines: List[str]) -> Dict[str, Any]:
-        """Chuyển đổi danh sách dòng thành cấu trúc bảng chuẩn, tương thích hoàn toàn với bộ render cũ"""
         rows = []
         headers = []
         
@@ -90,8 +95,9 @@ class MarkdownTokenizer:
             if any(re.match(r'^:?---+:?$', c) for c in raw_cells):
                 continue
 
-            # GIẢI PHÁP: Giữ nguyên 'content' kiểu str để không làm hỏng bộ render cũ, 
-            # đồng thời cung cấp thêm 'tokens' để xử lý toán nếu cần.
+            # Để an toàn nhất cho bộ render cũ lẫn mới:
+            # - content: là chuỗi thuần (str)
+            # - tokens: là list các dict nội dung
             processed_cells = [
                 {
                     "content": c, 
@@ -137,3 +143,18 @@ class MarkdownTokenizer:
                 tokens.append({"type": "text", "content": part})
                 
         return tokens
+
+    @staticmethod
+    def _sanitize_ast(nodes: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        """Hàm kiểm tra dữ liệu đầu ra để triệt tiêu hoàn toàn lỗi 'string indices must be integers'"""
+        sanitized = []
+        for node in nodes:
+            if not isinstance(node, dict):
+                continue
+            
+            # Đảm bảo trường 'tokens' của tất cả các node thông thường luôn là một danh sách hợp lệ
+            if "tokens" in node and isinstance(node["tokens"], str):
+                node["tokens"] = [{"type": "text", "content": node["tokens"]}]
+            
+            sanitized.append(node)
+        return sanitized
