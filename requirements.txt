@@ -20,3 +20,6 @@ xlsxwriter
 Pillow
 gspread
 oauth2client
+supabase
+pandas
+streamlit
