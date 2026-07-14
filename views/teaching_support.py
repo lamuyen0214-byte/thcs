@@ -8,6 +8,7 @@ from modules.teaching.bank_builder import render_bank_module
 from modules.teaching.video_builder import render_video_module
 from modules.teaching.interaction_builder import render_interaction_module
 from modules.teaching.personalization_builder import render_personalization_module
+from modules.teaching.camera_builder import render_camera_module
 def render_module():
     st.markdown("## 🌱 Hỗ trợ Giảng dạy")
     
@@ -103,12 +104,8 @@ def render_module():
 
     # --- THẺ 11: CAMERA CHẤM BÀI (AI VISION) ---
     with tabs[10]:
-        st.subheader("📷 Camera chấm bài bằng AI Vision")
-        st.info("Sử dụng Camera để quét và chấm điểm tự động bài kiểm tra.")
-        st.warning("🚧 Đang tích hợp thuật toán Computer Vision...")
-
-    # --- THẺ 12: TRẮC NGHIỆM LIVE ---
-    with tabs[11]:
-        st.subheader("⚡ Trắc nghiệm tương tác trực tiếp")
-        st.info("Tổ chức các phiên hỏi đáp, khảo sát thời gian thực cho học sinh.")
-        st.warning("🚧 Đang tích hợp hệ thống thời gian thực...")
+        st.subheader("📷 Camera AI Quét và Chấm bài Tự động")
+        try:
+            render_camera_module()
+        except Exception as e:
+            st.error(f"Lỗi tải module Camera: {e}")
