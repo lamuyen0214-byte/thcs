@@ -17,7 +17,7 @@ if os.path.exists(ai_engine_path) and ai_engine_path not in sys.path:
 # =====================================================================
 # 2. CẤU HÌNH TRANG (GIỮ NGUYÊN 100%)
 # =====================================================================
-st.set_page_config(layout="wide", page_title="Hệ Sinh Thái Số - L.H.Dưỡng Education", page_icon="👨‍🏫")
+st.set_page_config(layout="wide", page_title="HỆ SINH THÁI SỐ - HỖ TRỢ GIÁO VIÊN", page_icon="👨‍🏫")
 
 # =====================================================================
 # 3. IMPORT CÁC MODULE VÀ TRÁI TIM HỆ THỐNG
