@@ -1,6 +1,8 @@
 import streamlit as st
 from modules.teaching.rag_engine import process_rag_engine
+# 1. IMPORT MODULE TRÒ CHƠI VÀO ĐÂY:
 from modules.teaching.game_builder import render_game_module
+
 def render_module():
     st.markdown("## 🌱 Hỗ trợ Giảng dạy")
     
@@ -34,13 +36,12 @@ def render_module():
             
         process_rag_engine(uploaded_file, hinh_thuc_url)
 
-    # --- THẺ 2: TRÒ CHƠI ---
+    # --- THẺ 2: TRÒ CHƠI (ĐÃ ĐƯỢC KẾT NỐI LÊN GIAO DIỆN) ---
     with tabs[1]:
         st.subheader("🎮 Trò chơi học tập (Gamification)")
-        try:
-            render_game_module() # Hoặc render_game_module(api_key=api_key) tùy cấu trúc của thầy
-        except Exception as e:
-            st.error(f"Lỗi tải module Trò chơi: {e}")
+        # 2. GỌI HÀM GIAO DIỆN TRÒ CHƠI
+        render_game_module() 
+
     # --- THẺ 3: CHẤM BÀI ---
     with tabs[2]:
         from modules.teaching.grading_engine import render_grading_module
@@ -55,12 +56,10 @@ def render_module():
     with tabs[10]:
         st.subheader("📷 Camera chấm bài bằng AI Vision")
         st.info("Sử dụng Camera để quét và chấm điểm tự động bài kiểm tra.")
-        # Thầy sẽ tích hợp module xử lý ảnh tại đây
         st.warning("🚧 Đang tích hợp thuật toán Computer Vision...")
 
     # --- THẺ 12: TRẮC NGHIỆM LIVE ---
     with tabs[11]:
         st.subheader("⚡ Trắc nghiệm tương tác trực tiếp")
         st.info("Tổ chức các phiên hỏi đáp, khảo sát thời gian thực cho học sinh.")
-        # Thầy sẽ tích hợp module xử lý real-time tại đây
         st.warning("🚧 Đang tích hợp hệ thống thời gian thực...")
