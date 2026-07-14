@@ -14,7 +14,7 @@ def render_live_quiz_module():
     
     # --- PHẦN HIỂN THỊ ẢNH TỪ LINK (ĐÃ FIX) ---
     # THẦY DÁN LINK ẢNH VÀO ĐÂY (Link phải kết thúc bằng .jpg, .png hoặc .jpeg)
-    image_url = "https://link-anh-cua-thay-o-day.jpg" 
+    image_url = "https://photos.app.goo.gl/ozBLvB6VMWxvZaVf7.jpg" 
     
     try:
         st.image(image_url, use_container_width=True)
