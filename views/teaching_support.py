@@ -2,6 +2,7 @@ import streamlit as st
 from modules.teaching.rag_engine import process_rag_engine
 from modules.teaching.game_builder import render_game_module
 from modules.teaching.hoc_lieu_builder import render_hoc_lieu_module
+from modules.teaching.simulation_builder import render_simulation_module
 def render_module():
     st.markdown("## 🌱 Hỗ trợ Giảng dạy")
     
@@ -52,7 +53,18 @@ def render_module():
             render_hoc_lieu_module()
         except Exception as e:
             st.error(f"Lỗi tải module Học liệu: {e}")
+    # --- THẺ 5: MÔ PHỎNG TRỰC QUAN ---
+    with tabs[4]:
+        st.subheader("🔬 Mô phỏng Tương tác & Khám phá")
+        try:
+            render_simulation_module()
+        except Exception as e:
+            st.error(f"Lỗi tải module Mô phỏng: {e}")
 
+    # --- CÁC THẺ 6-10: GIAO DIỆN CHỜ (Sửa dải số thành từ 5 đến 9) ---
+    for i in range(5, 10):
+        with tabs[i]:
+            st.info("⏳ Giao diện đang được cập nhật...")
     # --- CÁC THẺ 5-10: GIAO DIỆN CHỜ (Đã sửa dải số từ 4 đến 9) ---
     for i in range(4, 10):
         with tabs[i]:
