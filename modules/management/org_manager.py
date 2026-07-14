@@ -17,7 +17,7 @@ def load_data():
         st.error(f"Lỗi tải dữ liệu: {e}")
         return pd.DataFrame()
 
-# Hàm tạo file Excel mẫu cho Danh sách
+# Hàm tạo file Excel mẫu
 @st.cache_data
 def get_member_template():
     df_mau = pd.DataFrame({
@@ -31,7 +31,6 @@ def get_member_template():
         df_mau.to_excel(writer, index=False, sheet_name='Danh_Sach')
     return buffer.getvalue()
 
-# Hàm tạo file Excel mẫu cho Phân công
 @st.cache_data
 def get_phan_cong_template():
     df_mau = pd.DataFrame({
@@ -48,24 +47,19 @@ def get_phan_cong_template():
 def render_org_management():
     df = load_data()
     
-    # --- CHỨC NĂNG ADMIN ---
     st.sidebar.markdown("---")
     st.sidebar.markdown("### 🔐 Quyền Quản Trị")
-    admin_password = st.sidebar.text_input("Nhập mật khẩu", type="password", help="Chỉ Admin mới có quyền thay đổi dữ liệu.")
-    is_admin = (admin_password == "admin") # Thầy có thể đổi pass ở chữ "admin" này
+    admin_password = st.sidebar.text_input("Nhập mật khẩu", type="password")
+    is_admin = (admin_password == "admin")
 
     tabs = st.tabs(["👥 Danh sách thành viên", "📋 Phân công", "📝 Biên bản", "📂 Kế hoạch", "🏆 Thi đua"])
 
-    # ==========================================
-    # TAB 0: DANH SÁCH THÀNH VIÊN
-    # ==========================================
     with tabs[0]:
         if is_admin:
             st.success("🔓 Chế độ Admin: Thầy có thể Thêm, Sửa, Xóa thành viên.")
-            
             c1, c2 = st.columns(2)
             with c1:
-                with st.expander("➕ THÊM 1 THÀNH VIÊN TỪNG NGƯỜI", expanded=False):
+                with st.expander("➕ THÊM 1 THÀNH VIÊN", expanded=False):
                     with st.form("add_member", clear_on_submit=True):
                         ten = st.text_input("Họ và tên")
                         ngay_sinh = st.text_input("Năm sinh")
@@ -83,28 +77,36 @@ def render_org_management():
                 with st.expander("📤 THÊM HÀNG LOẠT TỪ EXCEL", expanded=False):
                     st.download_button("📥 Tải file Excel Mẫu", data=get_member_template(), file_name="Mau_Danh_Sach.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
                     uploaded_file = st.file_uploader("Upload file Danh sách (.xlsx)", type=["xlsx"], key="file_ds")
+                    
                     if uploaded_file is not None:
                         try:
-                            df_import = pd.read_excel(uploaded_file, dtype=str).fillna("") # Xóa lỗi ô trống
+                            # Đọc Excel dưới dạng chuỗi
+                            df_import = pd.read_excel(uploaded_file, dtype=str)
+                            
+                            # CỐ ĐỊNH CỘT: Chỉ lấy đúng 7 cột này, loại bỏ mọi cột thừa bị tràn
+                            cols_chuan = ["ten", "ngay_sinh", "bang_cap", "chu_the", "vai_tro", "email", "dien_thoai"]
+                            df_import = df_import[cols_chuan].fillna("")
+                            
                             st.dataframe(df_import, height=150)
+                            
                             if st.button("🚀 Nạp vào hệ thống"):
                                 import_data = df_import.to_dict(orient="records")
                                 supabase.table("quan_ly_tcm").insert(import_data).execute()
                                 st.success("Nạp thành công!")
                                 st.rerun()
+                        except KeyError:
+                            st.error("⚠️ Lỗi: File Excel không có đủ các cột chuẩn. Thầy hãy tải lại file mẫu nhé!")
                         except Exception as e:
                             st.error(f"Lỗi: {e}")
             
             st.markdown("### ✏️ CHỈNH SỬA & XÓA THÀNH VIÊN")
-            st.info("💡 Hướng dẫn: Sửa trực tiếp vào ô, hoặc chọn ô vuông đầu dòng rồi nhấn 'Delete' để Xóa.")
             edited_df = st.data_editor(df, use_container_width=True, num_rows="dynamic", disabled=["id"], key="admin_editor")
             
-            if st.button("💾 Đồng bộ thay đổi (Sửa/Xóa) lên máy chủ"):
+            if st.button("💾 Đồng bộ thay đổi (Sửa/Xóa)"):
                 try:
                     original_ids = set(df['id'].dropna().tolist())
                     current_ids = set(edited_df['id'].dropna().tolist())
-                    deleted_ids = original_ids - current_ids
-                    for d_id in deleted_ids:
+                    for d_id in (original_ids - current_ids):
                         supabase.table("quan_ly_tcm").delete().eq("id", d_id).execute()
                         
                     records_to_update = edited_df.dropna(subset=['id']).to_dict(orient="records")
@@ -113,47 +115,31 @@ def render_org_management():
                     st.success("Đã đồng bộ thành công!")
                     st.rerun()
                 except Exception as e:
-                    st.error(f"Lỗi lưu thay đổi: {e}")
+                    st.error(f"Lỗi lưu: {e}")
         else:
-            st.info("🔒 Đang ở chế độ CHỈ XEM. Để chỉnh sửa, vui lòng nhập mật khẩu Admin bên trái.")
+            st.info("🔒 Đang ở chế độ CHỈ XEM.")
             st.dataframe(df, use_container_width=True, hide_index=True)
 
-    # ==========================================
-    # TAB 1: PHÂN CÔNG CHUYÊN MÔN
-    # ==========================================
     with tabs[1]:
         st.subheader("📋 Bảng Phân Công Chuyên Môn")
-        
         if is_admin:
-            with st.expander("📤 CẬP NHẬT LỊCH PHÂN CÔNG TỪ EXCEL", expanded=True):
-                st.markdown("Tổ trưởng tải file mẫu về, điền lịch dạy của tổ và upload lên đây.")
-                st.download_button(
-                    label="📥 Tải file Phân Công Mẫu",
-                    data=get_phan_cong_template(),
-                    file_name="Mau_Phan_Cong.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                )
-                
-                uploaded_pc = st.file_uploader("Upload bảng phân công đã điền (.xlsx)", type=["xlsx"], key="file_pc")
+            with st.expander("📤 CẬP NHẬT LỊCH TỪ EXCEL", expanded=True):
+                st.download_button("📥 Tải file Phân Công Mẫu", data=get_phan_cong_template(), file_name="Mau_Phan_Cong.xlsx", mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+                uploaded_pc = st.file_uploader("Upload bảng phân công", type=["xlsx"], key="file_pc")
                 if uploaded_pc is not None:
                     try:
-                        df_pc = pd.read_excel(uploaded_pc).fillna("")
-                        st.success("Xem trước dữ liệu phân công:")
+                        df_pc = pd.read_excel(uploaded_pc, dtype=str).fillna("")
                         st.dataframe(df_pc, use_container_width=True)
-                        
-                        if st.button("💾 Lưu Bảng Phân Công Lên Hệ Thống"):
-                            st.warning("⚠️ BƯỚC TIẾP THEO: Để lưu dữ liệu này, thầy cần tạo thêm một bảng tên là `phan_cong` trên Supabase (tương tự như lúc làm bảng danh sách). Thầy báo em để em hướng dẫn tạo bảng này nhé!")
+                        if st.button("💾 Lưu Bảng Phân Công"):
+                            st.warning("⚠️ Cần tạo bảng `phan_cong` trên Supabase trước khi lưu!")
                     except Exception as e:
-                        st.error(f"Lỗi đọc file: {e}. Thầy nhớ cài thư viện openpyxl nhé!")
+                        st.error(f"Lỗi: {e}")
         else:
-            st.info("🔒 Bảng phân công đang được Tổ trưởng cập nhật...")
+            st.info("🔒 Bảng phân công đang được cập nhật...")
             
     with tabs[2]:
-        st.subheader("Biên bản cuộc họp")
-        st.write("Tính năng đang phát triển...")
+        st.write("Biên bản cuộc họp")
     with tabs[3]:
-        st.subheader("Kế hoạch giáo dục")
-        st.write("Tính năng đang phát triển...")
+        st.write("Kế hoạch giáo dục")
     with tabs[4]:
-        st.subheader("Thi đua - Khen thưởng")
-        st.write("Tính năng đang phát triển...")
+        st.write("Thi đua - Khen thưởng")
