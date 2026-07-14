@@ -6,6 +6,7 @@ from modules.teaching.simulation_builder import render_simulation_module
 from modules.teaching.analytics_builder import render_analytics_module
 from modules.teaching.bank_builder import render_bank_module
 from modules.teaching.video_builder import render_video_module
+from modules.teaching.interaction_builder import render_interaction_module
 def render_module():
     st.markdown("## 🌱 Hỗ trợ Giảng dạy")
     
@@ -80,7 +81,15 @@ def render_module():
         except Exception as e:
             st.error(f"Lỗi tải module Sinh Video: {e}")
 
-    # --- CÁC THẺ 9-10: GIAO DIỆN CHỜ (Sửa dải số thành từ 8 đến 9) ---
-    for i in range(8, 10):
+    # --- THẺ 9: TƯƠNG TÁC ---
+    with tabs[8]:
+        st.subheader("🎭 Thiết kế Hoạt động Tương tác & Đóng vai")
+        try:
+            render_interaction_module()
+        except Exception as e:
+            st.error(f"Lỗi tải module Tương tác: {e}")
+
+    # --- THẺ 10: GIAO DIỆN CHỜ (Chỉ còn thẻ Cá nhân hóa) ---
+    for i in range(9, 10):
         with tabs[i]:
             st.info("⏳ Giao diện đang được cập nhật...")
