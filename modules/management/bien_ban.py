@@ -98,7 +98,6 @@ def render_bien_ban(supabase):
         st.markdown("---")
         st.markdown("### 🤖 Trợ lý AI Hỗ trợ viết Biên bản")
         
-        # Nhận diện API Key từ luồng chính
         api_key = ""
         for k, v in st.session_state.items():
             if isinstance(v, str) and (v.startswith("AIza") or v.startswith("AQ.")):
@@ -143,18 +142,25 @@ def render_bien_ban(supabase):
                         
                     prompt_base += "\n\nHãy trả về kết quả theo cấu trúc sau:\nPHẦN 1: NỘI DUNG\n(viết chi tiết ở đây)\nPHẦN 2: KẾT LUẬN\n(viết chi tiết ở đây)"
 
-                    with st.spinner("🤖 AI đang đọc tài liệu và soạn biên bản. Thầy chờ vài giây nhé..."):
-                        try:
-                            # CƠ CHẾ DỰ PHÒNG: Thử gọi bản flash mới nhất trước
-                            model = genai.GenerativeModel('gemini-1.5-flash-latest')
-                            response = model.generate_content(prompt_base)
-                        except Exception as inner_e:
-                            # Nếu Google báo lỗi 404 (Không tìm thấy model), tự động gọi bản ổn định cao nhất
-                            if "404" in str(inner_e) or "not found" in str(inner_e):
-                                model = genai.GenerativeModel('gemini-pro')
+                    with st.spinner("🤖 AI đang đọc tài liệu và thử các mô hình để soạn biên bản. Thầy chờ vài giây nhé..."):
+                        
+                        # VÒNG LẶP THÔNG MINH: Thử lần lượt các Model chuẩn nhất hiện nay
+                        models_to_try = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro']
+                        response = None
+                        last_error = None
+                        
+                        for model_name in models_to_try:
+                            try:
+                                model = genai.GenerativeModel(model_name)
                                 response = model.generate_content(prompt_base)
-                            else:
-                                raise inner_e
+                                break  # Nếu thành công, thoát khỏi vòng lặp ngay lập tức
+                            except Exception as e:
+                                last_error = e
+                                continue  # Nếu lỗi (ví dụ 404), tiếp tục thử Model tiếp theo
+                        
+                        # Nếu thử hết cả 3 cái mà vẫn lỗi thì mới báo ra màn hình
+                        if response is None:
+                            raise last_error
 
                         ai_text = response.text
                         
@@ -175,7 +181,7 @@ def render_bien_ban(supabase):
                         st.rerun()
                         
                 except Exception as e:
-                    st.error(f"❌ Lỗi từ AI: {e}")
+                    st.error(f"❌ Lỗi từ AI: Thầy kiểm tra lại đường truyền mạng hoặc API Key nhé. Chi tiết lỗi: {e}")
 
         noi_dung = st.text_area("1. Nội dung cuộc họp (Có thể chỉnh sửa):", value=st.session_state['ai_noi_dung'], height=250)
         ket_luan = st.text_area("2. Kết luận (Có thể chỉnh sửa):", value=st.session_state['ai_ket_luan'], height=150)
