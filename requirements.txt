@@ -23,4 +23,3 @@ oauth2client
 supabase
 pandas
 streamlit
-==0.8.3
