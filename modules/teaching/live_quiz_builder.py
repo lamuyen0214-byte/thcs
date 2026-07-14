@@ -54,7 +54,7 @@ def render_live_quiz_module():
             st.write("Đang chờ phản hồi từ học sinh...")
         else:
             st.warning("Hệ thống đang ở chế độ chờ. Hãy nhấn nút Bắt đầu để kích hoạt phiên Quiz.")
-            st.image("assets/unnamed.jpg", use_container_width=True)
+            st.image("https://drive.google.com/file/d/1j1FzoOvKWPsrSlEkBMdObiiKJFmkS5RM/view?usp=sharing", use_container_width=True)
 
     st.markdown("---")
     st.caption("💡 Lưu ý: Tính năng này giả lập môi trường server local. Để kết nối với thiết bị học sinh thực tế qua mạng LAN, hệ thống cần thêm module Websocket chuyên dụng.")
