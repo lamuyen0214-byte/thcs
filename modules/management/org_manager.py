@@ -1,49 +1,23 @@
 import streamlit as st
-import pandas as pd
-import gspread
-import json
-from oauth2client.service_account import ServiceAccountCredentials
+from supabase import create_client
 
-# Cấu hình
-SPREADSHEET_ID = "1C6642jk_oQ0g9UC2By2qsNxxfQVR0MrZYj52tRdWDlY"
-SHEET_NAME = "TO_CM"
-
-def get_gsheet_connection():
-    # Lấy thông tin từ Secrets (đã thiết lập trong Streamlit Cloud)
-    # Đảm bảo trong phần Secrets của Streamlit Cloud, thầy đã dán nội dung JSON vào key là GOOGLE_SHEETS_JSON
-    secrets_dict = json.loads(st.secrets["GOOGLE_SHEETS_JSON"])
-    
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    
-    # Sử dụng from_json_keyfile_dict thay vì from_json_keyfile_name
-    creds = ServiceAccountCredentials.from_json_keyfile_dict(secrets_dict, scope)
-    client = gspread.authorize(creds)
-    return client.open_by_key(SPREADSHEET_ID).worksheet(SHEET_NAME)
+# Kết nối Supabase
+supabase = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
 
 def load_data():
     try:
-        sheet = get_gsheet_connection()
-        data = sheet.get_all_records()
-        if not data:
-            return pd.DataFrame(columns=["Họ và tên", "Năm sinh", "Trình độ", "Môn dạy", "Chức vụ", "Email", "SĐT"])
-        return pd.DataFrame(data)
+        response = supabase.table("quan_ly_tcm").select("*").execute()
+        import pandas as pd
+        if not response.data:
+            return pd.DataFrame(columns=["id", "tên", "ngày sinh", "bằng cấp", "chủ thể", "vai trò", "email", "phone"])
+        return pd.DataFrame(response.data)
     except Exception as e:
-        st.error(f"Lỗi kết nối Sheet: {e}")
-        return pd.DataFrame(columns=["Họ và tên", "Năm sinh", "Trình độ", "Môn dạy", "Chức vụ", "Email", "SĐT"])
-
-def save_data(df):
-    try:
-        sheet = get_gsheet_connection()
-        sheet.clear()
-        # Chuyển đổi dataframe về dạng list để ghi vào Google Sheet
-        sheet.update([df.columns.values.tolist()] + df.values.tolist())
-    except Exception as e:
-        st.error(f"Lỗi lưu dữ liệu: {e}")
+        st.error(f"Lỗi tải dữ liệu: {e}")
+        return pd.DataFrame()
 
 def render_org_management():
-    # Load dữ liệu từ Sheet
-    if 'team_members' not in st.session_state:
-        st.session_state['team_members'] = load_data()
+    # Load dữ liệu
+    st.session_state['team_members'] = load_data()
 
     tabs = st.tabs(["👥 Danh sách thành viên", "📋 Phân công", "📝 Biên bản", "📂 Kế hoạch", "🏆 Thi đua"])
 
@@ -53,28 +27,37 @@ def render_org_management():
         with st.form("add_member_form", clear_on_submit=True):
             c1, c2, c3 = st.columns(3)
             name = c1.text_input("Họ và tên")
-            dob = c2.text_input("Năm sinh")
-            degree = c3.text_input("Trình độ")
+            dob = c2.text_input("Ngày sinh")
+            degree = c3.text_input("Bằng cấp")
             c4, c5, c6, c7 = st.columns(4)
-            subject = c4.text_input("Môn dạy")
-            role = c5.selectbox("Chức vụ", ["Tổ trưởng", "Tổ phó", "Giáo viên", "Thư ký"])
+            subject = c4.text_input("Chủ thể (Môn)")
+            role = c5.selectbox("Vai trò", ["Tổ trưởng", "Tổ phó", "Giáo viên", "Thư ký"])
             email = c6.text_input("Email")
             phone = c7.text_input("SĐT")
             
             if st.form_submit_button("➕ Thêm vào danh sách"):
-                new_row = pd.DataFrame([[name, dob, degree, subject, role, email, phone]], columns=st.session_state['team_members'].columns)
-                st.session_state['team_members'] = pd.concat([st.session_state['team_members'], new_row], ignore_index=True)
-                save_data(st.session_state['team_members'])
+                new_row = {
+                    "tên": name, 
+                    "ngày sinh": dob, 
+                    "bằng cấp": degree, 
+                    "chủ thể": subject, 
+                    "vai trò": role, 
+                    "email": email, 
+                    "phone": phone
+                }
+                supabase.table("quan_ly_tcm").insert(new_row).execute()
+                st.success("Đã thêm thành công!")
                 st.rerun()
 
-        df_display = st.session_state['team_members'].copy()
-        df_display.index = df_display.index + 1
-        st.dataframe(df_display, use_container_width=True)
+        st.dataframe(st.session_state['team_members'], use_container_width=True)
 
     with tabs[1]:
         st.subheader("Phân công chuyên môn")
+        st.info("Chỉnh sửa trực tiếp trên bảng và lưu.")
         edited_df = st.data_editor(st.session_state['team_members'], use_container_width=True)
-        if st.button("Lưu thay đổi lên Sheet"):
-            save_data(edited_df)
-            st.session_state['team_members'] = edited_df
-            st.success("Đã đồng bộ lên Sheet!")
+        if st.button("Lưu thay đổi"):
+            # Chuyển đổi dữ liệu và cập nhật
+            data = edited_df.to_dict(orient='records')
+            supabase.table("quan_ly_tcm").upsert(data).execute()
+            st.success("Đã đồng bộ lên Supabase!")
+            st.rerun()
