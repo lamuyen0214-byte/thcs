@@ -6,7 +6,8 @@ def render_module():
     
     tabs = st.tabs([
         "Hỏi-Đáp (RAG)", "Trò chơi", "Chấm bài", "Học liệu", "Mô phỏng", 
-        "Phân tích", "Ngân hàng đề", "Sinh Video", "Tương tác", "Cá nhân hóa"
+        "Phân tích", "Ngân hàng đề", "Sinh Video", "Tương tác", "Cá nhân hóa",
+        "📷 Camera chấm bài", "⚡ Trắc nghiệm Live"
     ])
     
     # --- THẺ 1: HỎI ĐÁP (RAG) ---
@@ -31,17 +32,33 @@ def render_module():
         else:
             hinh_thuc_url = st.text_input("Nhập đường dẫn Website (URL):")
             
-        # Gọi module RAG (đã nằm đúng trong khối tabs[0])
         process_rag_engine(uploaded_file, hinh_thuc_url)
 
-    # --- CÁC THẺ CÒN LẠI ---
+    # --- THẺ 2: TRÒ CHƠI ---
     with tabs[1]:
         st.subheader("🎮 Trò chơi")
         st.info("⏳ Đang chờ kết nối module trò chơi...")
+
+    # --- THẺ 3: CHẤM BÀI ---
     with tabs[2]:
         from modules.teaching.grading_engine import render_grading_module
         render_grading_module()    
        
+    # --- CÁC THẺ 4-10: GIAO DIỆN CHỜ ---
     for i in range(3, 10):
         with tabs[i]:
             st.info("⏳ Giao diện đang được cập nhật...")
+
+    # --- THẺ 11: CAMERA CHẤM BÀI (AI VISION) ---
+    with tabs[10]:
+        st.subheader("📷 Camera chấm bài bằng AI Vision")
+        st.info("Sử dụng Camera để quét và chấm điểm tự động bài kiểm tra.")
+        # Thầy sẽ tích hợp module xử lý ảnh tại đây
+        st.warning("🚧 Đang tích hợp thuật toán Computer Vision...")
+
+    # --- THẺ 12: TRẮC NGHIỆM LIVE ---
+    with tabs[11]:
+        st.subheader("⚡ Trắc nghiệm tương tác trực tiếp")
+        st.info("Tổ chức các phiên hỏi đáp, khảo sát thời gian thực cho học sinh.")
+        # Thầy sẽ tích hợp module xử lý real-time tại đây
+        st.warning("🚧 Đang tích hợp hệ thống thời gian thực...")
