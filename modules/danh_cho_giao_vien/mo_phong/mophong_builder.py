@@ -27,14 +27,18 @@ def render_mophong_module(api_key=""):
     </style>
     """, unsafe_allow_html=True)
 
-    # 1. GIAO DIỆN NHẬP LIỆU
-    col1, col2 = st.columns(2)
-    with col1: lop = st.selectbox("Chọn Lớp", ["Lớp 6", "Lớp 7", "Lớp 8", "Lớp 9"], index=0)
-    with col2: chu_de = st.text_input("Chủ đề thí nghiệm / Hiện tượng", placeholder="Ví dụ: Phản ứng hóa học, Sự rơi tự do...")
+    # 1. GIAO DIỆN NHẬP LIỆU (Đã thêm Môn học cùng hàng với Lớp)
+    col1, col2, col3 = st.columns([1, 1, 2])
+    with col1: 
+        lop = st.selectbox("Chọn Lớp", ["Lớp 6", "Lớp 7", "Lớp 8", "Lớp 9"], index=0)
+    with col2: 
+        mon_hoc = st.selectbox("Chọn Môn", ["KHTN", "Vật Lý", "Hóa Học", "Sinh Học", "Tin học", "Công nghệ"], index=0)
+    with col3: 
+        chu_de = st.text_input("Chủ đề thí nghiệm / Hiện tượng", placeholder="Ví dụ: Phản ứng hóa học, Sự rơi tự do...")
 
     loai_mo_phong = st.selectbox("Loại kịch bản thực hành", ["Thí nghiệm ảo (từng bước)", "Quy trình an toàn phòng lab", "Giải thích hiện tượng KHTN", "Thiết kế dụng cụ STEM"])
     file_tl = st.file_uploader("Tải quy trình/tài liệu hướng dẫn (nếu có)", type=['docx', 'pdf'])
-    yeu_cau = st.text_area("Yêu cầu sư phạm bổ sung", placeholder="Ví dụ: Tập trung vào tính an toàn, yêu cầu học sinh thảo luận nhóm...")
+    yeu_cau = st.text_area("Yêu cầu sư phạm bổ sung", placeholder="Ví dụ: Tập trung vào tính an toàn, yêu cầu học sinh thảo luận nhóm...", height=70)
 
     # 2. KHỞI TẠO AI
     if st.button("TỰ ĐỘNG THIẾT KẾ KỊCH BẢN THỰC HÀNH", type="primary", use_container_width=True):
@@ -52,7 +56,7 @@ def render_mophong_module(api_key=""):
             except: st.error("Lỗi đọc file")
 
         final_key = api_key if api_key else get_api_key()
-        prompt = f"Bạn là chuyên gia KHTN. Hãy thiết kế kịch bản '{loai_mo_phong}' cho lớp {lop} với chủ đề '{chu_de}'. Yêu cầu: {yeu_cau}. Dữ liệu tham khảo: {file_context[:3000]}. Xuất ra gồm: Mục tiêu, Dụng cụ, Quy trình thực hiện chi tiết, Lưu ý an toàn và Câu hỏi củng cố."
+        prompt = f"Bạn là chuyên gia {mon_hoc}. Hãy thiết kế kịch bản '{loai_mo_phong}' cho học sinh lớp {lop} với chủ đề '{chu_de}'. Yêu cầu: {yeu_cau}. Dữ liệu tham khảo: {file_context[:3000]}. Xuất ra gồm: Mục tiêu, Dụng cụ, Quy trình thực hiện chi tiết, Lưu ý an toàn và Câu hỏi củng cố."
         
         with st.spinner("AI đang mô phỏng kịch bản..."):
             result = run_ai_with_fallback(prompt=prompt, api_key=final_key, model_mode="flash")
