@@ -1,19 +1,29 @@
 import streamlit as st
 from supabase import create_client
+import pandas as pd
 
-# Kết nối Supabase
+# Kết nối Supabase sử dụng Secrets
 supabase = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
 
 def load_data():
     try:
         response = supabase.table("quan_ly_tcm").select("*").execute()
-        import pandas as pd
         if not response.data:
             return pd.DataFrame(columns=["id", "tên", "ngày sinh", "bằng cấp", "chủ thể", "vai trò", "email", "phone"])
         return pd.DataFrame(response.data)
     except Exception as e:
         st.error(f"Lỗi tải dữ liệu: {e}")
         return pd.DataFrame()
+
+def save_data(df):
+    try:
+        # Xóa hết dữ liệu cũ và thêm lại dữ liệu mới (đơn giản nhất)
+        supabase.table("quan_ly_tcm").delete().neq("id", 0).execute()
+        data = df.to_dict(orient='records')
+        supabase.table("quan_ly_tcm").insert(data).execute()
+        st.success("Đã đồng bộ lên Supabase!")
+    except Exception as e:
+        st.error(f"Lỗi lưu dữ liệu: {e}")
 
 def render_org_management():
     # Load dữ liệu
@@ -37,27 +47,17 @@ def render_org_management():
             
             if st.form_submit_button("➕ Thêm vào danh sách"):
                 new_row = {
-                    "tên": name, 
-                    "ngày sinh": dob, 
-                    "bằng cấp": degree, 
-                    "chủ thể": subject, 
-                    "vai trò": role, 
-                    "email": email, 
-                    "phone": phone
+                    "tên": name, "ngày sinh": dob, "bằng cấp": degree, 
+                    "chủ thể": subject, "vai trò": role, "email": email, "phone": phone
                 }
                 supabase.table("quan_ly_tcm").insert(new_row).execute()
-                st.success("Đã thêm thành công!")
                 st.rerun()
 
         st.dataframe(st.session_state['team_members'], use_container_width=True)
 
     with tabs[1]:
         st.subheader("Phân công chuyên môn")
-        st.info("Chỉnh sửa trực tiếp trên bảng và lưu.")
         edited_df = st.data_editor(st.session_state['team_members'], use_container_width=True)
         if st.button("Lưu thay đổi"):
-            # Chuyển đổi dữ liệu và cập nhật
-            data = edited_df.to_dict(orient='records')
-            supabase.table("quan_ly_tcm").upsert(data).execute()
-            st.success("Đã đồng bộ lên Supabase!")
+            save_data(edited_df)
             st.rerun()
