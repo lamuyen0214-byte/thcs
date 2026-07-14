@@ -1,17 +1,22 @@
 import streamlit as st
 import pandas as pd
 import gspread
+import json
 from oauth2client.service_account import ServiceAccountCredentials
 
-# Cấu hình kết nối Google Sheets
+# Cấu hình
 SPREADSHEET_ID = "1C6642jk_oQ0g9UC2By2qsNxxfQVR0MrZYj52tRdWDlY"
 SHEET_NAME = "TO_CM"
-JSON_FILE = "gen-lang-client-0756857962-85230ff4f039.json"
 
 def get_gsheet_connection():
+    # Lấy thông tin từ Secrets (đã thiết lập trong Streamlit Cloud)
+    # Đảm bảo trong phần Secrets của Streamlit Cloud, thầy đã dán nội dung JSON vào key là GOOGLE_SHEETS_JSON
+    secrets_dict = json.loads(st.secrets["GOOGLE_SHEETS_JSON"])
+    
     scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
-    # Đã đóng ngoặc đầy đủ tại đây
-    creds = ServiceAccountCredentials.from_json_keyfile_name(JSON_FILE, scope)
+    
+    # Sử dụng from_json_keyfile_dict thay vì from_json_keyfile_name
+    creds = ServiceAccountCredentials.from_json_keyfile_dict(secrets_dict, scope)
     client = gspread.authorize(creds)
     return client.open_by_key(SPREADSHEET_ID).worksheet(SHEET_NAME)
 
@@ -30,7 +35,7 @@ def save_data(df):
     try:
         sheet = get_gsheet_connection()
         sheet.clear()
-        # Đã đóng ngoặc đầy đủ tại đây
+        # Chuyển đổi dataframe về dạng list để ghi vào Google Sheet
         sheet.update([df.columns.values.tolist()] + df.values.tolist())
     except Exception as e:
         st.error(f"Lỗi lưu dữ liệu: {e}")
