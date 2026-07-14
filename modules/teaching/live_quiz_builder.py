@@ -1,7 +1,3 @@
-import os
-# Đoạn code kiểm tra đường dẫn
-st.write("https://drive.google.com/file/d/1j1FzoOvKWPsrSlEkBMdObiiKJFmkS5RM/view?usp=sharing", os.getcwd())
-st.write("Danh sách file trong thư mục assets:", os.listdir('assets') if os.path.exists('assets') else "Không tìm thấy thư mục assets!")
 import streamlit as st
 import time
 
