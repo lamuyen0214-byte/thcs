@@ -1,8 +1,7 @@
 import streamlit as st
 from modules.teaching.rag_engine import process_rag_engine
-# 1. IMPORT MODULE TRÒ CHƠI VÀO ĐÂY:
 from modules.teaching.game_builder import render_game_module
-
+from modules.teaching.hoc_lieu_builder import render_hoc_lieu_module
 def render_module():
     st.markdown("## 🌱 Hỗ trợ Giảng dạy")
     
@@ -46,7 +45,18 @@ def render_module():
     with tabs[2]:
         from modules.teaching.grading_engine import render_grading_module
         render_grading_module()    
-       
+    # --- THẺ 4: HỌC LIỆU ---
+    with tabs[3]:
+        st.subheader("📚 Kho Học liệu (Biên soạn tự động)")
+        try:
+            render_hoc_lieu_module()
+        except Exception as e:
+            st.error(f"Lỗi tải module Học liệu: {e}")
+
+    # --- CÁC THẺ 5-10: GIAO DIỆN CHỜ (Đã sửa dải số từ 4 đến 9) ---
+    for i in range(4, 10):
+        with tabs[i]:
+            st.info("⏳ Giao diện đang được cập nhật...")   
     # --- CÁC THẺ 4-10: GIAO DIỆN CHỜ ---
     for i in range(3, 10):
         with tabs[i]:
