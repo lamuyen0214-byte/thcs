@@ -6,69 +6,70 @@ from ai_engine.ai_config import get_api_key
 from ai_engine.ai_runner import run_ai_with_fallback
 
 def load_and_clean_data(file):
-    """Hàm xử lý thông minh để dọn rác file Excel từ SMAS, vnEdu"""
+    """Hàm xử lý thông minh để dọn rác file Excel từ SMAS, vnEdu (Đã bọc thép chống lỗi float)"""
     try:
+        # Xóa con trỏ bộ nhớ về 0 để đọc an toàn
+        if hasattr(file, 'seek'):
+            file.seek(0)
+            
         if file.name.endswith('.csv'):
             return pd.read_csv(file)
             
-        # Đọc file không dùng dòng đầu làm tiêu đề để lấy toàn bộ dữ liệu
+        # Đọc file không dùng dòng đầu làm tiêu đề
         df_raw = pd.read_excel(file, header=None)
         
-        # Tìm dòng có chứa chữ "Họ và tên" hoặc "Họ tên" (Giới hạn tìm trong 20 dòng đầu)
+        # Tìm dòng có chứa chữ "Họ và tên"
         header_idx = -1
         for i in range(min(20, len(df_raw))):
-            row_values = df_raw.iloc[i].astype(str).str.lower().values
+            # ÉP KIỂU TUYỆT ĐỐI BẰNG PYTHON (KHÔNG DÙNG PANDAS) ĐỂ CHỐNG LỖI FLOAT
+            row_values = [str(val).lower() for val in df_raw.iloc[i].values]
             if any('họ và tên' in val or 'họ tên' in val for val in row_values):
                 header_idx = i
                 break
                 
         if header_idx != -1:
-            # PHÁT HIỆN CẤU TRÚC SMAS/VNEDU
-            # Lấy dòng tiêu đề chính (kéo dài các ô bị merge bằng ffill)
             header_row_1 = df_raw.iloc[header_idx].ffill()
             
-            # Lấy dòng tiêu đề phụ (Cột 1, 2, 3, 4 của ĐĐG TX)
             if header_idx + 1 < len(df_raw):
                 header_row_2 = df_raw.iloc[header_idx + 1].fillna('')
             else:
                 header_row_2 = [''] * len(header_row_1)
             
-            # Ghép tiêu đề lại cho phẳng (Ví dụ: "ĐĐG TX (1)")
             new_headers = []
             for h1, h2 in zip(header_row_1, header_row_2):
                 h1_str = str(h1).strip() if pd.notna(h1) else ""
-                h2_str = str(h2).strip() if pd.notna(h2) and str(h2).strip() not in ['', 'nan'] else ""
+                h2_str = str(h2).strip() if pd.notna(h2) and str(h2).strip() not in ['', 'nan', 'none'] else ""
                 
                 if h2_str:
                     new_headers.append(f"{h1_str} ({h2_str})")
                 else:
                     new_headers.append(h1_str)
                     
-            # Cắt bỏ toàn bộ rác ở trên, chỉ lấy phần dữ liệu học sinh
             df_clean = df_raw.iloc[header_idx + 2:].copy()
-            df_clean.columns = new_headers
             
-            # ĐÃ VÁ LỖI TẠI ĐÂY: Ép tất cả tên cột về kiểu chữ (String) để tránh lỗi float/NaN
-            df_clean.columns = df_clean.columns.astype(str)
+            # Ép tên cột về chuỗi tuyệt đối
+            df_clean.columns = [str(c) for c in new_headers]
             
-            # Xóa các cột trống không có tên
-            df_clean = df_clean.loc[:, [c for c in df_clean.columns if c.lower() != 'nan' and c.strip() != '']]
+            # Xóa các cột trống
+            df_clean = df_clean.loc[:, [c for c in df_clean.columns if str(c).lower() not in ['nan', 'none', ''] and str(c).strip() != '']]
             
-            # Xóa các dòng rỗng (Không có dữ liệu ở cột Họ và tên)
-            name_col_list = [c for c in df_clean.columns if 'họ và tên' in c.lower() or 'họ tên' in c.lower()]
+            # Xóa các dòng rỗng
+            name_col_list = [c for c in df_clean.columns if 'họ và tên' in str(c).lower() or 'họ tên' in str(c).lower()]
             if name_col_list:
                 name_col = name_col_list[0]
                 df_clean = df_clean.dropna(subset=[name_col])
             
-            # Tự động ép kiểu các cột Điểm về dạng số học để thống kê
+            # Ép kiểu điểm (Kiểm tra chuỗi an toàn bằng str)
             for col in df_clean.columns:
-                if any(x in col for x in ['ĐĐG', 'TBM', 'Điểm', 'TX', 'GK', 'CK']):
+                if any(x in str(col) for x in ['ĐĐG', 'TBM', 'Điểm', 'TX', 'GK', 'CK']):
                     df_clean[col] = pd.to_numeric(df_clean[col], errors='coerce')
             
             return df_clean
             
         else:
-            # Nếu là file Excel chuẩn mực bình thường, đọc như cũ
+            # Nếu là file Excel thường, đưa con trỏ về 0 và đọc lại bình thường
+            if hasattr(file, 'seek'):
+                file.seek(0)
             return pd.read_excel(file)
             
     except Exception as e:
@@ -102,7 +103,7 @@ def render_analytics_module(api_key=""):
     # 2. XỬ LÝ DASHBOARD & AI PHÂN TÍCH
     if file_diem is not None:
         try:
-            # SỬ DỤNG HÀM LỌC SMAS THÔNG MINH
+            # SỬ DỤNG HÀM LỌC SMAS ĐÃ BỌC THÉP
             df = load_and_clean_data(file_diem)
             
             st.markdown("---")
@@ -111,7 +112,7 @@ def render_analytics_module(api_key=""):
             # Giao diện Tabs cho Dashboard
             tab_data, tab_stats = st.tabs(["1️⃣ Dữ liệu Đã làm sạch", "2️⃣ Thống kê độ phân tán"])
             with tab_data:
-                st.dataframe(df.head(15), use_container_width=True) # Hiển thị 15 dòng đầu siêu sạch đẹp
+                st.dataframe(df.head(15), use_container_width=True)
             with tab_stats:
                 numeric_cols = df.select_dtypes(include=['number']).columns
                 if len(numeric_cols) > 0:
