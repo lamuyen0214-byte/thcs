@@ -1,32 +1,41 @@
 import streamlit as st
 import pandas as pd
-import io
+import gspread
+from oauth2client.service_account import ServiceAccountCredentials
+
+# Cấu hình kết nối Google Sheets
+SPREADSHEET_ID = "1C6642jk_oQ0g9UC2By2qsNxxfQVR0MrZYj52tRdWDlY"
+SHEET_NAME = "TO_CM"
+
+def get_gsheet_connection():
+    # Thầy thay đường dẫn đến file JSON của thầy ở đây
+    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    creds = ServiceAccountCredentials.from_json_keyfile_name("gen-lang-client-0756857962-85230ff4f039.json", scope
+    client = gspread.authorize(creds)
+    return client.open_by_key(SPREADSHEET_ID).worksheet(SHEET_NAME)
+
+def load_data():
+    sheet = get_gsheet_connection()
+    data = sheet.get_all_records()
+    if not data:
+        return pd.DataFrame(columns=["Họ và tên", "Năm sinh", "Trình độ", "Môn dạy", "Chức vụ", "Email", "SĐT"])
+    return pd.DataFrame(data)
+
+def save_data(df):
+    sheet = get_gsheet_connection()
+    sheet.clear() # Xóa cũ
+    sheet.update([df.columns.values.tolist()] + df.values.tolist()) # Ghi mới
 
 def render_org_management():
-    # Khởi tạo data với các cột mới
-    cols = ["Họ và tên", "Năm sinh", "Trình độ", "Môn dạy", "Chức vụ", "Email", "SĐT"]
+    # Load dữ liệu từ Sheet thay vì session_state
     if 'team_members' not in st.session_state:
-        st.session_state['team_members'] = pd.DataFrame(columns=cols)
+        st.session_state['team_members'] = load_data()
 
     tabs = st.tabs(["👥 Danh sách thành viên", "📋 Phân công", "📝 Biên bản", "📂 Kế hoạch", "🏆 Thi đua"])
 
     with tabs[0]:
-        st.subheader("Quản lý thông tin giáo viên")
+        st.subheader("Quản lý thông tin giáo viên (Lưu trực tiếp lên Sheet)")
         
-        # --- PHẦN IMPORT / EXPORT EXCEL ---
-        col_up, col_down = st.columns(2)
-        with col_up:
-            uploaded_file = st.file_uploader("📥 Nhập từ Excel", type=["xlsx"])
-            if uploaded_file:
-                st.session_state['team_members'] = pd.read_excel(uploaded_file)
-                st.success("Đã cập nhật danh sách!")
-        
-        with col_down:
-            buffer = io.BytesIO()
-            with pd.ExcelWriter(buffer, engine='xlsxwriter') as writer:
-                st.session_state['team_members'].to_excel(writer, index=False)
-            st.download_button(label="📤 Tải xuống Excel", data=buffer.getvalue(), file_name="Danh_sach_Giao_vien.xlsx", mime="application/vnd.ms-excel")
-
         # --- PHẦN NHẬP LIỆU ---
         with st.form("add_member_form", clear_on_submit=True):
             c1, c2, c3 = st.columns(3)
@@ -40,20 +49,20 @@ def render_org_management():
             phone = c7.text_input("SĐT")
             
             if st.form_submit_button("➕ Thêm vào danh sách"):
-                new_row = pd.DataFrame([[name, dob, degree, subject, role, email, phone]], columns=cols)
+                new_row = pd.DataFrame([[name, dob, degree, subject, role, email, phone]], columns=st.session_state['team_members'].columns)
                 st.session_state['team_members'] = pd.concat([st.session_state['team_members'], new_row], ignore_index=True)
+                save_data(st.session_state['team_members']) # Lưu ngay lên Sheet
                 st.rerun()
 
-        # Hiển thị danh sách
-        st.dataframe(st.session_state['team_members'], use_container_width=True)
+        # Hiển thị danh sách với Index từ 1
+        df_display = st.session_state['team_members'].copy()
+        df_display.index = df_display.index + 1
+        st.dataframe(df_display, use_container_width=True)
 
-    # Các tab còn lại giữ nguyên
     with tabs[1]:
-        st.info("Sử dụng bảng trên để quản lý phân công.")
-        st.data_editor(st.session_state['team_members'], use_container_width=True)
-    with tabs[2]:
-        st.write("Tính năng biên bản đang được phát triển...")
-    with tabs[3]:
-        st.write("Kế hoạch tổ...")
-    with tabs[4]:
-        st.write("Thành tích...")
+        st.subheader("Phân công chuyên môn")
+        edited_df = st.data_editor(st.session_state['team_members'], use_container_width=True)
+        if st.button("Lưu thay đổi lên Sheet"):
+            save_data(edited_df)
+            st.session_state['team_members'] = edited_df
+            st.success("Đã đồng bộ lên Sheet!")
