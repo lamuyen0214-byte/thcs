@@ -18,3 +18,5 @@ langchain-community
 chromadb
 xlsxwriter
 Pillow
+gspread
+oauth2client
