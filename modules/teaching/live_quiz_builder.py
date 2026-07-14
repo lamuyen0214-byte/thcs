@@ -1,7 +1,5 @@
 import streamlit as st
 import time
-import os
-from PIL import Image
 
 def render_live_quiz_module():
     # Tinh chỉnh CSS
@@ -14,18 +12,14 @@ def render_live_quiz_module():
 
     st.subheader("⚡ Hệ thống Trắc nghiệm Tương tác Trực tiếp")
     
-    # --- PHẦN HIỂN THỊ ẢNH (BẢN VẬN HÀNH ỔN ĐỊNH) ---
-    image_path = os.path.join("assets", "unnamed.jpg")
+    # --- PHẦN HIỂN THỊ ẢNH TỪ LINK (ĐÃ FIX) ---
+    # THẦY DÁN LINK ẢNH VÀO ĐÂY (Link phải kết thúc bằng .jpg, .png hoặc .jpeg)
+    image_url = "https://link-anh-cua-thay-o-day.jpg" 
     
-    if os.path.exists(image_path):
-        try:
-            # Thử mở bằng PIL để kiểm tra xem có phải ảnh thật không
-            img = Image.open(image_path)
-            st.image(img, use_container_width=True)
-        except Exception as e:
-            st.error(f"⚠️ File 'unnamed.jpg' không phải là định dạng ảnh hợp lệ. Thầy hãy lưu lại ảnh bằng phần mềm Paint nhé. Lỗi: {e}")
-    else:
-        st.warning("Chưa tìm thấy ảnh 'unnamed.jpg' trong thư mục 'assets'.")
+    try:
+        st.image(image_url, use_container_width=True)
+    except Exception as e:
+        st.warning("Ảnh đang tải... (Nếu không hiện, thầy hãy kiểm tra lại link ảnh nhé)")
 
     # Khởi tạo session state cho quiz
     if 'quiz_started' not in st.session_state:
