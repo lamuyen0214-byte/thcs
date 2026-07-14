@@ -19,7 +19,7 @@ from modules.danh_cho_giao_vien.rubric.rubric_builder import render_rubric_modul
 from modules.danh_cho_giao_vien.organization.homeroom_builder import render_homeroom_module
 from modules.danh_cho_giao_vien.quan_ly_diem.quan_ly_diem_builder import render_quan_ly_diem_module
 from modules.danh_cho_giao_vien.tao_prompt.prompt_builder import render_prompt_module
-
+from modules.danh_cho_giao_vien.quizizz.quizizz_builder import render_quizizz_module
 # =====================================================================
 # 3. HẰNG SỐ NỀN TẢNG GIAO DIỆN
 # =====================================================================
@@ -176,11 +176,11 @@ def render_module(api_key=""):
         st.info(WELCOME_MESSAGE)
 
     # --- Tab 8: Quizizz nội bộ ---
+        
     with tabs[7]:
         st.subheader("🎯 Quizizz nội bộ (AI sinh & chấm trắc nghiệm)")
-        st.warning("🚧 Phân hệ đang trong quá trình phát triển và tích hợp. Xin vui lòng quay lại sau!")
-        # Nơi gọi hàm tương lai: render_quizizz_module(api_key=api_key)
         st.info(WELCOME_MESSAGE)
+        render_quizizz_module(api_key=api_key)
 
     # --- Tab 9: Mô phỏng thực hành KHTN ---
     with tabs[8]:
