@@ -8,41 +8,32 @@ supabase = create_client(st.secrets["SUPABASE_URL"], st.secrets["SUPABASE_KEY"])
 def load_data():
     try:
         response = supabase.table("quan_ly_tcm").select("*").execute()
+        cols = ["id", "ten", "ngay_sinh", "bang_cap", "chu_the", "vai_tro", "email", "dien_thoai"]
         if not response.data:
-            return pd.DataFrame(columns=["id", "ten", "ngay_sinh", "bang_cap", "chu_the", "vai_tro", "email", "dien_thoai"])
+            return pd.DataFrame(columns=cols)
         return pd.DataFrame(response.data)
     except Exception as e:
         st.error(f"Lỗi tải dữ liệu: {e}")
         return pd.DataFrame()
 
-def save_data(df):
-    try:
-        # Cập nhật từng dòng (upsert)
-        data = df.to_dict(orient='records')
-        supabase.table("quan_ly_tcm").upsert(data).execute()
-        st.success("Đã đồng bộ!")
-    except Exception as e:
-        st.error(f"Lỗi lưu: {e}")
-
 def render_org_management():
     st.session_state['team_members'] = load_data()
-    tabs = st.tabs(["👥 Danh sách", "📋 Phân công"])
+    st.subheader("Quản lý Tổ chuyên môn")
 
-    with tabs[0]:
-        with st.form("add_member", clear_on_submit=True):
-            c1, c2, c3 = st.columns(3)
-            ten = c1.text_input("Họ và tên")
-            ngay_sinh = c2.text_input("Ngày sinh")
-            bang_cap = c3.text_input("Bằng cấp")
-            c4, c5, c6, c7 = st.columns(4)
-            chu_the = c4.text_input("Môn dạy")
-            vai_tro = c5.selectbox("Vai trò", ["Tổ trưởng", "Tổ phó", "Giáo viên", "Thư ký"])
-            email = c6.text_input("Email")
-            dien_thoai = c7.text_input("SĐT")
-            
-            if st.form_submit_button("➕ Thêm thành viên"):
+    with st.form("add_member", clear_on_submit=True):
+        c1, c2, c3, c4 = st.columns(4)
+        ten = c1.text_input("Họ và tên")
+        ngay_sinh = c2.text_input("Ngày sinh")
+        bang_cap = c3.text_input("Bằng cấp")
+        c5, c6, c7, c8 = st.columns(4)
+        chu_the = c5.text_input("Môn dạy")
+        vai_tro = c6.selectbox("Vai trò", ["Tổ trưởng", "Tổ phó", "Giáo viên", "Thư ký"])
+        email = c7.text_input("Email")
+        dien_thoai = c8.text_input("SĐT")
+        
+        # Dòng dưới đây là dòng bị lỗi, em đã lùi đầu dòng (indent) đúng cách cho thầy
+        if st.form_submit_button("➕ Thêm thành viên"):
             try:
-                # Đảm bảo các key ở đây KHÔNG CÓ DẤU, khớp 100% với tên cột trên Supabase
                 new_row = {
                     "ten": ten, 
                     "ngay_sinh": ngay_sinh, 
@@ -57,3 +48,5 @@ def render_org_management():
                 st.rerun()
             except Exception as e:
                 st.error(f"Lỗi: {e}")
+
+    st.dataframe(st.session_state['team_members'], use_container_width=True)
