@@ -175,7 +175,6 @@ def render_module(api_key=""):
         st.subheader("💡 Công cụ Tạo prompt")
         render_prompt_module(api_key=api_key)
         st.info(WELCOME_MESSAGE)
-
     # --- Tab 8: Quizizz nội bộ ---
         
     with tabs[7]:
@@ -186,6 +185,6 @@ def render_module(api_key=""):
     # --- Tab 9: Mô phỏng thực hành KHTN ---
     with tabs[8]:
         st.subheader("🔬 Mô phỏng thực hành KHTN")
-        st.warning("🚧 Phân hệ đang trong quá trình phát triển và tích hợp. Xin vui lòng quay lại sau!")
-        # Nơi gọi hàm tương lai: render_mophong_module(api_key=api_key)
         st.info(WELCOME_MESSAGE)
+        render_mophong_module(api_key=api_key)
+ 
