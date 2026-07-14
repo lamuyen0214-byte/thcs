@@ -54,7 +54,16 @@ def render_live_quiz_module():
             st.write("Đang chờ phản hồi từ học sinh...")
         else:
             st.warning("Hệ thống đang ở chế độ chờ. Hãy nhấn nút Bắt đầu để kích hoạt phiên Quiz.")
-            st.image("assets/unnamed.jpg", use_container_width=True)
+            import os
+
+# Đường dẫn an toàn tuyệt đối, không sợ sai vị trí
+image_path = os.path.join("assets", "unnamed.jpg")
+
+# Kiểm tra lần cuối trước khi hiện ảnh
+if os.path.exists(image_path):
+    st.image(image_path, use_container_width=True)
+else:
+    st.error(f"Thầy ơi, chương trình đang đứng ở thư mục: {os.getcwd()}. Nó không thấy file tại: {os.path.abspath(image_path)}")
 
     st.markdown("---")
     st.caption("💡 Lưu ý: Tính năng này giả lập môi trường server local. Để kết nối với thiết bị học sinh thực tế qua mạng LAN, hệ thống cần thêm module Websocket chuyên dụng.")
