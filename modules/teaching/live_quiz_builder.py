@@ -1,6 +1,7 @@
 import streamlit as st
 import time
-import os  # <--- Dòng này là chìa khóa để sửa lỗi!
+import os
+from PIL import Image
 
 def render_live_quiz_module():
     # Tinh chỉnh CSS
@@ -13,10 +14,16 @@ def render_live_quiz_module():
 
     st.subheader("⚡ Hệ thống Trắc nghiệm Tương tác Trực tiếp")
     
-    # --- PHẦN HIỂN THỊ ẢNH (ĐÃ FIX LỖI ĐƯỜNG DẪN) ---
+    # --- PHẦN HIỂN THỊ ẢNH (BẢN VẬN HÀNH ỔN ĐỊNH) ---
     image_path = os.path.join("assets", "unnamed.jpg")
+    
     if os.path.exists(image_path):
-        st.image(image_path, use_container_width=True)
+        try:
+            # Thử mở bằng PIL để kiểm tra xem có phải ảnh thật không
+            img = Image.open(image_path)
+            st.image(img, use_container_width=True)
+        except Exception as e:
+            st.error(f"⚠️ File 'unnamed.jpg' không phải là định dạng ảnh hợp lệ. Thầy hãy lưu lại ảnh bằng phần mềm Paint nhé. Lỗi: {e}")
     else:
         st.warning("Chưa tìm thấy ảnh 'unnamed.jpg' trong thư mục 'assets'.")
 
