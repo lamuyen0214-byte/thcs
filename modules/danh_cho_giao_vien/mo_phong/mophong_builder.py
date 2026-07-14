@@ -58,12 +58,21 @@ def render_mophong_module(api_key=""):
         final_key = api_key if api_key else get_api_key()
         prompt = f"Bạn là chuyên gia {mon_hoc}. Hãy thiết kế kịch bản '{loai_mo_phong}' cho học sinh lớp {lop} với chủ đề '{chu_de}'. Yêu cầu: {yeu_cau}. Dữ liệu tham khảo: {file_context[:3000]}. Xuất ra gồm: Mục tiêu, Dụng cụ, Quy trình thực hiện chi tiết, Lưu ý an toàn và Câu hỏi củng cố."
         
-        with st.spinner("AI đang mô phỏng kịch bản..."):
-            result = run_ai_with_fallback(prompt=prompt, api_key=final_key, model_mode="flash")
-            if result.get("success"):
-                st.session_state['current_mophong_data'] = {"title": chu_de, "content": result.get("text")}
-                st.rerun()
-            else: st.error("AI không phản hồi.")
+        # ... (phần trên giữ nguyên)
+        with st.spinner("AI đang thiết kế..."):
+            try:
+                # Thay model thành gemini-1.5-flash để đảm bảo ổn định
+                result = run_ai_with_fallback(prompt=prompt, api_key=final_key, model_mode="flash")
+                
+                if result.get("success"):
+                    st.session_state['current_quizizz_data'] = {"title": ten_bai, "content": result.get("text")}
+                    st.rerun()
+                else:
+                    # HIỂN THỊ LỖI CỤ THỂ ĐỂ TA BIẾT NGUYÊN NHÂN
+                    st.error(f"❌ AI từ chối phản hồi. Chi tiết lỗi: {result.get('error', 'Không xác định')}")
+                    st.write("Debug thông tin:", result) 
+            except Exception as e:
+                st.error(f"❌ Lỗi ngoại lệ: {str(e)}")
 
     # 3. KẾT QUẢ
     if 'current_mophong_data' in st.session_state:
