@@ -85,7 +85,7 @@ def render_org_management():
                     uploaded_file = st.file_uploader("Upload file Danh sách (.xlsx)", type=["xlsx"], key="file_ds")
                     if uploaded_file is not None:
                         try:
-                            df_import = pd.read_excel(uploaded_file).fillna("") # Xóa lỗi ô trống
+                            df_import = pd.read_excel(uploaded_file, dtype=str).fillna("") # Xóa lỗi ô trống
                             st.dataframe(df_import, height=150)
                             if st.button("🚀 Nạp vào hệ thống"):
                                 import_data = df_import.to_dict(orient="records")
