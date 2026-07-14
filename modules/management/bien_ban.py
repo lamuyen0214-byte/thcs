@@ -98,15 +98,12 @@ def render_bien_ban(supabase):
         st.markdown("---")
         st.markdown("### 🤖 Trợ lý AI Hỗ trợ viết Biên bản")
         
-        # --- GIẢI QUYẾT TRIỆT ĐỂ VẤN ĐỀ API KEY ---
         api_key = ""
-        # 1. Thử quét tìm key trong hệ thống
         for k, v in st.session_state.items():
             if isinstance(v, str) and (v.startswith("AIza") or v.startswith("AQ.")):
                 api_key = v
                 break
                 
-        # 2. Nếu không thấy, hiện ô nhập trực tiếp cho chắc chắn
         if not api_key:
             st.warning("⚠️ Ứng dụng chưa nhận được Key từ thanh menu. Thầy vui lòng dán lại API Key vào ô dưới đây để kết nối nhé:")
             api_key = st.text_input("🔑 Nhập Gemini API Key tại đây:", type="password")
@@ -120,11 +117,10 @@ def render_bien_ban(supabase):
 
         if st.button("✨ Nhờ AI Viết Biên Bản", type="primary"):
             if not api_key:
-                st.error("❌ Thầy chưa dán API Key. Hãy dán vào ô phía trên để sử dụng AI ạ!")
+                st.error("❌ Thầy chưa dán API Key. Hãy dán vào thanh menu phía trên để sử dụng AI ạ!")
             else:
                 try:
                     genai.configure(api_key=api_key)
-                    model = genai.GenerativeModel('gemini-1.5-flash')
                     
                     prompt_base = f"Đóng vai một thư ký cuộc họp chuyên nghiệp của trường học. Hãy viết chi tiết phần [NỘI DUNG] và [KẾT LUẬN] cho biên bản '{tieu_de}'. "
                     
@@ -146,8 +142,26 @@ def render_bien_ban(supabase):
                         
                     prompt_base += "\n\nHãy trả về kết quả theo cấu trúc sau:\nPHẦN 1: NỘI DUNG\n(viết chi tiết ở đây)\nPHẦN 2: KẾT LUẬN\n(viết chi tiết ở đây)"
 
-                    with st.spinner("🤖 AI đang đọc tài liệu và soạn biên bản. Thầy chờ vài giây nhé..."):
-                        response = model.generate_content(prompt_base)
+                    with st.spinner("🤖 AI đang đọc tài liệu và thử các mô hình để soạn biên bản. Thầy chờ vài giây nhé..."):
+                        
+                        # VÒNG LẶP THÔNG MINH: Thử lần lượt các Model chuẩn nhất hiện nay
+                        models_to_try = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-1.0-pro']
+                        response = None
+                        last_error = None
+                        
+                        for model_name in models_to_try:
+                            try:
+                                model = genai.GenerativeModel(model_name)
+                                response = model.generate_content(prompt_base)
+                                break  # Nếu thành công, thoát khỏi vòng lặp ngay lập tức
+                            except Exception as e:
+                                last_error = e
+                                continue  # Nếu lỗi (ví dụ 404), tiếp tục thử Model tiếp theo
+                        
+                        # Nếu thử hết cả 3 cái mà vẫn lỗi thì mới báo ra màn hình
+                        if response is None:
+                            raise last_error
+
                         ai_text = response.text
                         
                         try:
@@ -156,7 +170,7 @@ def render_bien_ban(supabase):
                                 phan_2 = ai_text.split("PHẦN 2: KẾT LUẬN")[1].strip()
                             else:
                                 phan_1 = ai_text
-                                phan_2 = "Không có kết luận."
+                                phan_2 = "Không có kết luận cụ thể."
                                 
                             st.session_state['ai_noi_dung'] = phan_1
                             st.session_state['ai_ket_luan'] = phan_2
@@ -164,11 +178,10 @@ def render_bien_ban(supabase):
                             st.session_state['ai_noi_dung'] = ai_text
                             st.session_state['ai_ket_luan'] = ""
                         
-                        # Làm mới trang để cập nhật nội dung vào khung text
                         st.rerun()
                         
                 except Exception as e:
-                    st.error(f"❌ Lỗi từ AI: {e}")
+                    st.error(f"❌ Lỗi từ AI: Thầy kiểm tra lại đường truyền mạng hoặc API Key nhé. Chi tiết lỗi: {e}")
 
         noi_dung = st.text_area("1. Nội dung cuộc họp (Có thể chỉnh sửa):", value=st.session_state['ai_noi_dung'], height=250)
         ket_luan = st.text_area("2. Kết luận (Có thể chỉnh sửa):", value=st.session_state['ai_ket_luan'], height=150)
