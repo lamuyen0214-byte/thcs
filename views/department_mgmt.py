@@ -1,8 +1,10 @@
 import streamlit as st
-
+from modules.management.org_manager import render_org_management
 def render_module():
     st.markdown("<h2 style='color: #27AE60;'>📊 Phân hệ: Quản lý Tổ chuyên môn</h2>", unsafe_allow_html=True)
-    
+
+def render_management_view():
+    render_org_management()
     # Định nghĩa các thẻ chức năng
     tabs = st.tabs([
         "Danh sách thành viên", 
