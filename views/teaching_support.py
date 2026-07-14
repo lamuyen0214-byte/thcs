@@ -4,7 +4,7 @@ from modules.teaching.game_builder import render_game_module
 from modules.teaching.hoc_lieu_builder import render_hoc_lieu_module
 from modules.teaching.simulation_builder import render_simulation_module
 from modules.teaching.analytics_builder import render_analytics_module
-
+from modules.teaching.bank_builder import render_bank_module
 def render_module():
     st.markdown("## 🌱 Hỗ trợ Giảng dạy")
     
@@ -63,20 +63,15 @@ def render_module():
         except Exception as e:
             st.error(f"Lỗi tải module Phân tích: {e}. (Gợi ý: Thầy kiểm tra đã cài thư viện pandas và openpyxl chưa nhé)")
 
-    # --- CÁC THẺ 7-10: GIAO DIỆN CHỜ ---
-    # Chỗ này em đã dọn lại chỉ còn ĐÚNG 1 VÒNG LẶP duy nhất từ Thẻ 7 (index 6) đến Thẻ 10 (index 9)
-    for i in range(6, 10):
+    # --- THẺ 7: NGÂN HÀNG ĐỀ ---
+    with tabs[6]:
+        st.subheader("📚 Ngân hàng đề & Trộn đề thông minh")
+        try:
+            render_bank_module()
+        except Exception as e:
+            st.error(f"Lỗi tải module Ngân hàng đề: {e}")
+
+    # --- CÁC THẺ 8-10: GIAO DIỆN CHỜ (Sửa dải số thành từ 7 đến 9) ---
+    for i in range(7, 10):
         with tabs[i]:
             st.info("⏳ Giao diện đang được cập nhật...")
-
-    # --- THẺ 11: CAMERA CHẤM BÀI ---
-    with tabs[10]:
-        st.subheader("📷 Camera chấm bài bằng AI Vision")
-        st.info("Sử dụng Camera để quét và chấm điểm tự động bài kiểm tra.")
-        st.warning("🚧 Đang tích hợp thuật toán Computer Vision...")
-
-    # --- THẺ 12: TRẮC NGHIỆM LIVE ---
-    with tabs[11]:
-        st.subheader("⚡ Trắc nghiệm tương tác trực tiếp")
-        st.info("Tổ chức các phiên hỏi đáp, khảo sát thời gian thực cho học sinh.")
-        st.warning("🚧 Đang tích hợp hệ thống thời gian thực...")
