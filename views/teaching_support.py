@@ -9,6 +9,7 @@ from modules.teaching.video_builder import render_video_module
 from modules.teaching.interaction_builder import render_interaction_module
 from modules.teaching.personalization_builder import render_personalization_module
 from modules.teaching.camera_builder import render_camera_module
+from modules.teaching.live_quiz_builder import render_live_quiz_module
 def render_module():
     st.markdown("## 🌱 Hỗ trợ Giảng dạy")
     
@@ -109,3 +110,10 @@ def render_module():
             render_camera_module()
         except Exception as e:
             st.error(f"Lỗi tải module Camera: {e}")
+    # --- THẺ 12: TRẮC NGHIỆM LIVE ---
+    with tabs[11]:
+        st.subheader("⚡ Trắc nghiệm tương tác trực tiếp")
+        try:
+            render_live_quiz_module()
+        except Exception as e:
+            st.error(f"Lỗi tải module Trắc nghiệm Live: {e}")
