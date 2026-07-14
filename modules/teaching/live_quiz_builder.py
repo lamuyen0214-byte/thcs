@@ -1,5 +1,6 @@
 import streamlit as st
 import time
+import os  # <--- Dòng này là chìa khóa để sửa lỗi!
 
 def render_live_quiz_module():
     # Tinh chỉnh CSS
@@ -12,6 +13,13 @@ def render_live_quiz_module():
 
     st.subheader("⚡ Hệ thống Trắc nghiệm Tương tác Trực tiếp")
     
+    # --- PHẦN HIỂN THỊ ẢNH (ĐÃ FIX LỖI ĐƯỜNG DẪN) ---
+    image_path = os.path.join("assets", "unnamed.jpg")
+    if os.path.exists(image_path):
+        st.image(image_path, use_container_width=True)
+    else:
+        st.warning("Chưa tìm thấy ảnh 'unnamed.jpg' trong thư mục 'assets'.")
+
     # Khởi tạo session state cho quiz
     if 'quiz_started' not in st.session_state:
         st.session_state['quiz_started'] = False
@@ -46,24 +54,14 @@ def render_live_quiz_module():
                 progress.progress(i + 1)
             
             col_a, col_b = st.columns(2)
-            col_a.metric("Số HS tham gia", "28/35")
-            col_b.metric("Câu hỏi hiện tại", f"{st.session_state['current_q'] + 1}/{so_cau}")
+            col_a.metric("Số HS tham gia", "0")
+            col_b.metric("Câu hỏi hiện tại", f"0/{so_cau}")
             
             st.write("---")
             st.markdown("### 📊 Kết quả trực tiếp (Live Feed)")
             st.write("Đang chờ phản hồi từ học sinh...")
         else:
             st.warning("Hệ thống đang ở chế độ chờ. Hãy nhấn nút Bắt đầu để kích hoạt phiên Quiz.")
-            import os
-
-# Đường dẫn an toàn tuyệt đối, không sợ sai vị trí
-image_path = os.path.join("assets", "unnamed.jpg")
-
-# Kiểm tra lần cuối trước khi hiện ảnh
-if os.path.exists(image_path):
-    st.image(image_path, use_container_width=True)
-else:
-    st.error(f"Thầy ơi, chương trình đang đứng ở thư mục: {os.getcwd()}. Nó không thấy file tại: {os.path.abspath(image_path)}")
 
     st.markdown("---")
-    st.caption("💡 Lưu ý: Tính năng này giả lập môi trường server local. Để kết nối với thiết bị học sinh thực tế qua mạng LAN, hệ thống cần thêm module Websocket chuyên dụng.")
+    st.caption("💡 Lưu ý: Tính năng này giả lập môi trường server local.")
