@@ -48,12 +48,17 @@ def load_and_clean_data(file):
             df_clean = df_raw.iloc[header_idx + 2:].copy()
             df_clean.columns = new_headers
             
+            # ĐÃ VÁ LỖI TẠI ĐÂY: Ép tất cả tên cột về kiểu chữ (String) để tránh lỗi float/NaN
+            df_clean.columns = df_clean.columns.astype(str)
+            
             # Xóa các cột trống không có tên
-            df_clean = df_clean.loc[:, [c for c in df_clean.columns if str(c).lower() != 'nan' and c != '']]
+            df_clean = df_clean.loc[:, [c for c in df_clean.columns if c.lower() != 'nan' and c.strip() != '']]
             
             # Xóa các dòng rỗng (Không có dữ liệu ở cột Họ và tên)
-            name_col = [c for c in df_clean.columns if 'họ và tên' in c.lower() or 'họ tên' in c.lower()][0]
-            df_clean = df_clean.dropna(subset=[name_col])
+            name_col_list = [c for c in df_clean.columns if 'họ và tên' in c.lower() or 'họ tên' in c.lower()]
+            if name_col_list:
+                name_col = name_col_list[0]
+                df_clean = df_clean.dropna(subset=[name_col])
             
             # Tự động ép kiểu các cột Điểm về dạng số học để thống kê
             for col in df_clean.columns:
@@ -67,7 +72,7 @@ def load_and_clean_data(file):
             return pd.read_excel(file)
             
     except Exception as e:
-        raise Exception(f"Lỗi khi dọn dẹp dữ liệu: {e}")
+        raise Exception(f"{e}")
 
 
 def render_analytics_module(api_key=""):
