@@ -1,9 +1,15 @@
 import streamlit as st
 import io
 import docx
-from gtts import gTTS
 from ai_engine.ai_config import get_api_key
 from ai_engine.ai_runner import run_ai_with_fallback
+
+# Bẫy lỗi thông minh: Nếu chưa cài gTTS, hệ thống vẫn chạy và báo lỗi mềm trên giao diện
+try:
+    from gtts import gTTS
+    HAS_GTTS = True
+except ImportError:
+    HAS_GTTS = False
 
 def render_video_module(api_key=""):
     # Tinh chỉnh CSS
@@ -60,8 +66,7 @@ Hãy chia nhỏ thành các cảnh ngắn (mỗi cảnh 5-10 giây). Lời bình
                 if result.get("success"):
                     st.session_state['current_video_script'] = {
                         "title": chu_de_video, 
-                        "content": result.get("text"),
-                        "voice_text": "" # Chuẩn bị biến lưu text để đọc giọng nói
+                        "content": result.get("text")
                     }
                 else:
                     st.error(f"❌ Lỗi AI: {result.get('error')}")
@@ -74,7 +79,6 @@ Hãy chia nhỏ thành các cảnh ngắn (mỗi cảnh 5-10 giây). Lời bình
         with st.expander("📝 KỊCH BẢN PHÂN CẢNH VIDEO (SCENE SCRIPT)", expanded=True):
             st.markdown(st.session_state['current_video_script']['content'])
             
-            # Xuất Kịch bản ra Word
             def export_script_to_word(data):
                 doc = docx.Document()
                 doc.add_heading(f"KỊCH BẢN VIDEO: {data['title'].upper()}", 0)
@@ -90,17 +94,17 @@ Hãy chia nhỏ thành các cảnh ngắn (mỗi cảnh 5-10 giây). Lời bình
                     word_file = export_script_to_word(st.session_state['current_video_script'])
                     st.download_button("Xác nhận Tải Kịch bản", data=word_file, file_name=f"Kich_Ban_{chu_de_video.replace(' ', '_')}.docx", use_container_width=True)
             
-            # Công cụ sinh Audio thuyết minh nháp
             with col_btn2:
                 st.info("💡 Mẹo: Copy cột 'Lời bình' ở trên dán vào hộp dưới đây để AI đọc thử.")
             
             text_to_read = st.text_area("🎙️ Nhập lời bình (Voiceover) để tạo File Âm thanh:", placeholder="Dán lời thoại vào đây...")
             
             if st.button("🔊 Tạo Giọng Đọc Thuyết Minh (AI Voice)", use_container_width=True):
-                if text_to_read.strip():
-                    with st.spinner("Đang tổng hợp giọng nói..."):
+                if not HAS_GTTS:
+                    st.error("⚠️ Hệ thống chưa được cài đặt thư viện giọng nói. Thầy vui lòng mở Terminal gõ lệnh: `pip install gTTS` và khởi động lại ứng dụng.")
+                elif text_to_read.strip():
+                    with st.spinner("Đang tổng hợp giọng nói tiếng Việt..."):
                         try:
-                            # Sử dụng gTTS để đọc tiếng Việt (ngôn ngữ 'vi')
                             tts = gTTS(text=text_to_read, lang='vi', slow=False)
                             audio_buffer = io.BytesIO()
                             tts.write_to_fp(audio_buffer)
@@ -109,6 +113,6 @@ Hãy chia nhỏ thành các cảnh ngắn (mỗi cảnh 5-10 giây). Lời bình
                             st.success("Tạo âm thanh thành công! Nghe thử hoặc tải về bên dưới:")
                             st.audio(audio_buffer, format='audio/mp3')
                         except Exception as e:
-                            st.error(f"Lỗi tạo giọng nói: {e}. Vui lòng cài đặt thư viện gTTS (pip install gTTS).")
+                            st.error(f"Lỗi tạo giọng nói: {e}")
                 else:
                     st.warning("Vui lòng nhập nội dung để AI đọc.")
