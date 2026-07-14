@@ -95,85 +95,16 @@ def render_org_management():
                 except Exception as e:
                     st.error(f"Lỗi: {e}")
 
-    # TAB 3: BIÊN BẢN (THIẾT KẾ MỚI)
+    # ... (các tab danh sách, phân công giữ nguyên) ...
+
+    # TAB 3: BIÊN BẢN (GỌI TỪ FILE BIEN_BAN.PY)
     with tabs[2]:
-        st.markdown("## 📝 Quản Lý Hồ Sơ Biên Bản Tổ Chuyên Môn")
-        
-        bb_tabs = st.tabs(["📋 Kho Biên Bản", "➕ Viết Biên Bản Mới"])
-        
-        # Giao diện Nhập biên bản mới
-        with bb_tabs[1]:
-            st.markdown("### ✍️ Soạn thảo biên bản")
-            with st.form("form_bien_ban", clear_on_submit=True):
-                c1, c2 = st.columns([2, 1])
-                tieu_de = c1.text_input("Tiêu đề cuộc họp", placeholder="VD: Sinh hoạt chuyên môn định kỳ tháng 9")
-                ngay_hop = c2.date_input("Ngày họp")
-                
-                c3, c4, c5 = st.columns(3)
-                dia_diem = c3.text_input("Địa điểm", value="Văn phòng trường")
-                chu_tri = c4.text_input("Chủ trì", value="Lê Hồng Dưỡng")
-                thu_ky = c5.text_input("Thư ký", placeholder="Nhập tên thư ký...")
-                
-                vang_mat = st.text_input("Thành viên vắng mặt (có phép/không phép)", placeholder="VD: Cô Trang (có phép), Không có (để trống)")
-                
-                st.markdown("**Nội dung cuộc họp:**")
-                noi_dung = st.text_area("Nhập chi tiết nội dung triển khai...", height=200)
-                
-                st.markdown("**Kết luận / Biểu quyết:**")
-                ket_luan = st.text_area("Nhập kết luận của chủ tọa...", height=100)
-                
-                if st.form_submit_button("💾 Lưu Biên Bản", type="primary"):
-                    new_bb = {
-                        "tieu_de": tieu_de,
-                        "ngay_hop": str(ngay_hop),
-                        "dia_diem": dia_diem,
-                        "chu_tri": chu_tri,
-                        "thu_ky": thu_ky,
-                        "vang_mat": vang_mat if vang_mat else "Không",
-                        "noi_dung": noi_dung,
-                        "ket_luan": ket_luan
-                    }
-                    try:
-                        supabase.table("bien_ban").insert(new_bb).execute()
-                        st.success("🎉 Đã lưu biên bản thành công!")
-                        st.rerun()
-                    except Exception as e:
-                        st.error("⚠️ Lỗi: Không thể lưu! Có thể thầy chưa tạo bảng 'bien_ban' trên Supabase.")
-        
-        # Giao diện Xem danh sách biên bản
-        with bb_tabs[0]:
-            df_bb = load_bien_ban_data()
-            if df_bb.empty:
-                st.info("📭 Tổ chuyên môn chưa có biên bản nào được lưu.")
-            else:
-                st.markdown(f"**Tổng số biên bản đã lưu:** `{len(df_bb)}`")
-                for index, row in df_bb.iterrows():
-                    # Thiết kế mỗi biên bản như một tập hồ sơ có thể xổ ra
-                    with st.expander(f"📌 {row['ngay_hop']} | {row['tieu_de']}"):
-                        st.markdown(f"""
-                        <div style='background-color: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #e0e0e0;'>
-                            <h3 style='text-align: center; color: #1f3a93;'>BIÊN BẢN CUỘC HỌP</h3>
-                            <p style='text-align: center; font-style: italic;'>{row['tieu_de']}</p>
-                            <hr>
-                            <p><b>⏰ Thời gian:</b> {row['ngay_hop']}</p>
-                            <p><b>📍 Địa điểm:</b> {row['dia_diem']}</p>
-                            <p><b>👤 Chủ trì:</b> {row['chu_tri']} &nbsp;&nbsp;&nbsp;&nbsp; <b>📝 Thư ký:</b> {row['thu_ky']}</p>
-                            <p><b>🚫 Vắng mặt:</b> {row['vang_mat']}</p>
-                            <hr>
-                            <h4 style='color: #2c3e50;'>I. Nội dung triển khai:</h4>
-                            <p style='white-space: pre-wrap;'>{row['noi_dung']}</p>
-                            <br>
-                            <h4 style='color: #2c3e50;'>II. Kết luận:</h4>
-                            <p style='white-space: pre-wrap;'>{row['ket_luan']}</p>
-                        </div>
-                        """, unsafe_allow_html=True)
-                        
-                        # Nút xóa biên bản
-                        if st.button("🗑️ Xóa biên bản này", key=f"del_{row['id']}"):
-                            supabase.table("bien_ban").delete().eq("id", row['id']).execute()
-                            st.rerun()
+        # Trỏ tới thư mục chứa file bien_ban.py
+        from modules.management.bien_ban import render_bien_ban
+        render_bien_ban(supabase)
 
     with tabs[3]:
         st.write("Đang phát triển...")
+
     with tabs[4]:
         st.write("Đang phát triển...")
