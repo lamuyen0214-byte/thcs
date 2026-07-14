@@ -6,22 +6,18 @@ from ai_engine.ai_config import get_api_key
 from ai_engine.ai_runner import run_ai_with_fallback
 
 def load_and_clean_data(file):
-    """Hàm xử lý thông minh để dọn rác file Excel từ SMAS, vnEdu (Đã bọc thép chống lỗi float)"""
+    """Hàm xử lý thông minh để dọn rác file Excel từ SMAS, vnEdu"""
     try:
-        # Xóa con trỏ bộ nhớ về 0 để đọc an toàn
         if hasattr(file, 'seek'):
             file.seek(0)
             
         if file.name.endswith('.csv'):
             return pd.read_csv(file)
             
-        # Đọc file không dùng dòng đầu làm tiêu đề
         df_raw = pd.read_excel(file, header=None)
         
-        # Tìm dòng có chứa chữ "Họ và tên"
         header_idx = -1
         for i in range(min(20, len(df_raw))):
-            # ÉP KIỂU TUYỆT ĐỐI BẰNG PYTHON (KHÔNG DÙNG PANDAS) ĐỂ CHỐNG LỖI FLOAT
             row_values = [str(val).lower() for val in df_raw.iloc[i].values]
             if any('họ và tên' in val or 'họ tên' in val for val in row_values):
                 header_idx = i
@@ -46,28 +42,29 @@ def load_and_clean_data(file):
                     new_headers.append(h1_str)
                     
             df_clean = df_raw.iloc[header_idx + 2:].copy()
-            
-            # Ép tên cột về chuỗi tuyệt đối
             df_clean.columns = [str(c) for c in new_headers]
             
             # Xóa các cột trống
             df_clean = df_clean.loc[:, [c for c in df_clean.columns if str(c).lower() not in ['nan', 'none', ''] and str(c).strip() != '']]
             
-            # Xóa các dòng rỗng
+            # Xóa các dòng rỗng (Không có dữ liệu ở cột Họ và tên)
             name_col_list = [c for c in df_clean.columns if 'họ và tên' in str(c).lower() or 'họ tên' in str(c).lower()]
             if name_col_list:
                 name_col = name_col_list[0]
                 df_clean = df_clean.dropna(subset=[name_col])
             
-            # Ép kiểu điểm (Kiểm tra chuỗi an toàn bằng str)
+            # Ép kiểu điểm về dạng số
             for col in df_clean.columns:
                 if any(x in str(col) for x in ['ĐĐG', 'TBM', 'Điểm', 'TX', 'GK', 'CK']):
                     df_clean[col] = pd.to_numeric(df_clean[col], errors='coerce')
             
+            # TỰ ĐỘNG ẨN CÁC CỘT MÃ KHÔNG CẦN THIẾT
+            cols_to_hide = [c for c in df_clean.columns if any(x in str(c).lower() for x in ['studentid', 'mã học sinh', 'stt'])]
+            df_clean = df_clean.drop(columns=cols_to_hide, errors='ignore')
+            
             return df_clean
             
         else:
-            # Nếu là file Excel thường, đưa con trỏ về 0 và đọc lại bình thường
             if hasattr(file, 'seek'):
                 file.seek(0)
             return pd.read_excel(file)
@@ -77,7 +74,6 @@ def load_and_clean_data(file):
 
 
 def render_analytics_module(api_key=""):
-    # Tinh chỉnh CSS
     st.markdown("""
     <style>
     div[data-testid="stAppViewBlockContainer"], .main .block-container { padding-top: 3.5rem !important; padding-bottom: 3rem !important; }
@@ -87,7 +83,6 @@ def render_analytics_module(api_key=""):
     </style>
     """, unsafe_allow_html=True)
 
-    # 1. GIAO DIỆN NHẬP LIỆU ĐA CHIỀU
     col_mode, col_req = st.columns([1, 1])
     with col_mode:
         che_do = st.selectbox("🎯 Chọn Chế độ Phân tích", [
@@ -100,25 +95,34 @@ def render_analytics_module(api_key=""):
     with col_req:
         yeu_cau = st.text_area("Yêu cầu trọng tâm cho AI (Tùy chọn)", placeholder="Ví dụ: Chỉ ra 5 học sinh yếu nhất cần phụ đạo gấp, phân tích xem học sinh hổng kiến thức ở câu nào nhiều nhất...", height=115)
 
-    # 2. XỬ LÝ DASHBOARD & AI PHÂN TÍCH
     if file_diem is not None:
         try:
-            # SỬ DỤNG HÀM LỌC SMAS ĐÃ BỌC THÉP
             df = load_and_clean_data(file_diem)
             
             st.markdown("---")
             st.markdown("### 📊 Dashboard Thống kê Nhanh")
             
-            # Giao diện Tabs cho Dashboard
             tab_data, tab_stats = st.tabs(["1️⃣ Dữ liệu Đã làm sạch", "2️⃣ Thống kê độ phân tán"])
+            
             with tab_data:
-                st.dataframe(df.head(15), use_container_width=True)
+                # THIẾT LẬP CẤU HÌNH ĐỘ RỘNG CỘT (ÉP NHỎ CỘT ĐIỂM)
+                col_cfg = {}
+                for c in df.columns:
+                    if 'họ' in str(c).lower() or 'tên' in str(c).lower():
+                        # Cột tên thì để độ rộng vừa (medium) để không bị khuất chữ
+                        col_cfg[c] = st.column_config.TextColumn(str(c), width="medium")
+                    else:
+                        # Tất cả các cột điểm, nhận xét... ép nhỏ lại (small)
+                        col_cfg[c] = st.column_config.Column(str(c), width="small")
+                        
+                st.dataframe(df.head(15), column_config=col_cfg, use_container_width=True)
+                
             with tab_stats:
                 numeric_cols = df.select_dtypes(include=['number']).columns
                 if len(numeric_cols) > 0:
                     st.write(df[numeric_cols].describe())
                 else:
-                    st.info("Hệ thống không tìm thấy cột số nào để thống kê (Có thể bảng điểm chỉ chứa chữ).")
+                    st.info("Hệ thống không tìm thấy cột số nào để thống kê.")
 
             if st.button("🤖 TIẾN HÀNH PHÂN TÍCH CHUYÊN SÂU", type="primary", use_container_width=True):
                 data_str = df.head(150).to_csv(index=False)
@@ -158,7 +162,6 @@ Yêu cầu trình bày:
         except Exception as e:
             st.error(f"❌ Lỗi xử lý file: {str(e)}")
 
-    # 3. KẾT QUẢ VÀ XUẤT FILE WORD
     if 'current_analytics' in st.session_state:
         st.markdown("---")
         with st.expander("📑 BÁO CÁO PHÂN TÍCH CHUYÊN SÂU SƯ PHẠM", expanded=True):
