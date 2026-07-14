@@ -78,7 +78,8 @@ Cấu trúc yêu cầu:
 
 Nội dung phải sinh động, kích thích tư duy khoa học!
 """
-        with st.spinner("AI đang "xem" mô phỏng và soạn phiếu bài tập..."):
+        # ĐÃ FIX LỖI CÚ PHÁP TẠI DÒNG NÀY (Đổi nháy kép thành nháy đơn ở chữ 'xem')
+        with st.spinner("AI đang 'xem' mô phỏng và soạn phiếu bài tập..."):
             try:
                 result = run_ai_with_fallback(prompt=prompt, api_key=final_key, model_mode="flash")
                 if result.get("success"):
