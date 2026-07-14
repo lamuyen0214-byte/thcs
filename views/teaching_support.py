@@ -3,6 +3,8 @@ from modules.teaching.rag_engine import process_rag_engine
 from modules.teaching.game_builder import render_game_module
 from modules.teaching.hoc_lieu_builder import render_hoc_lieu_module
 from modules.teaching.simulation_builder import render_simulation_module
+from modules.teaching.analytics_builder import render_analytics_module
+
 def render_module():
     st.markdown("## 🌱 Hỗ trợ Giảng dạy")
     
@@ -61,8 +63,16 @@ def render_module():
         except Exception as e:
             st.error(f"Lỗi tải module Mô phỏng: {e}")
 
-    # --- CÁC THẺ 5-10: GIAO DIỆN CHỜ (Đã sửa dải số từ 4 đến 9) ---
-    for i in range(4, 10):
+    # --- THẺ 6: PHÂN TÍCH DỮ LIỆU ---
+    with tabs[5]:
+        st.subheader("📊 Phân tích Kết quả Học tập")
+        try:
+            render_analytics_module()
+        except Exception as e:
+            st.error(f"Lỗi tải module Phân tích: {e}. Vui lòng kiểm tra đã cài đặt thư viện pandas và openpyxl chưa.")
+
+    # --- CÁC THẺ 7-10: GIAO DIỆN CHỜ (Sửa dải số thành từ 6 đến 9) ---
+    for i in range(6, 10):
         with tabs[i]:
             st.info("⏳ Giao diện đang được cập nhật...")   
     # --- CÁC THẺ 4-10: GIAO DIỆN CHỜ ---
