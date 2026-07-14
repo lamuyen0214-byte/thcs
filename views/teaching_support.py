@@ -7,6 +7,7 @@ from modules.teaching.analytics_builder import render_analytics_module
 from modules.teaching.bank_builder import render_bank_module
 from modules.teaching.video_builder import render_video_module
 from modules.teaching.interaction_builder import render_interaction_module
+from modules.teaching.personalization_builder import render_personalization_module
 def render_module():
     st.markdown("## 🌱 Hỗ trợ Giảng dạy")
     
@@ -81,15 +82,33 @@ def render_module():
         except Exception as e:
             st.error(f"Lỗi tải module Sinh Video: {e}")
 
-    # --- THẺ 9: TƯƠNG TÁC ---
+   # --- THẺ 9: TƯƠNG TÁC ---
     with tabs[8]:
         st.subheader("🎭 Thiết kế Hoạt động Tương tác & Đóng vai")
         try:
+            from modules.teaching.interaction_builder import render_interaction_module
             render_interaction_module()
         except Exception as e:
             st.error(f"Lỗi tải module Tương tác: {e}")
 
-    # --- THẺ 10: GIAO DIỆN CHỜ (Chỉ còn thẻ Cá nhân hóa) ---
-    for i in range(9, 10):
-        with tabs[i]:
-            st.info("⏳ Giao diện đang được cập nhật...")
+    # --- THẺ 10: CÁ NHÂN HÓA ---
+    with tabs[9]:
+        st.subheader("🎯 Thiết lập Lộ trình Học tập Cá nhân hóa")
+        try:
+            render_personalization_module()
+        except Exception as e:
+            st.error(f"Lỗi tải module Cá nhân hóa: {e}")
+
+    # (LƯU Ý: Xóa bỏ hoàn toàn đoạn "for i in range..." giao diện chờ ở đây)
+
+    # --- THẺ 11: CAMERA CHẤM BÀI (AI VISION) ---
+    with tabs[10]:
+        st.subheader("📷 Camera chấm bài bằng AI Vision")
+        st.info("Sử dụng Camera để quét và chấm điểm tự động bài kiểm tra.")
+        st.warning("🚧 Đang tích hợp thuật toán Computer Vision...")
+
+    # --- THẺ 12: TRẮC NGHIỆM LIVE ---
+    with tabs[11]:
+        st.subheader("⚡ Trắc nghiệm tương tác trực tiếp")
+        st.info("Tổ chức các phiên hỏi đáp, khảo sát thời gian thực cho học sinh.")
+        st.warning("🚧 Đang tích hợp hệ thống thời gian thực...")
