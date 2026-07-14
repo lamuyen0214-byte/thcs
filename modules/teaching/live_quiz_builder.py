@@ -20,7 +20,7 @@ def render_live_quiz_module():
     # Hiển thị ảnh nếu có link
     if image_url:
         try:
-            st.image(image_url, use_container_width=True)
+            st.image(https://img.freepik.com/free-vector/quiz-time-background-with-flat-design_23-2147986064.jpg, use_container_width=True)
         except:
             st.error("Link ảnh không hợp lệ, thầy kiểm tra lại nhé!")
 
