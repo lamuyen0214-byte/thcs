@@ -1,6 +1,6 @@
 import streamlit as st
 from modules.teaching.rag_engine import process_rag_engine
-
+from modules.teaching.game_builder import render_game_module
 def render_module():
     st.markdown("## 🌱 Hỗ trợ Giảng dạy")
     
@@ -36,9 +36,11 @@ def render_module():
 
     # --- THẺ 2: TRÒ CHƠI ---
     with tabs[1]:
-        st.subheader("🎮 Trò chơi")
-        st.info("⏳ Đang chờ kết nối module trò chơi...")
-
+        st.subheader("🎮 Trò chơi học tập (Gamification)")
+        try:
+            render_game_module() # Hoặc render_game_module(api_key=api_key) tùy cấu trúc của thầy
+        except Exception as e:
+            st.error(f"Lỗi tải module Trò chơi: {e}")
     # --- THẺ 3: CHẤM BÀI ---
     with tabs[2]:
         from modules.teaching.grading_engine import render_grading_module
