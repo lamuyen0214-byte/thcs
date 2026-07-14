@@ -40,12 +40,20 @@ def render_org_management():
             email = c6.text_input("Email")
             dien_thoai = c7.text_input("SĐT")
             
-            if st.form_submit_button("➕ Thêm"):
+            if st.form_submit_button("➕ Thêm thành viên"):
+            try:
+                # Đảm bảo các key ở đây KHÔNG CÓ DẤU, khớp 100% với tên cột trên Supabase
                 new_row = {
-                    "ten": ten, "ngay_sinh": ngay_sinh, "bang_cap": bang_cap, 
-                    "chu_the": chu_the, "vai_tro": vai_tro, "email": email, "dien_thoai": dien_thoai
+                    "ten": ten, 
+                    "ngay_sinh": ngay_sinh, 
+                    "bang_cap": bang_cap, 
+                    "chu_the": chu_the, 
+                    "vai_tro": vai_tro, 
+                    "email": email, 
+                    "dien_thoai": dien_thoai
                 }
                 supabase.table("quan_ly_tcm").insert(new_row).execute()
+                st.success("Thêm thành công!")
                 st.rerun()
-
-        st.dataframe(st.session_state['team_members'], use_container_width=True)
+            except Exception as e:
+                st.error(f"Lỗi: {e}")
