@@ -58,10 +58,15 @@ def render_quizizz_module(api_key=""):
         sl_dien = ct3.number_input("Điền khuyết (Fill-in)", value=2, min_value=0, key="qz_dien")
         sl_ghep = ct4.number_input("Ghép đôi (Matching)", value=2, min_value=0, key="qz_ghep")
 
-    # 3. KHỞI TẠO AI
+    # 3. KHỞI TẠO AI (BẢN CÓ HIỂN THỊ LỖI CHI TIẾT)
     if st.button("TỰ ĐỘNG SINH NGÂN HÀNG QUIZIZZ", type="primary", use_container_width=True):
         if not ten_bai.strip(): 
             st.warning("Vui lòng nhập Chủ đề / Tên bài học!")
+            st.stop()
+        
+        # Kiểm tra API Key từ sidebar
+        if not api_key:
+            st.error("⚠️ Chưa có API Key! Vui lòng nhập API Key ở menu bên trái.")
             st.stop()
         
         file_context = ""
@@ -75,33 +80,33 @@ def render_quizizz_module(api_key=""):
                     file_context = "\n".join([p.text for p in doc.paragraphs])
             except Exception as e: st.error(f"Lỗi đọc file: {e}")
 
-        final_key = api_key if api_key else get_api_key()
-        
-        # SIÊU CÂU LỆNH PROMPT CHUYÊN BIỆT CHO QUIZIZZ
+        # SIÊU CÂU LỆNH PROMPT
         prompt = f"""
-Bạn là Chuyên gia thiết kế nội dung Elearning xuất sắc. Hãy soạn một bộ câu hỏi tương tác lên nền tảng Quizizz môn {mon_hoc} {lop}. 
+Bạn là Chuyên gia thiết kế nội dung Elearning. Hãy soạn bộ câu hỏi Quizizz môn {mon_hoc} {lop}. 
 Chủ đề: {ten_bai}.
-Yêu cầu phân bổ mức độ: Nhận biết {nb}%, Thông hiểu {th}%, Vận dụng {vd}%, VDC {vdc}%.
-Thời gian dự kiến làm mỗi câu: {thoi_gian_cau}.
-Dựa sát vào tài liệu sau: {file_context[:3500]}
-Yêu cầu chi tiết của giáo viên: {yeu_cau_khac}
+Yêu cầu phân bổ: Nhận biết {nb}%, Thông hiểu {th}%, Vận dụng {vd}%, VDC {vdc}%.
+Dựa vào tài liệu: {file_context[:3500]}
+Yêu cầu: {yeu_cau_khac}
 
-BẮT BUỘC tạo chính xác các dạng câu hỏi sau:
-1. Dạng 1: {sl_mcq} câu hỏi CHỌN 1 ĐÁP ÁN ĐÚNG. Mỗi câu có 4 phương án (A, B, C, D).
-2. Dạng 2: {sl_multi} câu hỏi NHIỀU ĐÁP ÁN ĐÚNG (Checkbox). Mỗi câu 4-5 phương án, liệt kê rõ các đáp án đúng.
-3. Dạng 3: {sl_dien} câu hỏi ĐIỀN KHUYẾT. Cung cấp câu trần thuật thiếu từ và CHUỖI TỪ KHOÁ CẦN ĐIỀN CHÍNH XÁC.
-4. Dạng 4: {sl_ghep} câu hỏi GHÉP ĐÔI. Cho 2 nhóm dữ liệu (Ví dụ: Nhóm 1 (A,B,C,D) và Nhóm 2 (1,2,3,4)) và đáp án ghép cặp.
+Tạo các dạng câu hỏi:
+1. {sl_mcq} câu chọn 1 đáp án đúng (A,B,C,D).
+2. {sl_multi} câu chọn nhiều đáp án đúng (Checkbox).
+3. {sl_dien} câu điền khuyết (Fill-in).
+4. {sl_ghep} câu ghép đôi (Matching).
 
-Về Định dạng Markdown: 
-- Trình bày rõ từng câu hỏi.
-- Dưới mỗi câu, BẮT BUỘC phải có "ĐÁP ÁN" và "GIẢI THÍCH NGẮN GỌN" (rất quan trọng để Quizizz hiện phản hồi cho học sinh sau khi chọn).
+Mỗi câu phải có: ĐÁP ÁN ĐÚNG và GIẢI THÍCH CHI TIẾT.
 """
-        with st.spinner("AI đang thiết kế cấu trúc và sinh ngân hàng câu hỏi đa dạng..."):
-            result = run_ai_with_fallback(prompt=prompt, api_key=final_key, model_mode="flash")
-            if result.get("success"):
-                st.session_state['current_quizizz_data'] = {"title": ten_bai, "content": result.get("text")}
-                st.rerun()
-            else: st.error("AI không phản hồi.")
+        with st.spinner("AI đang làm việc..."):
+            try:
+                result = run_ai_with_fallback(prompt=prompt, api_key=api_key, model_mode="flash")
+                if result.get("success"):
+                    st.session_state['current_quizizz_data'] = {"title": ten_bai, "content": result.get("text")}
+                    st.rerun()
+                else:
+                    # HIỂN THỊ CHI TIẾT LỖI TỪ HỆ THỐNG
+                    st.error(f"❌ AI không phản hồi: {result.get('error', 'Lỗi kết nối không xác định')}")
+            except Exception as e:
+                st.error(f"❌ Lỗi hệ thống: {str(e)}")
 
     # 4. KẾT QUẢ VÀ XUẤT FILE
     if 'current_quizizz_data' in st.session_state:
